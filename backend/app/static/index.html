@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Tracker</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+    <main class="page">
+        <section>
+            <div>
+                <h1 class="card">Attendance Tracker</h1>
+            </div>
+            <div class="hero-actions">
+                <label class="field">
+                    <span>Meeting filter</span>
+                    <input id="meeting-filter" type="text" placeholder="Optional meeting_id" />
+                </label>
+                <div class="button-row">
+                    <button id="refresh-button" type="button">Refresh Now</button>
+                    <a id="export-link" href="/attendance/export.csv">Export CSV</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card">
+                <div class="card-header">
+                    <h2>Active Participants</h2>
+                    <span id="active-count" class="pill">0</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Meeting</th>
+                                <th>First Seen</th>
+                                <th>Last Seen</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="current-table"></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-header">
+                    <h2>Attendance History</h2>
+                    <span id="history-count" class="pill">0</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Meeting</th>
+                                <th>Status</th>
+                                <th>First Seen</th>
+                                <th>Last Seen</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+</body>
+
+</html>
