@@ -4,6 +4,11 @@
   "version": "0.1.0",
   "description": "Reads visible Zoom Web participants and sends attendance updates to a local FastAPI backend.",
   "host_permissions": ["https://*.zoom.us/*", "https://app.zoom.us/*", "http://127.0.0.1:8000/*", "http://localhost:8000/*"],
+  "permissions": ["tabs"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Zoom Attendance Tracker"
+  },
   "background": {
     "service_worker": "background.js"
   },

@@ -234,28 +234,41 @@ function extractParticipantNames() {
 function sendAttendanceUpdate() {
   if (!isLikelyMeetingPage()) {
     console.log(`${LOG_PREFIX} Not a Zoom meeting page, skipping.`, window.location.href);
-    return;
+    return Promise.resolve({
+      ok: false,
+      error: "Not a Zoom meeting page.",
+    });
   }
 
   const participants = extractParticipantNames();
   if (!participants) {
-    return;
+    return Promise.resolve({
+      ok: false,
+      error: "Participants panel not found or empty.",
+    });
   }
 
-  chrome.runtime.sendMessage(
-    {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({
       type: "attendance:update",
       meetingId: getMeetingId(),
       participants,
-    },
-    (response) => {
+    }, (response) => {
       if (chrome.runtime.lastError) {
         console.error(`${LOG_PREFIX} Attendance update message failed`, chrome.runtime.lastError.message);
+        resolve({
+          ok: false,
+          error: chrome.runtime.lastError.message,
+        });
         return;
       }
 
       if (!response?.ok) {
         console.error(`${LOG_PREFIX} Attendance update rejected`, response?.error);
+        resolve(response || {
+          ok: false,
+          error: "Attendance update rejected.",
+        });
         return;
       }
 
@@ -263,9 +276,19 @@ function sendAttendanceUpdate() {
         meetingId: getMeetingId(),
         participants,
       });
-    }
-  );
+      resolve(response);
+    });
+  });
 }
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type !== "attendance:force-send") {
+    return false;
+  }
+
+  sendAttendanceUpdate().then(sendResponse);
+  return true;
+});
 
 // Zoom Web updates its DOM often, so the selectors intentionally lean on accessible labels,
 // generic roles, and participant-related text rather than brittle generated class names.

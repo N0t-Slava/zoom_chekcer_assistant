@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zoom Attendance Tracker</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+  <main class="popup">
+    <header class="header">
+      <div>
+        <p class="eyebrow">Zoom attendance</p>
+        <h1>Tracker</h1>
+      </div>
+      <span id="backend-status" class="status offline">Offline</span>
+    </header>
+
+    <section class="panel">
+      <div class="row">
+        <span>Meeting ID</span>
+        <strong id="meeting-id">-</strong>
+      </div>
+      <div class="row">
+        <span>Participants</span>
+        <strong id="participant-count">0</strong>
+      </div>
+      <div class="row">
+        <span>Last sent</span>
+        <strong id="last-sent">-</strong>
+      </div>
+    </section>
+
+    <section class="lesson">
+      <span>Current lesson</span>
+      <strong id="lesson-title">Not linked</strong>
+      <small id="lesson-group">No group</small>
+    </section>
+
+    <p id="error-message" class="error"></p>
+
+    <div class="actions">
+      <button id="force-send" type="button">Force Send Now</button>
+      <button id="open-dashboard" class="secondary" type="button">Open Dashboard</button>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

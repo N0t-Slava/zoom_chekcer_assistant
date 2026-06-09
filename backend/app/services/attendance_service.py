@@ -183,6 +183,9 @@ def process_attendance_update(
     return {
         "meeting_id": meeting_id,
         "meeting_session_id": meeting.id,
+        "meeting_title": meeting.title,
+        "meeting_group_name": meeting.group_name,
+        "schedule_entry_id": meeting.schedule_entry_id,
         "active_count": len(incoming_by_name),
         "joined": joined,
         "left": left,

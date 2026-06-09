@@ -26,6 +26,9 @@ class AttendanceRecordResponse(BaseModel):
 class AttendanceUpdateResponse(BaseModel):
     meeting_id: str
     meeting_session_id: int
+    meeting_title: str | None = None
+    meeting_group_name: str | None = None
+    schedule_entry_id: int | None = None
     active_count: int
     joined: list[str]
     left: list[str]

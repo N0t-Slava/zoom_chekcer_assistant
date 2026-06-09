@@ -115,13 +115,49 @@ select {
   outline: none;
 }
 
-select {
+.select-shell {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.select-shell::after {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  display: grid;
+  width: 38px;
+  height: calc(100% - 2px);
+  place-items: center;
+  border-left: 1px solid var(--line);
+  border-radius: 0 11px 11px 0;
+  background: rgba(226, 232, 240, 0.78);
+  content: "";
+  pointer-events: none;
+}
+
+.select-shell::before {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border-top: 5px solid var(--muted);
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+  content: "";
+  pointer-events: none;
+  transform: translateY(-35%);
+}
+
+.select-shell select {
   appearance: none;
-  padding-right: 38px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 17px, calc(100% - 13px) 17px;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
+  overflow: hidden;
+  padding-right: 48px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--surface-soft);
 }
 
 input:focus,

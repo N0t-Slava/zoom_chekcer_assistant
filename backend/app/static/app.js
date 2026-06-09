@@ -78,8 +78,8 @@ function buildQuery() {
 
 function meetingLabel(meeting) {
   const title = meeting.title || "Untitled";
-  const group = meeting.group_name ? ` / ${meeting.group_name}` : "";
-  return `#${meeting.id} ${title}${group} (${formatDate(meeting.started_at)})`;
+  const group = meeting.group_name ? ` - ${meeting.group_name}` : "";
+  return `#${meeting.id} ${title}${group}`;
 }
 
 function renderEmptyRow(target, columnCount, label) {

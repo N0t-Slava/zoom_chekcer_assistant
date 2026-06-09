@@ -11,10 +11,6 @@
 <body>
     <main class="page">
         <section class="hero">
-            <div class="hero-copy">
-                <p class="eyebrow">Zoom attendance</p>
-                <h1>Attendance Tracker</h1>
-            </div>
             <div class="hero-actions">
                 <label class="field">
                     <span>Zoom meeting filter</span>
@@ -22,9 +18,11 @@
                 </label>
                 <label class="field">
                     <span>Meeting session</span>
-                    <select id="meeting-session-filter">
-                        <option value="">All sessions</option>
-                    </select>
+                    <span class="select-shell">
+                        <select id="meeting-session-filter">
+                            <option value="">All sessions</option>
+                        </select>
+                    </span>
                 </label>
                 <div class="button-row">
                     <button id="refresh-button" type="button">Refresh Now</button>
@@ -41,7 +39,8 @@
                 </div>
                 <div class="import-panel">
                     <button id="generate-summary-button" type="button">Generate Journal</button>
-                    <a id="matrix-export-link" class="secondary-action" href="/reports/attendance-matrix.csv">Export Matrix CSV</a>
+                    <a id="matrix-export-link" class="secondary-action" href="/reports/attendance-matrix.csv">Export
+                        Matrix CSV</a>
                     <p id="summary-status" class="subtle"></p>
                 </div>
                 <div class="table-wrap">
