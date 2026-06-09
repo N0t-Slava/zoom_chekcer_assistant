@@ -45,9 +45,10 @@ async def update_attendance(payload: AttendanceUpdateRequest, db: DbSession) -> 
 async def get_current_attendance(
     db: DbSession,
     meeting_id: str | None = Query(default=None, min_length=1),
+    meeting_session_id: int | None = Query(default=None, ge=1),
 ) -> list[AttendanceRecordResponse]:
     try:
-        records = list_current_attendance(db, meeting_id=meeting_id)
+        records = list_current_attendance(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error while loading current attendance")
@@ -63,9 +64,10 @@ async def get_current_attendance(
 async def get_attendance_history(
     db: DbSession,
     meeting_id: str | None = Query(default=None, min_length=1),
+    meeting_session_id: int | None = Query(default=None, ge=1),
 ) -> list[AttendanceRecordResponse]:
     try:
-        records = list_attendance_history(db, meeting_id=meeting_id)
+        records = list_attendance_history(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error while loading attendance history")
@@ -81,9 +83,10 @@ async def get_attendance_history(
 async def export_attendance(
     db: DbSession,
     meeting_id: str | None = Query(default=None, min_length=1),
+    meeting_session_id: int | None = Query(default=None, ge=1),
 ) -> Response:
     try:
-        csv_content = export_attendance_csv(db, meeting_id=meeting_id)
+        csv_content = export_attendance_csv(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error while exporting attendance CSV")
@@ -92,6 +95,11 @@ async def export_attendance(
             detail="Unable to export attendance CSV.",
         ) from exc
 
-    filename = "attendance.csv" if not meeting_id else f"{meeting_id}-attendance.csv"
+    if meeting_session_id:
+        filename = f"meeting-{meeting_session_id}-attendance.csv"
+    elif meeting_id:
+        filename = f"{meeting_id}-attendance.csv"
+    else:
+        filename = "attendance.csv"
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
     return Response(content=csv_content, media_type="text/csv", headers=headers)

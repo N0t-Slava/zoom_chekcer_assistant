@@ -9,6 +9,10 @@ from fastapi.staticfiles import StaticFiles
 
 from .database import init_db
 from .routers.attendance import router as attendance_router
+from .routers.meetings import router as meetings_router
+from .routers.reports import router as reports_router
+from .routers.schedule import router as schedule_router
+from .routers.students import router as students_router
 from .schemas import HealthResponse
 
 
@@ -43,6 +47,10 @@ app.add_middleware(
 )
 
 app.include_router(attendance_router)
+app.include_router(meetings_router)
+app.include_router(reports_router)
+app.include_router(schedule_router)
+app.include_router(students_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
