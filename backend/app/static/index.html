@@ -27,6 +27,7 @@
                 <div class="button-row">
                     <button id="refresh-button" type="button">Refresh Now</button>
                     <a id="export-link" class="secondary-action" href="/attendance/export.csv">Export CSV</a>
+                    <a class="secondary-action" href="/teacher-meeting">Teacher Meeting</a>
                 </div>
             </div>
         </section>
@@ -164,6 +165,28 @@
                             </tr>
                         </thead>
                         <tbody id="current-table"></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-header">
+                    <h2>Unmatched Names</h2>
+                    <span id="unmatched-count" class="pill">0</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Group</th>
+                                <th>Meeting</th>
+                                <th>Session</th>
+                                <th>Last Seen</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unmatched-table"></tbody>
                     </table>
                 </div>
             </article>

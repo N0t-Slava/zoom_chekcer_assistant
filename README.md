@@ -118,6 +118,38 @@ Use the dashboard in this order:
 6. Click `Generate Journal`.
 7. Download `Export Matrix CSV`.
 
+## Teacher Meeting SDK Prototype
+
+Open the teacher SDK page here:
+
+```text
+http://127.0.0.1:8000/teacher-meeting
+```
+
+To prepare a Zoom Meeting SDK join, set these environment variables before starting the backend:
+
+```bash
+export ZOOM_CLIENT_ID="your_meeting_sdk_client_id"
+export ZOOM_CLIENT_SECRET="your_meeting_sdk_client_secret"
+export ZOOM_OAUTH_REDIRECT_URL="http://127.0.0.1:8000/zoom/oauth/callback"
+```
+
+Optional:
+
+```bash
+export ZOOM_MEETING_SDK_JS_URL="https://source.zoom.us/3.13.2/zoom-meeting-3.13.2.min.js"
+```
+
+The teacher SDK page is a prototype. Students can still join through the normal Zoom link.
+
+To join as the meeting host, authorize Zoom from the teacher page. In the Zoom app settings, use this OAuth redirect URL:
+
+```text
+http://127.0.0.1:8000/zoom/oauth/callback
+```
+
+The app also needs a user token/ZAK scope such as `user:read:token`.
+
 ## Students CSV
 
 Recommended format:
@@ -163,6 +195,9 @@ Supported time formats:
 08:30
 08:30:00
 ```
+
+Schedule times are interpreted in the app timezone. By default this is `Europe/Kyiv`.
+Set `APP_TIMEZONE` before starting the backend if you need a different timezone.
 
 If a Zoom meeting starts during a scheduled lesson, the backend automatically links that meeting to the lesson group/title.
 

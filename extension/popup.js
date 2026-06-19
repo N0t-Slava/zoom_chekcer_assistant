@@ -4,6 +4,8 @@ const participantCount = document.querySelector("#participant-count");
 const lastSent = document.querySelector("#last-sent");
 const lessonTitle = document.querySelector("#lesson-title");
 const lessonGroup = document.querySelector("#lesson-group");
+const unmatchedCount = document.querySelector("#unmatched-count");
+const unmatchedNames = document.querySelector("#unmatched-names");
 const errorMessage = document.querySelector("#error-message");
 const forceSendButton = document.querySelector("#force-send");
 const openDashboardButton = document.querySelector("#open-dashboard");
@@ -32,6 +34,9 @@ function renderSnapshot(snapshot) {
   lastSent.textContent = formatTime(snapshot.lastSentAt);
   lessonTitle.textContent = snapshot.meetingTitle || "Not linked";
   lessonGroup.textContent = snapshot.meetingGroupName ? `Group ${snapshot.meetingGroupName}` : "No group";
+  const unmatched = snapshot.unmatchedParticipants || [];
+  unmatchedCount.textContent = String(unmatched.length);
+  unmatchedNames.textContent = unmatched.length ? unmatched.join(", ") : "All matched";
   errorMessage.textContent = snapshot.lastError || "";
 }
 

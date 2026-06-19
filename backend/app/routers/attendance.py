@@ -7,11 +7,17 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..schemas import AttendanceRecordResponse, AttendanceUpdateRequest, AttendanceUpdateResponse
+from ..schemas import (
+    AttendanceRecordResponse,
+    AttendanceUpdateRequest,
+    AttendanceUpdateResponse,
+    UnmatchedParticipantResponse,
+)
 from ..services.attendance_service import (
     export_attendance_csv,
     list_attendance_history,
     list_current_attendance,
+    list_unmatched_current_participants,
     process_attendance_update,
 )
 
@@ -58,6 +64,29 @@ async def get_current_attendance(
         ) from exc
 
     return [AttendanceRecordResponse.model_validate(record) for record in records]
+
+
+@router.get("/unmatched", response_model=list[UnmatchedParticipantResponse])
+async def get_unmatched_participants(
+    db: DbSession,
+    meeting_id: str | None = Query(default=None, min_length=1),
+    meeting_session_id: int | None = Query(default=None, ge=1),
+) -> list[UnmatchedParticipantResponse]:
+    try:
+        records = list_unmatched_current_participants(
+            db,
+            meeting_id=meeting_id,
+            meeting_session_id=meeting_session_id,
+        )
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while loading unmatched participants")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to load unmatched participants.",
+        ) from exc
+
+    return [UnmatchedParticipantResponse(**record) for record in records]
 
 
 @router.get("/history", response_model=list[AttendanceRecordResponse])

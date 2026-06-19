@@ -31,7 +31,8 @@ body {
 
 .header,
 .panel,
-.lesson {
+.lesson,
+.unmatched {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -97,6 +98,10 @@ h1 {
   border-bottom: none;
 }
 
+.compact {
+  padding: 10px 14px;
+}
+
 .row span,
 .lesson span,
 .lesson small {
@@ -121,6 +126,20 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.unmatched {
+  overflow: hidden;
+}
+
+.name-list {
+  max-height: 72px;
+  margin: 0;
+  padding: 0 14px 12px;
+  overflow: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .error {

@@ -23,6 +23,15 @@ class AttendanceRecordResponse(BaseModel):
     status: str
 
 
+class UnmatchedParticipantResponse(BaseModel):
+    participant_name: str
+    meeting_id: str
+    meeting_session_id: int | None = None
+    group_name: str | None = None
+    first_seen: datetime
+    last_seen: datetime
+
+
 class AttendanceUpdateResponse(BaseModel):
     meeting_id: str
     meeting_session_id: int
@@ -32,6 +41,7 @@ class AttendanceUpdateResponse(BaseModel):
     active_count: int
     joined: list[str]
     left: list[str]
+    unmatched_participants: list[str] = Field(default_factory=list)
 
 
 class MeetingResponse(BaseModel):
@@ -61,6 +71,24 @@ class StudentResponse(BaseModel):
     full_name: str
     normalized_name: str
     group_name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class StudentAliasCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    student_id: int = Field(..., ge=1)
+    alias_name: str = Field(..., min_length=1, max_length=255)
+
+
+class StudentAliasResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    student_id: int
+    alias_name: str
+    normalized_name: str
     created_at: datetime
     updated_at: datetime
 
@@ -124,6 +152,37 @@ class AttendanceSummaryGenerateResponse(BaseModel):
     generated_count: int
     present_count: int
     absent_count: int
+
+
+class ZoomSdkConfigResponse(BaseModel):
+    configured: bool
+    client_id: str | None = None
+    sdk_js_url: str | None = None
+
+
+class ZoomSdkSignatureRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    meeting_number: str = Field(..., min_length=6, max_length=32)
+    role: int = Field(default=0, ge=0, le=1)
+
+
+class ZoomSdkSignatureResponse(BaseModel):
+    signature: str
+    client_id: str
+    meeting_number: str
+    role: int
+    expires_at: int
+
+
+class ZoomOAuthStatusResponse(BaseModel):
+    authorized: bool
+    expires_at: int | None = None
+    api_url: str | None = None
+
+
+class ZoomZakResponse(BaseModel):
+    zak: str
 
 
 class HealthResponse(BaseModel):

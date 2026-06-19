@@ -7,8 +7,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..schemas import StudentImportRequest, StudentImportResponse, StudentResponse
-from ..services.student_service import import_students_csv, list_students
+from ..schemas import (
+    StudentAliasCreateRequest,
+    StudentAliasResponse,
+    StudentImportRequest,
+    StudentImportResponse,
+    StudentResponse,
+)
+from ..services.student_service import create_student_alias, import_students_csv, list_students
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +39,31 @@ async def get_students(
         ) from exc
 
     return [StudentResponse.model_validate(student) for student in students]
+
+
+@router.post("/aliases", response_model=StudentAliasResponse)
+async def create_alias(payload: StudentAliasCreateRequest, db: DbSession) -> StudentAliasResponse:
+    try:
+        alias = create_student_alias(
+            db=db,
+            student_id=payload.student_id,
+            alias_name=payload.alias_name,
+        )
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while creating student alias")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to create student alias.",
+        ) from exc
+
+    if alias is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Student not found.",
+        )
+
+    return StudentAliasResponse.model_validate(alias)
 
 
 @router.post("/import.csv", response_model=StudentImportResponse)

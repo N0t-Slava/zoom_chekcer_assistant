@@ -36,6 +36,17 @@ class Student(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
+class StudentAlias(Base):
+    __tablename__ = "student_aliases"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), index=True, nullable=False)
+    alias_name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    normalized_name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
 class ScheduleEntry(Base):
     __tablename__ = "schedule_entries"
 

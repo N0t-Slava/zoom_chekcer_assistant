@@ -1,4 +1,8 @@
 const POLL_INTERVAL_MS = 5000;
+const SCAN_RESET_MS = 30000;
+const SCROLL_BOTTOM_TOLERANCE_PX = 8;
+const MIN_SCROLL_STEP_PX = 120;
+const SCROLL_STEP_RATIO = 0.85;
 const LOG_PREFIX = "[Zoom Attendance Tracker]";
 console.log(`${LOG_PREFIX} Content script loaded`, {
   href: window.location.href,
@@ -52,6 +56,13 @@ const NAME_SELECTOR = [
   '[aria-label*="participant" i]',
   '[aria-label*="участник" i]',
 ].join(", ");
+
+let participantScan = {
+  meetingId: null,
+  scanNames: new Map(),
+  completeNames: new Map(),
+  lastActivityAt: 0,
+};
 
 function getMeetingId() {
   const url = new URL(window.location.href);
@@ -182,6 +193,96 @@ function pickNameFromElement(element) {
   return pickNameFromRow({ innerText: rawText, textContent: rawText });
 }
 
+function resetParticipantScan(meetingId) {
+  participantScan = {
+    meetingId,
+    scanNames: new Map(),
+    completeNames: new Map(),
+    lastActivityAt: Date.now(),
+  };
+}
+
+function rememberNames(target, names) {
+  for (const name of names) {
+    target.set(name.toLocaleLowerCase(), name);
+  }
+}
+
+function namesFromMap(map) {
+  return [...map.values()];
+}
+
+function getScrollableParticipantContainer(panel) {
+  const candidates = [panel, ...panel.querySelectorAll("*")];
+  let best = null;
+  let bestScrollableDistance = 0;
+
+  for (const candidate of candidates) {
+    const scrollableDistance = candidate.scrollHeight - candidate.clientHeight;
+    if (scrollableDistance <= SCROLL_BOTTOM_TOLERANCE_PX) {
+      continue;
+    }
+
+    if (scrollableDistance > bestScrollableDistance) {
+      best = candidate;
+      bestScrollableDistance = scrollableDistance;
+    }
+  }
+
+  return best;
+}
+
+function advanceParticipantScan(panel) {
+  const scroller = getScrollableParticipantContainer(panel);
+  if (!scroller) {
+    return { complete: true, scrollTop: 0, maxScrollTop: 0 };
+  }
+
+  const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+  const atBottom = scroller.scrollTop >= maxScrollTop - SCROLL_BOTTOM_TOLERANCE_PX;
+  if (atBottom) {
+    scroller.scrollTop = 0;
+    return { complete: true, scrollTop: maxScrollTop, maxScrollTop };
+  }
+
+  const step = Math.max(Math.floor(scroller.clientHeight * SCROLL_STEP_RATIO), MIN_SCROLL_STEP_PX);
+  scroller.scrollTop = Math.min(maxScrollTop, scroller.scrollTop + step);
+  return { complete: false, scrollTop: scroller.scrollTop, maxScrollTop };
+}
+
+function updateParticipantScan(panel, visibleNames) {
+  const meetingId = getMeetingId();
+  const now = Date.now();
+  if (participantScan.meetingId !== meetingId || now - participantScan.lastActivityAt > SCAN_RESET_MS) {
+    resetParticipantScan(meetingId);
+  }
+
+  participantScan.lastActivityAt = now;
+  rememberNames(participantScan.scanNames, visibleNames);
+
+  const scanProgress = advanceParticipantScan(panel);
+  if (scanProgress.complete) {
+    participantScan.completeNames = new Map(participantScan.scanNames);
+    participantScan.scanNames = new Map();
+  }
+
+  const names = participantScan.completeNames.size
+    ? namesFromMap(participantScan.completeNames)
+    : namesFromMap(participantScan.scanNames);
+
+  console.log(`${LOG_PREFIX} Participant scan state`, {
+    visibleCount: visibleNames.length,
+    scanCount: participantScan.scanNames.size,
+    completeCount: participantScan.completeNames.size,
+    sentCount: names.length,
+    scrollTop: scanProgress.scrollTop,
+    maxScrollTop: scanProgress.maxScrollTop,
+    complete: scanProgress.complete,
+  });
+
+  return names;
+}
+
 function extractParticipantNames() {
   let panel = findParticipantsPanel();
   if (!panel) {
@@ -204,7 +305,7 @@ function extractParticipantNames() {
       isTopFrame: window.top === window,
       bodyTextPreview: sanitizeLine((document.body?.innerText || "").slice(0, 500)),
     });
-    return null;
+    return [];
   }
 
   const rows = getParticipantRows(panel);
@@ -225,10 +326,10 @@ function extractParticipantNames() {
       nameElementCount: getNameElements(panel).length,
       panelClassName: String(panel.className || ""),
     });
-    return null;
+    return [];
   }
 
-  return [...new Set(names)];
+  return updateParticipantScan(panel, [...new Set(names)]);
 }
 
 function sendAttendanceUpdate() {
@@ -241,12 +342,6 @@ function sendAttendanceUpdate() {
   }
 
   const participants = extractParticipantNames();
-  if (!participants) {
-    return Promise.resolve({
-      ok: false,
-      error: "Participants panel not found or empty.",
-    });
-  }
 
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({

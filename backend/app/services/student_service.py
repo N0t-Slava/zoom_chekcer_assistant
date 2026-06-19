@@ -6,10 +6,12 @@ from datetime import UTC, datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from ..models import Student
+from ..models import Student, StudentAlias
 
 
 WHITESPACE_RE = re.compile(r"\s+")
+PARENTHETICAL_RE = re.compile(r"\([^)]*\)")
+NON_NAME_RE = re.compile(r"[^0-9a-zа-яёіїєґ]+", re.IGNORECASE)
 
 
 def utc_now() -> datetime:
@@ -18,6 +20,46 @@ def utc_now() -> datetime:
 
 def normalize_student_name(value: str) -> str:
     return WHITESPACE_RE.sub(" ", value).strip().casefold()
+
+
+def canonical_name_key(value: str) -> str:
+    value = normalize_student_name(value)
+    value = PARENTHETICAL_RE.sub(" ", value)
+    value = re.sub(r"\b[\w.+-]+@[\w.-]+\.\w+\b", " ", value)
+    value = NON_NAME_RE.sub(" ", value)
+    tokens = WHITESPACE_RE.sub(" ", value).strip().split()
+    return " ".join(sorted(tokens))
+
+
+def build_student_name_keys(student: Student, aliases: list[str] | None = None) -> set[str]:
+    keys = {
+        normalize_student_name(student.full_name),
+        normalize_student_name(student.normalized_name),
+        canonical_name_key(student.full_name),
+        canonical_name_key(student.normalized_name),
+    }
+    for alias in aliases or []:
+        keys.add(normalize_student_name(alias))
+        keys.add(canonical_name_key(alias))
+    return {key for key in keys if key}
+
+
+def build_roster_name_keys(
+    students: list[Student],
+    aliases_by_student_id: dict[int, list[str]] | None = None,
+) -> set[str]:
+    keys: set[str] = set()
+    for student in students:
+        keys.update(build_student_name_keys(student, (aliases_by_student_id or {}).get(student.id)))
+    return keys
+
+
+def participant_matches_roster(participant_name: str, roster_keys: set[str]) -> bool:
+    participant_keys = {
+        normalize_student_name(participant_name),
+        canonical_name_key(participant_name),
+    }
+    return bool({key for key in participant_keys if key} & roster_keys)
 
 
 def _pick_value(row: dict[str, str], *keys: str) -> str:
@@ -36,6 +78,53 @@ def list_students(db: Session, group_name: str | None = None) -> list[Student]:
 
     stmt = stmt.order_by(Student.group_name, Student.full_name)
     return db.scalars(stmt).all()
+
+
+def aliases_by_student_id(db: Session, student_ids: list[int]) -> dict[int, list[str]]:
+    if not student_ids:
+        return {}
+
+    aliases = db.scalars(
+        select(StudentAlias).where(StudentAlias.student_id.in_(student_ids))
+    ).all()
+    result: dict[int, list[str]] = {}
+    for alias in aliases:
+        result.setdefault(alias.student_id, []).append(alias.alias_name)
+    return result
+
+
+def create_student_alias(db: Session, student_id: int, alias_name: str) -> StudentAlias | None:
+    student = db.get(Student, student_id)
+    if not student:
+        return None
+
+    now = utc_now()
+    normalized_name = normalize_student_name(alias_name)
+    existing = db.scalars(
+        select(StudentAlias).where(
+            StudentAlias.student_id == student_id,
+            StudentAlias.normalized_name == normalized_name,
+        )
+    ).first()
+
+    if existing:
+        existing.alias_name = alias_name
+        existing.updated_at = now
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    alias = StudentAlias(
+        student_id=student_id,
+        alias_name=alias_name,
+        normalized_name=normalized_name,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(alias)
+    db.commit()
+    db.refresh(alias)
+    return alias
 
 
 def import_students_csv(
@@ -60,6 +149,7 @@ def import_students_csv(
     errors: list[str] = []
 
     if replace_existing:
+        db.execute(delete(StudentAlias))
         db.execute(delete(Student))
 
     existing_students = {

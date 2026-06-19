@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Meeting</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+    <main class="page meeting-page">
+        <section class="hero">
+            <div class="hero-actions meeting-actions">
+                <label class="field">
+                    <span>Meeting number</span>
+                    <input id="meeting-number" type="text" inputmode="numeric" placeholder="1234567890" />
+                </label>
+                <label class="field">
+                    <span>Password</span>
+                    <input id="meeting-password" type="text" autocomplete="off" />
+                </label>
+                <label class="field">
+                    <span>Teacher name</span>
+                    <input id="teacher-name" type="text" value="Teacher" />
+                </label>
+                <label class="checkbox-field host-field">
+                    <input id="join-as-host" type="checkbox" />
+                    <span>Join as host</span>
+                </label>
+                <div class="button-row">
+                    <button id="join-button" type="button">Prepare Join</button>
+                    <button id="zoom-login-button" class="secondary-button" type="button">Authorize Zoom</button>
+                    <a class="secondary-action" href="/">Dashboard</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card">
+                <div class="card-header">
+                    <h2>Meeting SDK</h2>
+                    <span id="sdk-status" class="pill">Checking</span>
+                </div>
+                <div class="meeting-status">
+                    <p id="sdk-message" class="subtle">Loading SDK configuration...</p>
+                    <p id="oauth-message" class="subtle">Checking Zoom authorization...</p>
+                </div>
+                <div id="zoom-root" class="zoom-root"></div>
+            </article>
+        </section>
+    </main>
+
+    <script src="/static/teacher-meeting.js"></script>
+</body>
+
+</html>

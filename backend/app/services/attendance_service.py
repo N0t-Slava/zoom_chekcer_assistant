@@ -7,8 +7,11 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from ..models import AttendanceRecord, AttendanceStatus, Meeting
+from ..models import AttendanceRecord, AttendanceStatus, Meeting, ScheduleEntry, Student
+from .report_service import refresh_attendance_summary_for_schedule
 from .schedule_service import find_schedule_for_time
+from .student_service import aliases_by_student_id, build_roster_name_keys, participant_matches_roster
+from .time_service import app_now
 
 
 logger = logging.getLogger(__name__)
@@ -36,8 +39,8 @@ def normalize_participant_names(participants: list[str]) -> list[str]:
     return normalized
 
 
-def utc_now() -> datetime:
-    return datetime.now(UTC).replace(tzinfo=None)
+def current_time() -> datetime:
+    return app_now()
 
 
 def _duration_seconds(first_seen: datetime, current_time: datetime) -> int:
@@ -61,7 +64,7 @@ def expire_stale_active_records(
     meeting_id: str | None = None,
     meeting_session_id: int | None = None,
 ) -> None:
-    cutoff = utc_now() - timedelta(seconds=ACTIVE_TIMEOUT_SECONDS)
+    cutoff = current_time() - timedelta(seconds=ACTIVE_TIMEOUT_SECONDS)
     stmt = select(AttendanceRecord).where(
         AttendanceRecord.status == AttendanceStatus.ACTIVE.value,
         AttendanceRecord.last_seen < cutoff,
@@ -116,7 +119,7 @@ def process_attendance_update(
     meeting_id: str,
     participants: list[str],
 ) -> dict[str, object]:
-    now = utc_now()
+    now = current_time()
     meeting = get_or_create_current_meeting(db, meeting_id, now)
     expire_stale_active_records(db, meeting_session_id=meeting.id)
     participant_names = normalize_participant_names(participants)
@@ -140,6 +143,7 @@ def process_attendance_update(
     incoming_by_name = {name.casefold(): name for name in participant_names}
     joined: list[str] = []
     left: list[str] = []
+    unmatched_participants: list[str] = []
 
     for key, participant_name in incoming_by_name.items():
         existing = active_by_name.get(key)
@@ -170,6 +174,19 @@ def process_attendance_update(
         record.status = AttendanceStatus.LEFT.value
         left.append(record.participant_name)
 
+    if meeting.schedule_entry_id:
+        schedule_entry = db.get(ScheduleEntry, meeting.schedule_entry_id)
+        if schedule_entry:
+            refresh_attendance_summary_for_schedule(db, schedule_entry, now)
+            students = db.scalars(
+                select(Student).where(Student.group_name == schedule_entry.group_name)
+            ).all()
+            student_aliases = aliases_by_student_id(db, [student.id for student in students])
+            roster_keys = build_roster_name_keys(students, student_aliases)
+            unmatched_participants = [
+                name for name in participant_names if not participant_matches_roster(name, roster_keys)
+            ]
+
     db.commit()
 
     logger.info(
@@ -189,6 +206,7 @@ def process_attendance_update(
         "active_count": len(incoming_by_name),
         "joined": joined,
         "left": left,
+        "unmatched_participants": unmatched_participants,
     }
 
 
@@ -209,6 +227,59 @@ def list_current_attendance(
 
     stmt = stmt.order_by(AttendanceRecord.meeting_session_id, AttendanceRecord.meeting_id, AttendanceRecord.participant_name)
     return db.scalars(stmt).all()
+
+
+def list_unmatched_current_participants(
+    db: Session,
+    meeting_id: str | None = None,
+    meeting_session_id: int | None = None,
+) -> list[dict[str, object]]:
+    records = list_current_attendance(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
+    if not records:
+        return []
+
+    meeting_ids = {record.meeting_session_id for record in records if record.meeting_session_id}
+    meetings = {
+        meeting.id: meeting
+        for meeting in db.scalars(select(Meeting).where(Meeting.id.in_(meeting_ids))).all()
+    }
+
+    group_names = {meeting.group_name for meeting in meetings.values() if meeting.group_name}
+    students_by_group = {
+        group.casefold(): db.scalars(select(Student).where(Student.group_name == group)).all()
+        for group in group_names
+    }
+    aliases_by_group = {
+        group_key: aliases_by_student_id(db, [student.id for student in students])
+        for group_key, students in students_by_group.items()
+    }
+
+    unmatched: list[dict[str, object]] = []
+    for record in records:
+        meeting = meetings.get(record.meeting_session_id)
+        if not meeting or not meeting.group_name:
+            continue
+
+        group_key = meeting.group_name.casefold()
+        roster_keys = build_roster_name_keys(
+            students_by_group.get(group_key, []),
+            aliases_by_group.get(group_key),
+        )
+        if participant_matches_roster(record.participant_name, roster_keys):
+            continue
+
+        unmatched.append(
+            {
+                "participant_name": record.participant_name,
+                "meeting_id": record.meeting_id,
+                "meeting_session_id": record.meeting_session_id,
+                "group_name": meeting.group_name,
+                "first_seen": record.first_seen,
+                "last_seen": record.last_seen,
+            }
+        )
+
+    return unmatched
 
 
 def list_attendance_history(
@@ -294,7 +365,7 @@ def update_meeting(
 
 
 def close_meeting(db: Session, meeting: Meeting) -> Meeting:
-    now = utc_now()
+    now = current_time()
     meeting.ended_at = now
 
     active_records = db.scalars(_active_records_query(meeting.id)).all()
@@ -302,6 +373,11 @@ def close_meeting(db: Session, meeting: Meeting) -> Meeting:
         record.last_seen = now
         record.total_seconds = _duration_seconds(record.first_seen, now)
         record.status = AttendanceStatus.LEFT.value
+
+    if meeting.schedule_entry_id:
+        schedule_entry = db.get(ScheduleEntry, meeting.schedule_entry_id)
+        if schedule_entry:
+            refresh_attendance_summary_for_schedule(db, schedule_entry, now)
 
     db.commit()
     db.refresh(meeting)

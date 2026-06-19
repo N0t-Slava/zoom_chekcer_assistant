@@ -80,6 +80,25 @@ h1 {
   max-width: 760px;
 }
 
+.meeting-actions {
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr) max-content auto;
+  max-width: none;
+}
+
+.host-field {
+  align-self: end;
+  padding-bottom: 8px;
+}
+
+.meeting-status {
+  padding: 0 24px 16px;
+}
+
+.zoom-root {
+  min-height: 560px;
+  background: #111827;
+}
+
 .import-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
@@ -244,6 +263,7 @@ button:disabled {
 }
 
 .secondary-action,
+.secondary-button,
 a {
   background: rgba(4, 120, 87, 0.1);
   color: var(--success);

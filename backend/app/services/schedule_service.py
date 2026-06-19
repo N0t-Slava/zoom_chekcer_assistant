@@ -1,12 +1,13 @@
 import csv
 import io
 import re
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime, time
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from ..models import ScheduleEntry
+from .time_service import app_now
 
 
 WHITESPACE_RE = re.compile(r"\s+")
@@ -14,8 +15,8 @@ TIME_FORMATS = ("%H:%M", "%H:%M:%S")
 DATE_FORMATS = ("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y")
 
 
-def utc_now() -> datetime:
-    return datetime.now(UTC).replace(tzinfo=None)
+def current_time() -> datetime:
+    return app_now()
 
 
 def clean_value(value: str | None) -> str:
@@ -86,7 +87,7 @@ def import_schedule_csv(
             "errors": ["CSV must include a header row."],
         }
 
-    now = utc_now()
+    now = current_time()
     created_count = 0
     updated_count = 0
     skipped_count = 0

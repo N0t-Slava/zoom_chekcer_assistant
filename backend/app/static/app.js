@@ -17,12 +17,14 @@ const studentsImportStatus = document.querySelector("#students-import-status");
 const studentsTable = document.querySelector("#students-table");
 const meetingsTable = document.querySelector("#meetings-table");
 const currentTable = document.querySelector("#current-table");
+const unmatchedTable = document.querySelector("#unmatched-table");
 const historyTable = document.querySelector("#history-table");
 const scheduleCount = document.querySelector("#schedule-count");
 const summaryCount = document.querySelector("#summary-count");
 const studentCount = document.querySelector("#student-count");
 const meetingCount = document.querySelector("#meeting-count");
 const activeCount = document.querySelector("#active-count");
+const unmatchedCount = document.querySelector("#unmatched-count");
 const historyCount = document.querySelector("#history-count");
 
 const REFRESH_INTERVAL_MS = 5000;
@@ -219,7 +221,7 @@ function renderSchedule(entries) {
 function renderSummary(summaries) {
   summaryCount.textContent = String(summaries.length);
   if (!summaries.length) {
-    renderEmptyRow(summaryTable, 6, "Generate the journal after importing students and schedule.");
+    renderEmptyRow(summaryTable, 6, "Waiting for scheduled attendance updates, or generate the journal manually.");
     return;
   }
 
@@ -271,6 +273,56 @@ function renderCurrent(records) {
       row.appendChild(cell);
     });
     currentTable.appendChild(row);
+  }
+}
+
+function renderUnmatched(records, students) {
+  unmatchedCount.textContent = String(records.length);
+  if (!records.length) {
+    renderEmptyRow(unmatchedTable, 6, "All active participants match the selected group roster.");
+    return;
+  }
+
+  unmatchedTable.innerHTML = "";
+  for (const record of records) {
+    const row = document.createElement("tr");
+    [
+      record.participant_name,
+      record.group_name || "",
+      record.meeting_id,
+      record.meeting_session_id ? `#${record.meeting_session_id}` : "",
+      formatDate(record.last_seen),
+    ].forEach((value) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+    });
+
+    const actionsCell = document.createElement("td");
+    actionsCell.className = "actions";
+
+    const studentSelect = document.createElement("select");
+    const groupStudents = students.filter((student) => student.group_name === record.group_name);
+    for (const student of groupStudents) {
+      const option = document.createElement("option");
+      option.value = String(student.id);
+      option.textContent = student.full_name;
+      studentSelect.appendChild(option);
+    }
+    studentSelect.disabled = !groupStudents.length;
+    actionsCell.appendChild(studentSelect);
+
+    const mapButton = document.createElement("button");
+    mapButton.type = "button";
+    mapButton.textContent = "Map";
+    mapButton.disabled = !groupStudents.length;
+    mapButton.addEventListener("click", async () => {
+      await createStudentAlias(Number(studentSelect.value), record.participant_name);
+    });
+    actionsCell.appendChild(mapButton);
+
+    row.appendChild(actionsCell);
+    unmatchedTable.appendChild(row);
   }
 }
 
@@ -335,6 +387,28 @@ async function closeMeeting(meetingId) {
     throw new Error("Unable to close meeting.");
   }
 
+  await safeRefresh();
+}
+
+async function createStudentAlias(studentId, aliasName) {
+  const response = await fetch("/students/aliases", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      student_id: studentId,
+      alias_name: aliasName,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to map participant name.");
+  }
+
+  await fetch("/reports/attendance-summary/generate", {
+    method: "POST",
+  });
   await safeRefresh();
 }
 
@@ -428,25 +502,27 @@ async function generateSummary() {
 
 async function refreshDashboard() {
   const query = buildQuery();
-  const [summaryResponse, scheduleResponse, studentsResponse, meetingsResponse, currentResponse, historyResponse] = await Promise.all([
+  const [summaryResponse, scheduleResponse, studentsResponse, meetingsResponse, currentResponse, unmatchedResponse, historyResponse] = await Promise.all([
     fetch("/reports/attendance-summary"),
     fetch("/schedule"),
     fetch("/students"),
     fetch("/meetings"),
     fetch(`/attendance/current${query}`),
+    fetch(`/attendance/unmatched${query}`),
     fetch(`/attendance/history${query}`),
   ]);
 
-  if (!summaryResponse.ok || !scheduleResponse.ok || !studentsResponse.ok || !meetingsResponse.ok || !currentResponse.ok || !historyResponse.ok) {
+  if (!summaryResponse.ok || !scheduleResponse.ok || !studentsResponse.ok || !meetingsResponse.ok || !currentResponse.ok || !unmatchedResponse.ok || !historyResponse.ok) {
     throw new Error("Unable to refresh dashboard data.");
   }
 
-  const [summaries, schedule, students, meetings, currentRecords, historyRecords] = await Promise.all([
+  const [summaries, schedule, students, meetings, currentRecords, unmatchedRecords, historyRecords] = await Promise.all([
     summaryResponse.json(),
     scheduleResponse.json(),
     studentsResponse.json(),
     meetingsResponse.json(),
     currentResponse.json(),
+    unmatchedResponse.json(),
     historyResponse.json(),
   ]);
 
@@ -455,6 +531,7 @@ async function refreshDashboard() {
   renderStudents(students);
   renderMeetings(meetings);
   renderCurrent(currentRecords);
+  renderUnmatched(unmatchedRecords, students);
   renderHistory(historyRecords);
 }
 

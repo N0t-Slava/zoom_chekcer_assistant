@@ -10,6 +10,7 @@ let latestSnapshot = {
   meetingGroupName: null,
   participantCount: 0,
   participants: [],
+  unmatchedParticipants: [],
   lastSentAt: null,
   lastError: null,
 };
@@ -77,6 +78,7 @@ async function sendAttendanceUpdate(message) {
       meetingTitle: payload.meeting_title,
       meetingGroupName: payload.meeting_group_name,
       participantCount: payload.active_count,
+      unmatchedParticipants: payload.unmatched_participants || [],
       lastSentAt: new Date().toISOString(),
       lastError: null,
     });
