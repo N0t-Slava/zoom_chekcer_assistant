@@ -27,6 +27,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": (
+        "default-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zoom.us https://source.zoom.us https://*.zoom.us; "
+        "style-src 'self' 'unsafe-inline' https://source.zoom.us; "
+        "img-src 'self' data: blob: https:; "
+        "font-src 'self' data: https:; "
+        "connect-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com wss://*.zoom.us wss://*.zoom.com; "
+        "media-src 'self' data: blob: https:; "
+        "worker-src 'self' blob:; "
+        "frame-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com; "
+        "child-src 'self' blob: https://zoom.us https://*.zoom.us https://*.zoom.com"
+    ),
+}
 
 
 @asynccontextmanager
@@ -50,6 +67,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    for header, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(header, value)
+    return response
+
 app.include_router(attendance_router)
 app.include_router(meetings_router)
 app.include_router(reports_router)
@@ -64,8 +89,18 @@ async def dashboard() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.head("/", include_in_schema=False)
+async def dashboard_head() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
+
+
 @app.get("/teacher-meeting", include_in_schema=False)
 async def teacher_meeting() -> FileResponse:
+    return FileResponse(STATIC_DIR / "teacher-meeting.html")
+
+
+@app.head("/teacher-meeting", include_in_schema=False)
+async def teacher_meeting_head() -> FileResponse:
     return FileResponse(STATIC_DIR / "teacher-meeting.html")
 
 

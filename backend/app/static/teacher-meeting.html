@@ -31,6 +31,7 @@
                 <div class="button-row">
                     <button id="join-button" type="button">Prepare Join</button>
                     <button id="zoom-login-button" class="secondary-button" type="button">Authorize Zoom</button>
+                    <button id="zoom-disconnect-button" class="secondary-button" type="button" hidden>Disconnect Zoom</button>
                     <a class="secondary-action" href="/">Dashboard</a>
                 </div>
             </div>
@@ -45,6 +46,9 @@
                 <div class="meeting-status">
                     <p id="sdk-message" class="subtle">Loading SDK configuration...</p>
                     <p id="oauth-message" class="subtle">Checking Zoom authorization...</p>
+                    <p id="zoom-user-message" class="subtle"></p>
+                    <p id="meeting-check-message" class="subtle"></p>
+                    <p id="attendance-message" class="subtle">Attendance sync has not started.</p>
                 </div>
                 <div id="zoom-root" class="zoom-root"></div>
             </article>

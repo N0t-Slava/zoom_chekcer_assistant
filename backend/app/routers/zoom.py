@@ -6,12 +6,14 @@ import os
 import secrets
 import time
 from urllib.parse import urlencode
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
 
 from ..schemas import (
+    ZoomMeetingCheckResponse,
     ZoomOAuthStatusResponse,
     ZoomSdkConfigResponse,
     ZoomSdkSignatureRequest,
@@ -100,6 +102,12 @@ def _post_zoom_token(params: dict[str, str]) -> dict[str, object]:
     try:
         with urlopen(request, timeout=15) as response:
             payload = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Zoom OAuth token request failed: HTTP {exc.code} {detail}",
+        ) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -154,11 +162,33 @@ def _zoom_api_get(path: str) -> dict[str, object]:
     try:
         with urlopen(request, timeout=15) as response:
             return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Zoom API request failed: HTTP {exc.code} {detail}",
+        ) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Zoom API request failed: {exc}",
         ) from exc
+
+
+def _safe_meeting_settings(settings: object) -> dict[str, object]:
+    if not isinstance(settings, dict):
+        return {}
+
+    allowed_keys = {
+        "approval_type",
+        "authentication_option",
+        "enforce_login",
+        "join_before_host",
+        "meeting_authentication",
+        "participant_video",
+        "waiting_room",
+    }
+    return {key: settings[key] for key in allowed_keys if key in settings}
 
 
 @router.get("/meeting-sdk/config", response_model=ZoomSdkConfigResponse)
@@ -172,7 +202,7 @@ async def meeting_sdk_config() -> ZoomSdkConfigResponse:
 
 
 @router.get("/oauth/start")
-async def zoom_oauth_start() -> RedirectResponse:
+async def zoom_oauth_start(prompt: str | None = Query(default=None)) -> RedirectResponse:
     client_id = _client_id()
     if not client_id:
         raise HTTPException(
@@ -182,14 +212,15 @@ async def zoom_oauth_start() -> RedirectResponse:
 
     state = secrets.token_urlsafe(24)
     oauth_states.add(state)
-    params = urlencode(
-        {
-            "response_type": "code",
-            "client_id": client_id,
-            "redirect_uri": _oauth_redirect_uri(),
-            "state": state,
-        }
-    )
+    oauth_params = {
+        "response_type": "code",
+        "client_id": client_id,
+        "redirect_uri": _oauth_redirect_uri(),
+        "state": state,
+    }
+    if prompt:
+        oauth_params["prompt"] = prompt
+    params = urlencode(oauth_params)
     return RedirectResponse(f"{ZOOM_AUTHORIZE_URL}?{params}")
 
 
@@ -214,10 +245,82 @@ async def zoom_oauth_callback(code: str | None = None, state: str | None = None)
 
 @router.get("/oauth/status", response_model=ZoomOAuthStatusResponse)
 async def zoom_oauth_status() -> ZoomOAuthStatusResponse:
+    if not oauth_token.get("access_token"):
+        return ZoomOAuthStatusResponse(authorized=False)
+
+    scopes = [
+        scope
+        for scope in str(oauth_token.get("scope") or "").split()
+        if scope
+    ]
+    user: dict[str, object] = {}
+    profile_error: str | None = None
+    try:
+        user = _zoom_api_get("/v2/users/me")
+    except HTTPException as exc:
+        user = {}
+        profile_error = str(exc.detail)
+
     return ZoomOAuthStatusResponse(
-        authorized=bool(oauth_token.get("access_token")),
-        expires_at=oauth_token.get("expires_at") if oauth_token.get("access_token") else None,
-        api_url=oauth_token.get("api_url") if oauth_token.get("access_token") else None,
+        authorized=True,
+        expires_at=oauth_token.get("expires_at"),
+        api_url=oauth_token.get("api_url"),
+        scopes=scopes,
+        user_id=str(user.get("id")) if user.get("id") else None,
+        account_id=str(user.get("account_id")) if user.get("account_id") else None,
+        email=str(user.get("email")) if user.get("email") else None,
+        display_name=str(user.get("display_name")) if user.get("display_name") else None,
+        profile_error=profile_error,
+    )
+
+
+@router.post("/oauth/disconnect", response_model=ZoomOAuthStatusResponse)
+async def zoom_oauth_disconnect() -> ZoomOAuthStatusResponse:
+    oauth_token.clear()
+    oauth_states.clear()
+    return ZoomOAuthStatusResponse(authorized=False)
+
+
+@router.get("/meetings/{meeting_number}/check", response_model=ZoomMeetingCheckResponse)
+async def zoom_meeting_check(meeting_number: str) -> ZoomMeetingCheckResponse:
+    normalized_meeting_number = "".join(character for character in meeting_number if character.isdigit())
+    if not normalized_meeting_number:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Meeting number must contain digits.")
+
+    current_user: dict[str, object] = {}
+    try:
+        current_user = _zoom_api_get("/v2/users/me")
+    except HTTPException:
+        current_user = {}
+
+    try:
+        meeting = _zoom_api_get(f"/v2/meetings/{normalized_meeting_number}")
+    except HTTPException as exc:
+        return ZoomMeetingCheckResponse(
+            meeting_number=normalized_meeting_number,
+            can_read=False,
+            error=str(exc.detail),
+            current_user_id=str(current_user.get("id")) if current_user.get("id") else None,
+            current_user_email=str(current_user.get("email")) if current_user.get("email") else None,
+        )
+
+    current_user_id = str(current_user.get("id")) if current_user.get("id") else None
+    host_id = str(meeting.get("host_id")) if meeting.get("host_id") else None
+    return ZoomMeetingCheckResponse(
+        meeting_number=normalized_meeting_number,
+        can_read=True,
+        id=str(meeting.get("id")) if meeting.get("id") else None,
+        uuid=str(meeting.get("uuid")) if meeting.get("uuid") else None,
+        host_id=host_id,
+        host_email=str(meeting.get("host_email")) if meeting.get("host_email") else None,
+        current_user_id=current_user_id,
+        current_user_email=str(current_user.get("email")) if current_user.get("email") else None,
+        owner_matches_authorized_user=bool(current_user_id and host_id and current_user_id == host_id),
+        topic=str(meeting.get("topic")) if meeting.get("topic") else None,
+        type=int(meeting["type"]) if isinstance(meeting.get("type"), int) else None,
+        status=str(meeting.get("status")) if meeting.get("status") else None,
+        has_password=bool(meeting.get("password") or meeting.get("encrypted_password")),
+        settings=_safe_meeting_settings(meeting.get("settings")),
     )
 
 

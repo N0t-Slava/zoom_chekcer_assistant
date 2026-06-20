@@ -179,6 +179,30 @@ class ZoomOAuthStatusResponse(BaseModel):
     authorized: bool
     expires_at: int | None = None
     api_url: str | None = None
+    scopes: list[str] = Field(default_factory=list)
+    user_id: str | None = None
+    account_id: str | None = None
+    email: str | None = None
+    display_name: str | None = None
+    profile_error: str | None = None
+
+
+class ZoomMeetingCheckResponse(BaseModel):
+    meeting_number: str
+    can_read: bool
+    error: str | None = None
+    id: str | None = None
+    uuid: str | None = None
+    host_id: str | None = None
+    host_email: str | None = None
+    current_user_id: str | None = None
+    current_user_email: str | None = None
+    owner_matches_authorized_user: bool | None = None
+    topic: str | None = None
+    type: int | None = None
+    status: str | None = None
+    has_password: bool = False
+    settings: dict[str, object] = Field(default_factory=dict)
 
 
 class ZoomZakResponse(BaseModel):
