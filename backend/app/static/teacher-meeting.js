@@ -1,8 +1,14 @@
+console.log("Teacher meeting JS loaded v2026-06-21-3");
+
+const savedMeetingSelect = document.querySelector("#saved-meeting-select");
+const meetingTitleInput = document.querySelector("#meeting-title");
 const meetingNumberInput = document.querySelector("#meeting-number");
 const meetingPasswordInput = document.querySelector("#meeting-password");
 const teacherNameInput = document.querySelector("#teacher-name");
 const joinAsHostInput = document.querySelector("#join-as-host");
 const joinButton = document.querySelector("#join-button");
+const saveMeetingButton = document.querySelector("#save-meeting-button");
+const deleteMeetingButton = document.querySelector("#delete-meeting-button");
 const zoomLoginButton = document.querySelector("#zoom-login-button");
 const zoomDisconnectButton = document.querySelector("#zoom-disconnect-button");
 const sdkStatus = document.querySelector("#sdk-status");
@@ -11,6 +17,9 @@ const oauthMessage = document.querySelector("#oauth-message");
 const zoomUserMessage = document.querySelector("#zoom-user-message");
 const meetingCheckMessage = document.querySelector("#meeting-check-message");
 const attendanceMessage = document.querySelector("#attendance-message");
+const savedMeetingsTable = document.querySelector("#saved-meetings-table");
+const savedMeetingsCount = document.querySelector("#saved-meetings-count");
+const savedMeetingsMessage = document.querySelector("#saved-meetings-message");
 
 const ATTENDANCE_SYNC_INTERVAL_MS = 5000;
 
@@ -20,6 +29,7 @@ let oauthAuthorized = false;
 let attendanceSyncTimer = null;
 let currentMeetingNumber = null;
 let participantCache = new Map();
+let savedMeetings = [];
 
 function setStatus(label, message) {
   sdkStatus.textContent = label;
@@ -142,13 +152,13 @@ function zoomJoinHint(error, role, zak) {
   return "";
 }
 
-function zoomJoinContext(signaturePayload, role, zak) {
+function zoomJoinContext(signaturePayload, role, zak, joinData = {}) {
   return {
     meetingNumber: signaturePayload?.meeting_number || meetingNumberValue(),
     role,
     hostJoin: role === 1,
     hasZak: Boolean(zak),
-    hasPasscode: Boolean(meetingPasswordInput.value),
+    hasPasscode: Boolean(joinData.passcode ?? meetingPasswordInput.value),
     hasTeacherName: Boolean(teacherNameInput.value.trim()),
     sdkConfigured: Boolean(sdkConfig?.configured),
     sdkScriptUrl: sdkConfig?.sdk_js_url || "",
@@ -158,6 +168,141 @@ function zoomJoinContext(signaturePayload, role, zak) {
 
 function meetingNumberValue() {
   return meetingNumberInput.value.replace(/\D+/g, "");
+}
+
+function selectedSavedMeeting() {
+  const selectedId = Number(savedMeetingSelect.value);
+  if (!selectedId) {
+    return null;
+  }
+  return savedMeetings.find((meeting) => meeting.id === selectedId) || null;
+}
+
+function savedMeetingLabel(meeting) {
+  const title = meeting.title || "Untitled meeting";
+  return `${title} (${meeting.meeting_number})`;
+}
+
+function formatSavedMeetingDate(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toLocaleString([], {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function meetingCell(text, className = "") {
+  const cell = document.createElement("td");
+  cell.textContent = text;
+  if (className) {
+    cell.className = className;
+  }
+  return cell;
+}
+
+function setSavedMeetingsMessage(message) {
+  if (savedMeetingsMessage) {
+    savedMeetingsMessage.textContent = message;
+  }
+}
+
+function renderSavedMeetingsTable() {
+  if (!savedMeetingsTable || !savedMeetingsCount) {
+    return;
+  }
+  savedMeetingsCount.textContent = String(savedMeetings.length);
+  savedMeetingsTable.innerHTML = "";
+
+  if (!savedMeetings.length) {
+    const row = document.createElement("tr");
+    const cell = meetingCell("No saved meetings yet.", "empty");
+    cell.colSpan = 6;
+    row.appendChild(cell);
+    savedMeetingsTable.appendChild(row);
+    return;
+  }
+
+  for (const meeting of savedMeetings) {
+    const row = document.createElement("tr");
+    row.appendChild(meetingCell(meeting.title || "Untitled meeting"));
+    row.appendChild(meetingCell(meeting.meeting_number));
+    row.appendChild(meetingCell(meeting.passcode ? "Saved" : "Not saved"));
+    row.appendChild(meetingCell(meeting.join_as_host ? "Host" : "Participant"));
+    row.appendChild(meetingCell(formatSavedMeetingDate(meeting.updated_at)));
+
+    const actions = document.createElement("td");
+    actions.className = "actions";
+
+    const joinSavedButton = document.createElement("button");
+    joinSavedButton.type = "button";
+    joinSavedButton.textContent = "Join";
+    joinSavedButton.addEventListener("click", () => joinSavedMeeting(meeting));
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.textContent = "Edit";
+    editButton.addEventListener("click", () => {
+      savedMeetingSelect.value = String(meeting.id);
+      fillMeetingForm(meeting);
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => deleteMeeting(meeting));
+
+    actions.append(joinSavedButton, editButton, deleteButton);
+    row.appendChild(actions);
+    savedMeetingsTable.appendChild(row);
+  }
+}
+
+function renderSavedMeetings(selectedId = "") {
+  if (!savedMeetingSelect) {
+    renderSavedMeetingsTable();
+    return;
+  }
+  savedMeetingSelect.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "New meeting";
+  savedMeetingSelect.appendChild(placeholder);
+
+  for (const meeting of savedMeetings) {
+    const option = document.createElement("option");
+    option.value = String(meeting.id);
+    option.textContent = savedMeetingLabel(meeting);
+    savedMeetingSelect.appendChild(option);
+  }
+
+  savedMeetingSelect.value = selectedId ? String(selectedId) : "";
+  deleteMeetingButton.disabled = !savedMeetingSelect.value;
+  renderSavedMeetingsTable();
+}
+
+function fillMeetingForm(meeting) {
+  if (!meeting) {
+    meetingTitleInput.value = "";
+    meetingNumberInput.value = "";
+    meetingPasswordInput.value = "";
+    joinAsHostInput.checked = Boolean(oauthAuthorized);
+    deleteMeetingButton.disabled = true;
+    return;
+  }
+
+  meetingTitleInput.value = meeting.title || "";
+  meetingNumberInput.value = meeting.meeting_number;
+  meetingPasswordInput.value = meeting.passcode || "";
+  joinAsHostInput.checked = Boolean(meeting.join_as_host);
+  deleteMeetingButton.disabled = false;
 }
 
 function setAttendanceStatus(message) {
@@ -481,6 +626,109 @@ async function loadOAuthStatus() {
   }
 }
 
+async function loadSavedMeetings() {
+  const response = await fetch("/zoom/saved-meetings", {
+    credentials: "same-origin"
+  });
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Unable to load saved meetings: ${details}`);
+  }
+  savedMeetings = await response.json();
+  renderSavedMeetings(savedMeetingSelect?.value);
+  setSavedMeetingsMessage(savedMeetings.length
+    ? `${savedMeetings.length} saved meeting${savedMeetings.length === 1 ? "" : "s"} available.`
+    : "No saved meetings yet.");
+}
+
+async function saveCurrentMeeting() {
+  console.log("Save meeting clicked");
+  setSavedMeetingsMessage("Saving meeting...");
+  setStatus("Saving", "Saving meeting credentials...");
+  const meetingNumber = meetingNumberValue();
+  if (!meetingNumber) {
+    setSavedMeetingsMessage("Enter a meeting number before saving.");
+    setStatus("Waiting", "Enter a Zoom meeting number before saving.");
+    return;
+  }
+
+  saveMeetingButton.disabled = true;
+  const originalButtonText = saveMeetingButton.textContent;
+  saveMeetingButton.textContent = "Saving...";
+  try {
+    const response = await fetch("/zoom/saved-meetings", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        meeting_number: meetingNumber,
+        title: meetingTitleInput.value.trim() || null,
+        passcode: meetingPasswordInput.value || null,
+        join_as_host: joinAsHostInput.checked
+      })
+    });
+    if (!response.ok) {
+      const details = await response.text();
+      throw new Error(`Unable to save meeting: ${details}`);
+    }
+    const savedMeeting = await response.json();
+    await loadSavedMeetings();
+    renderSavedMeetings(savedMeeting.id);
+    fillMeetingForm(savedMeeting);
+    setSavedMeetingsMessage(`Saved "${savedMeeting.title || savedMeeting.meeting_number}".`);
+    setStatus("Saved", "Meeting number and passcode were saved for this teacher session.");
+  } catch (error) {
+    console.error("Saved meeting failed", { error: zoomErrorDetails(error) });
+    setSavedMeetingsMessage(error.message);
+    setStatus("Error", error.message);
+  } finally {
+    saveMeetingButton.disabled = false;
+    saveMeetingButton.textContent = originalButtonText;
+  }
+}
+
+async function deleteMeeting(meeting) {
+  if (!meeting) {
+    return;
+  }
+
+  deleteMeetingButton.disabled = true;
+  try {
+    const response = await fetch(`/zoom/saved-meetings/${meeting.id}`, {
+      method: "DELETE",
+      credentials: "same-origin"
+    });
+    if (!response.ok) {
+      const details = await response.text();
+      throw new Error(`Unable to delete saved meeting: ${details}`);
+    }
+    await loadSavedMeetings();
+    fillMeetingForm(null);
+    setSavedMeetingsMessage(`Deleted "${meeting.title || meeting.meeting_number}".`);
+    setStatus("Deleted", "Saved meeting was removed.");
+  } catch (error) {
+    console.error("Delete saved meeting failed", { error: zoomErrorDetails(error) });
+    setSavedMeetingsMessage(error.message);
+    setStatus("Error", error.message);
+    deleteMeetingButton.disabled = false;
+  }
+}
+
+async function deleteCurrentMeeting() {
+  await deleteMeeting(selectedSavedMeeting());
+}
+
+async function joinSavedMeeting(meeting) {
+  savedMeetingSelect.value = String(meeting.id);
+  await prepareJoin({
+    meetingNumber: meeting.meeting_number,
+    passcode: meeting.passcode || "",
+    joinAsHost: Boolean(meeting.join_as_host)
+  });
+}
+
 async function disconnectZoom() {
   zoomDisconnectButton.disabled = true;
   zoomLoginButton.disabled = true;
@@ -567,7 +815,7 @@ function displayMeetingCheck(check) {
   console.log("Zoom meeting check", check);
 }
 
-function prepareClientJoin(signaturePayload, zak, role) {
+function prepareClientJoin(signaturePayload, zak, role, joinData = {}) {
   const zoomMtg = window.ZoomMtg;
   if (!zoomMtg) {
     setStatus(
@@ -589,7 +837,7 @@ function prepareClientJoin(signaturePayload, zak, role) {
         signature: signaturePayload.signature,
         sdkKey: signaturePayload.client_id,
         meetingNumber: signaturePayload.meeting_number,
-        passWord: meetingPasswordInput.value,
+        passWord: joinData.passcode ?? meetingPasswordInput.value,
         userName: teacherNameInput.value.trim() || "Teacher",
         success: () => {
           setStatus("Joined", "Teacher client joined the meeting through the SDK.");
@@ -606,7 +854,7 @@ function prepareClientJoin(signaturePayload, zak, role) {
           ].filter(Boolean).join(" | ");
           console.error("Zoom SDK join failed", {
             error: zoomErrorDetails(error),
-            context: zoomJoinContext(signaturePayload, role, zak)
+            context: zoomJoinContext(signaturePayload, role, zak, joinData)
           });
           setStatus(
             "Join failed",
@@ -622,22 +870,22 @@ function prepareClientJoin(signaturePayload, zak, role) {
     error: (error) => {
       console.error("Zoom SDK init failed", {
         error: zoomErrorDetails(error),
-        context: zoomJoinContext(signaturePayload, role, zak)
+        context: zoomJoinContext(signaturePayload, role, zak, joinData)
       });
       setStatus("SDK failed", formatZoomError(error));
     }
   });
 }
 
-async function prepareJoin() {
-  const meetingNumber = meetingNumberValue();
+async function prepareJoin(joinData = {}) {
+  const meetingNumber = joinData.meetingNumber || meetingNumberValue();
   if (!meetingNumber) {
     setStatus("Waiting", "Enter a Zoom meeting number first.");
     return;
   }
 
   joinButton.disabled = true;
-  const joinAsHost = joinAsHostInput.checked;
+  const joinAsHost = joinData.joinAsHost ?? joinAsHostInput.checked;
   const role = joinAsHost ? 1 : 0;
   setStatus("Preparing", joinAsHost ? "Creating host signature and ZAK token..." : "Creating a Meeting SDK signature...");
   try {
@@ -649,7 +897,7 @@ async function prepareJoin() {
     const zak = joinAsHost ? await fetchZak() : null;
     setStatus("Loading", "Loading the Zoom Meeting SDK script...");
     await loadMeetingSdk(sdkConfig.sdk_js_url);
-    prepareClientJoin(signaturePayload, zak, role);
+    prepareClientJoin(signaturePayload, zak, role, joinData);
   } catch (error) {
     console.error("Teacher join preparation failed", {
       error: zoomErrorDetails(error),
@@ -657,7 +905,7 @@ async function prepareJoin() {
         meetingNumber,
         role,
         hostJoin: joinAsHost,
-        hasPasscode: Boolean(meetingPasswordInput.value),
+        hasPasscode: Boolean(joinData.passcode ?? meetingPasswordInput.value),
         oauthAuthorized
       }
     });
@@ -669,7 +917,22 @@ async function prepareJoin() {
 
 joinButton.disabled = true;
 joinAsHostInput.disabled = true;
-joinButton.addEventListener("click", prepareJoin);
+if (savedMeetingSelect) {
+  savedMeetingSelect.addEventListener("change", () => {
+    fillMeetingForm(selectedSavedMeeting());
+  });
+}
+if (saveMeetingButton) {
+  saveMeetingButton.addEventListener("click", saveCurrentMeeting);
+} else {
+  console.error("Save Meeting button was not found in the page HTML.");
+}
+if (deleteMeetingButton) {
+  deleteMeetingButton.addEventListener("click", deleteCurrentMeeting);
+}
+joinButton.addEventListener("click", () => {
+  prepareJoin();
+});
 zoomLoginButton.addEventListener("click", () => {
   window.location.href = "/zoom/oauth/start?prompt=login";
 });
@@ -682,4 +945,7 @@ loadConfig().catch((error) => {
 loadOAuthStatus().catch((error) => {
   console.error(error);
   oauthMessage.textContent = error.message;
+});
+loadSavedMeetings().catch((error) => {
+  console.error("Load saved meetings failed", { error: zoomErrorDetails(error) });
 });

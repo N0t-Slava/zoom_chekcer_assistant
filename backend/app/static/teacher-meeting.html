@@ -13,6 +13,16 @@
         <section class="hero">
             <div class="hero-actions meeting-actions">
                 <label class="field">
+                    <span>Saved meeting</span>
+                    <select id="saved-meeting-select">
+                        <option value="">New meeting</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Meeting title</span>
+                    <input id="meeting-title" type="text" placeholder="Group 252 lesson" />
+                </label>
+                <label class="field">
                     <span>Meeting number</span>
                     <input id="meeting-number" type="text" inputmode="numeric" placeholder="1234567890" />
                 </label>
@@ -30,6 +40,8 @@
                 </label>
                 <div class="button-row">
                     <button id="join-button" type="button">Prepare Join</button>
+                    <button id="save-meeting-button" class="secondary-button" type="button">Save Meeting</button>
+                    <button id="delete-meeting-button" class="secondary-button" type="button" disabled>Delete Saved</button>
                     <button id="zoom-login-button" class="secondary-button" type="button">Authorize Zoom</button>
                     <button id="zoom-disconnect-button" class="secondary-button" type="button" hidden>Disconnect Zoom</button>
                     <a class="secondary-action" href="/">Dashboard</a>
@@ -38,6 +50,33 @@
         </section>
 
         <section class="grid">
+            <article class="card">
+                <div class="card-header">
+                    <h2>Saved Meetings</h2>
+                    <span id="saved-meetings-count" class="pill">0</span>
+                </div>
+                <p id="saved-meetings-message" class="subtle meeting-table-message">Saved meetings are loading...</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Meeting number</th>
+                                <th>Password</th>
+                                <th>Mode</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="saved-meetings-table">
+                            <tr>
+                                <td class="empty" colspan="6">No saved meetings yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
             <article class="card">
                 <div class="card-header">
                     <h2>Meeting SDK</h2>
@@ -55,7 +94,7 @@
         </section>
     </main>
 
-    <script src="/static/teacher-meeting.js"></script>
+    <script src="/static/teacher-meeting.js?v=2026-06-21-3"></script>
 </body>
 
 </html>

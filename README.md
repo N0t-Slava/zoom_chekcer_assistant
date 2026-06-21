@@ -132,6 +132,7 @@ To prepare a Zoom Meeting SDK join, set these environment variables before start
 export ZOOM_CLIENT_ID="your_meeting_sdk_client_id"
 export ZOOM_CLIENT_SECRET="your_meeting_sdk_client_secret"
 export ZOOM_OAUTH_REDIRECT_URL="http://127.0.0.1:8000/zoom/oauth/callback"
+export APP_SECRET_KEY="use_a_long_random_string_for_token_encryption"
 ```
 
 Optional:
@@ -141,6 +142,10 @@ export ZOOM_MEETING_SDK_JS_URL="https://source.zoom.us/3.13.2/zoom-meeting-3.13.
 ```
 
 The teacher SDK page is a prototype. Students can still join through the normal Zoom link.
+
+Zoom OAuth tokens are stored in SQLite in the `zoom_oauth_tokens` table and encrypted with
+`APP_SECRET_KEY`. If `APP_SECRET_KEY` is not set, the app falls back to the Zoom client secret
+for local development, but production should use a separate stable secret.
 
 To join as the meeting host, authorize Zoom from the teacher page. In the Zoom app settings, use this OAuth redirect URL:
 

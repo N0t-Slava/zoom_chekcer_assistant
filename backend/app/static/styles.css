@@ -81,7 +81,7 @@ h1 {
 }
 
 .meeting-actions {
-  grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr) max-content auto;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   max-width: none;
 }
 
@@ -91,6 +91,10 @@ h1 {
 }
 
 .meeting-status {
+  padding: 0 24px 16px;
+}
+
+.meeting-table-message {
   padding: 0 24px 16px;
 }
 
@@ -265,6 +269,18 @@ button:disabled {
 .secondary-action,
 .secondary-button,
 a {
+  background: rgba(4, 120, 87, 0.1);
+  color: var(--success);
+}
+
+.meeting-page .secondary-action,
+.meeting-page .secondary-button {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-strong);
+}
+
+.meeting-page #zoom-login-button,
+.meeting-page .secondary-action {
   background: rgba(4, 120, 87, 0.1);
   color: var(--success);
 }

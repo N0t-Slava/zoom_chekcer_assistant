@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -74,6 +74,38 @@ class AttendanceSummary(Base):
     status: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
     total_seconds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class ZoomOAuthToken(Base):
+    __tablename__ = "zoom_oauth_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    access_token_encrypted: Mapped[str] = mapped_column(Text, nullable=False)
+    refresh_token_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    token_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    scope: Mapped[str | None] = mapped_column(Text, nullable=True)
+    api_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    expires_at: Mapped[int] = mapped_column(Integer, nullable=False)
+    zoom_user_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    zoom_account_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    zoom_email: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    zoom_display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class ZoomSavedMeeting(Base):
+    __tablename__ = "zoom_saved_meetings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    meeting_number: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    passcode_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    join_as_host: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
 class AttendanceRecord(Base):

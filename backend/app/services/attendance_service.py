@@ -59,6 +59,42 @@ def _active_records_query(meeting_session_id: int) -> Select[tuple[AttendanceRec
     )
 
 
+def _merge_duplicate_records(db: Session, meeting_session_id: int) -> None:
+    records = db.scalars(
+        select(AttendanceRecord)
+        .where(AttendanceRecord.meeting_session_id == meeting_session_id)
+        .order_by(
+            AttendanceRecord.participant_name,
+            AttendanceRecord.first_seen,
+            AttendanceRecord.id,
+        )
+    ).all()
+    by_name: dict[str, AttendanceRecord] = {}
+    deleted_any = False
+
+    for record in records:
+        key = record.participant_name.casefold()
+        existing = by_name.get(key)
+        if existing is None:
+            by_name[key] = record
+            continue
+
+        existing.first_seen = min(existing.first_seen, record.first_seen)
+        existing.last_seen = max(existing.last_seen, record.last_seen)
+        existing.total_seconds = max(
+            existing.total_seconds,
+            _duration_seconds(existing.first_seen, existing.last_seen),
+        )
+        if record.status == AttendanceStatus.ACTIVE.value:
+            existing.status = AttendanceStatus.ACTIVE.value
+            existing.last_seen = max(existing.last_seen, record.last_seen)
+        db.delete(record)
+        deleted_any = True
+
+    if deleted_any:
+        db.flush()
+
+
 def expire_stale_active_records(
     db: Session,
     meeting_id: str | None = None,
@@ -123,22 +159,27 @@ def process_attendance_update(
     meeting = get_or_create_current_meeting(db, meeting_id, now)
     expire_stale_active_records(db, meeting_session_id=meeting.id)
     participant_names = normalize_participant_names(participants)
-    active_records = db.scalars(_active_records_query(meeting.id)).all()
 
     legacy_active_records = db.scalars(
         select(AttendanceRecord).where(
             AttendanceRecord.meeting_id == meeting_id,
             AttendanceRecord.meeting_session_id.is_(None),
-            AttendanceRecord.status == AttendanceStatus.ACTIVE.value,
         )
     ).all()
     for record in legacy_active_records:
         record.meeting_session_id = meeting.id
 
-    active_records.extend(legacy_active_records)
-    active_by_name = {
-        record.participant_name.casefold(): record for record in active_records
-    }
+    db.flush()
+    _merge_duplicate_records(db, meeting.id)
+    session_records = db.scalars(
+        select(AttendanceRecord)
+        .where(AttendanceRecord.meeting_session_id == meeting.id)
+        .order_by(AttendanceRecord.last_seen.desc(), AttendanceRecord.id.desc())
+    ).all()
+
+    records_by_name: dict[str, AttendanceRecord] = {}
+    for record in session_records:
+        records_by_name.setdefault(record.participant_name.casefold(), record)
 
     incoming_by_name = {name.casefold(): name for name in participant_names}
     joined: list[str] = []
@@ -146,7 +187,7 @@ def process_attendance_update(
     unmatched_participants: list[str] = []
 
     for key, participant_name in incoming_by_name.items():
-        existing = active_by_name.get(key)
+        existing = records_by_name.get(key)
         if existing is None:
             db.add(
                 AttendanceRecord(
@@ -162,11 +203,17 @@ def process_attendance_update(
             joined.append(participant_name)
             continue
 
+        if existing.status != AttendanceStatus.ACTIVE.value:
+            joined.append(existing.participant_name)
+        existing.status = AttendanceStatus.ACTIVE.value
+        existing.participant_name = participant_name
         existing.last_seen = now
         existing.total_seconds = _duration_seconds(existing.first_seen, now)
 
-    for key, record in active_by_name.items():
+    for key, record in records_by_name.items():
         if key in incoming_by_name:
+            continue
+        if record.status != AttendanceStatus.ACTIVE.value:
             continue
 
         record.last_seen = now

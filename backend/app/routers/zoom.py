@@ -5,24 +5,42 @@ import json
 import os
 import secrets
 import time
+from typing import Annotated
 from urllib.parse import urlencode
 from urllib.error import HTTPError
 from urllib.request import Request as UrlRequest, urlopen
 
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import Response
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from ..database import get_db
+from ..models import ZoomSavedMeeting
 from ..schemas import (
     ZoomMeetingCheckResponse,
     ZoomOAuthStatusResponse,
+    ZoomSavedMeetingCreateRequest,
+    ZoomSavedMeetingResponse,
     ZoomSdkConfigResponse,
     ZoomSdkSignatureRequest,
     ZoomSdkSignatureResponse,
     ZoomZakResponse,
 )
+from ..services.zoom_token_store import (
+    decrypt_secret,
+    delete_token,
+    encrypt_secret,
+    get_token_payload,
+    get_token_row,
+    save_token_payload,
+)
+from ..services.time_service import app_now
 
 
 router = APIRouter(prefix="/zoom", tags=["zoom"])
+DbSession = Annotated[Session, Depends(get_db)]
 
 DEFAULT_SDK_JS_URL = "https://source.zoom.us/3.13.2/zoom-meeting-3.13.2.min.js"
 JWT_TTL_SECONDS = 2 * 60 * 60
@@ -31,7 +49,6 @@ ZOOM_TOKEN_URL = "https://zoom.us/oauth/token"
 SESSION_COOKIE_NAME = "class_tracker_teacher_session"
 
 oauth_states: dict[str, str] = {}
-oauth_tokens: dict[str, dict[str, object]] = {}
 
 
 def _client_id() -> str | None:
@@ -69,7 +86,7 @@ def _new_session_id() -> str:
     return secrets.token_urlsafe(32)
 
 
-def _set_session_cookie(response: RedirectResponse, request: Request, session_id: str) -> None:
+def _set_session_cookie(response: Response, request: Request, session_id: str) -> None:
     response.set_cookie(
         SESSION_COOKIE_NAME,
         session_id,
@@ -78,6 +95,15 @@ def _set_session_cookie(response: RedirectResponse, request: Request, session_id
         samesite="lax",
         max_age=60 * 60 * 24 * 30,
     )
+
+
+def _ensure_session_id(request: Request, response: Response) -> str:
+    session_id = _session_id_from_request(request)
+    if session_id:
+        return session_id
+    session_id = _new_session_id()
+    _set_session_cookie(response, request, session_id)
+    return session_id
 
 
 def _base64_url_encode(value: bytes) -> str:
@@ -145,14 +171,16 @@ def _post_zoom_token(params: dict[str, str]) -> dict[str, object]:
     return payload
 
 
-def _store_oauth_token(session_id: str, payload: dict[str, object]) -> None:
-    oauth_tokens[session_id] = payload
-
-
-def _authorized_token(request: Request) -> dict[str, object]:
+def _authorized_token(db: Session, request: Request) -> dict[str, object]:
     session_id = _session_id_from_request(request)
-    oauth_token = oauth_tokens.get(session_id or "")
-    if not oauth_token.get("access_token"):
+    try:
+        oauth_token = get_token_payload(db, session_id)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+    if not oauth_token or not oauth_token.get("access_token"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorize Zoom first.",
@@ -176,12 +204,11 @@ def _authorized_token(request: Request) -> dict[str, object]:
         }
     )
     if session_id:
-        _store_oauth_token(session_id, refreshed)
+        save_token_payload(db, session_id, refreshed)
     return refreshed
 
 
-def _zoom_api_get(request: Request, path: str) -> dict[str, object]:
-    token = _authorized_token(request)
+def _zoom_api_get_with_token(token: dict[str, object], path: str) -> dict[str, object]:
     api_url = str(token.get("api_url") or "https://api.zoom.us")
     api_request = UrlRequest(
         f"{api_url}{path}",
@@ -204,6 +231,11 @@ def _zoom_api_get(request: Request, path: str) -> dict[str, object]:
         ) from exc
 
 
+def _zoom_api_get(db: Session, request: Request, path: str) -> dict[str, object]:
+    token = _authorized_token(db, request)
+    return _zoom_api_get_with_token(token, path)
+
+
 def _safe_meeting_settings(settings: object) -> dict[str, object]:
     if not isinstance(settings, dict):
         return {}
@@ -218,6 +250,25 @@ def _safe_meeting_settings(settings: object) -> dict[str, object]:
         "waiting_room",
     }
     return {key: settings[key] for key in allowed_keys if key in settings}
+
+
+def _normalized_meeting_number(value: str) -> str:
+    return "".join(character for character in value if character.isdigit())
+
+
+def _saved_meeting_response(meeting: ZoomSavedMeeting) -> ZoomSavedMeetingResponse:
+    try:
+        passcode = decrypt_secret(meeting.passcode_encrypted)
+    except RuntimeError:
+        passcode = None
+    return ZoomSavedMeetingResponse(
+        id=meeting.id,
+        meeting_number=meeting.meeting_number,
+        title=meeting.title,
+        passcode=passcode,
+        join_as_host=bool(meeting.join_as_host),
+        updated_at=meeting.updated_at,
+    )
 
 
 @router.get("/meeting-sdk/config", response_model=ZoomSdkConfigResponse)
@@ -262,6 +313,7 @@ async def zoom_oauth_start(
 @router.get("/oauth/callback")
 async def zoom_oauth_callback(
     request: Request,
+    db: DbSession,
     code: str | None = None,
     state: str | None = None,
 ) -> RedirectResponse:
@@ -278,17 +330,28 @@ async def zoom_oauth_callback(
             "redirect_uri": _oauth_redirect_uri(),
         }
     )
-    _store_oauth_token(session_id, token_payload)
+    save_token_payload(db, session_id, token_payload)
+    try:
+        user = _zoom_api_get_with_token(token_payload, "/v2/users/me")
+    except HTTPException:
+        user = None
+    save_token_payload(db, session_id, token_payload, user=user)
     response = RedirectResponse("/teacher-meeting?zoom_oauth=connected")
     _set_session_cookie(response, request, session_id)
     return response
 
 
 @router.get("/oauth/status", response_model=ZoomOAuthStatusResponse)
-async def zoom_oauth_status(request: Request) -> ZoomOAuthStatusResponse:
+async def zoom_oauth_status(request: Request, db: DbSession) -> ZoomOAuthStatusResponse:
     session_id = _session_id_from_request(request)
-    oauth_token = oauth_tokens.get(session_id or "")
-    if not oauth_token.get("access_token"):
+    token_row = get_token_row(db, session_id)
+    if token_row is None:
+        return ZoomOAuthStatusResponse(authorized=False)
+    try:
+        oauth_token = get_token_payload(db, session_id)
+    except RuntimeError as exc:
+        return ZoomOAuthStatusResponse(authorized=False, profile_error=str(exc))
+    if not oauth_token or not oauth_token.get("access_token"):
         return ZoomOAuthStatusResponse(authorized=False)
 
     scopes = [
@@ -299,7 +362,8 @@ async def zoom_oauth_status(request: Request) -> ZoomOAuthStatusResponse:
     user: dict[str, object] = {}
     profile_error: str | None = None
     try:
-        user = _zoom_api_get(request, "/v2/users/me")
+        user = _zoom_api_get(db, request, "/v2/users/me")
+        save_token_payload(db, session_id or "", oauth_token, user=user)
     except HTTPException as exc:
         user = {}
         profile_error = str(exc.detail)
@@ -309,39 +373,107 @@ async def zoom_oauth_status(request: Request) -> ZoomOAuthStatusResponse:
         expires_at=oauth_token.get("expires_at"),
         api_url=oauth_token.get("api_url"),
         scopes=scopes,
-        user_id=str(user.get("id")) if user.get("id") else None,
-        account_id=str(user.get("account_id")) if user.get("account_id") else None,
-        email=str(user.get("email")) if user.get("email") else None,
-        display_name=str(user.get("display_name")) if user.get("display_name") else None,
+        user_id=str(user.get("id") or token_row.zoom_user_id) if user.get("id") or token_row.zoom_user_id else None,
+        account_id=str(user.get("account_id") or token_row.zoom_account_id) if user.get("account_id") or token_row.zoom_account_id else None,
+        email=str(user.get("email") or token_row.zoom_email) if user.get("email") or token_row.zoom_email else None,
+        display_name=str(user.get("display_name") or token_row.zoom_display_name) if user.get("display_name") or token_row.zoom_display_name else None,
         profile_error=profile_error,
     )
 
 
 @router.post("/oauth/disconnect", response_model=ZoomOAuthStatusResponse)
-async def zoom_oauth_disconnect(request: Request) -> ZoomOAuthStatusResponse:
+async def zoom_oauth_disconnect(request: Request, db: DbSession) -> ZoomOAuthStatusResponse:
     session_id = _session_id_from_request(request)
-    if session_id:
-        oauth_tokens.pop(session_id, None)
+    delete_token(db, session_id)
     for state, state_session_id in list(oauth_states.items()):
         if state_session_id == session_id:
             oauth_states.pop(state, None)
     return ZoomOAuthStatusResponse(authorized=False)
 
 
+@router.get("/saved-meetings", response_model=list[ZoomSavedMeetingResponse])
+async def list_saved_meetings(request: Request, db: DbSession) -> list[ZoomSavedMeetingResponse]:
+    session_id = _session_id_from_request(request)
+    if not session_id:
+        return []
+
+    meetings = db.scalars(
+        select(ZoomSavedMeeting)
+        .where(ZoomSavedMeeting.session_id == session_id)
+        .order_by(ZoomSavedMeeting.updated_at.desc())
+    ).all()
+    return [_saved_meeting_response(meeting) for meeting in meetings]
+
+
+@router.post("/saved-meetings", response_model=ZoomSavedMeetingResponse)
+async def save_meeting(
+    payload: ZoomSavedMeetingCreateRequest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+) -> ZoomSavedMeetingResponse:
+    session_id = _ensure_session_id(request, response)
+    meeting_number = _normalized_meeting_number(payload.meeting_number)
+    if not meeting_number:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Meeting number must contain digits.")
+
+    meeting = db.scalar(
+        select(ZoomSavedMeeting).where(
+            ZoomSavedMeeting.session_id == session_id,
+            ZoomSavedMeeting.meeting_number == meeting_number,
+        )
+    )
+    now = app_now()
+    if meeting is None:
+        meeting = ZoomSavedMeeting(
+            session_id=session_id,
+            meeting_number=meeting_number,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(meeting)
+
+    meeting.title = payload.title or None
+    meeting.passcode_encrypted = encrypt_secret(payload.passcode) if payload.passcode else None
+    meeting.join_as_host = 1 if payload.join_as_host else 0
+    meeting.updated_at = now
+    db.commit()
+    db.refresh(meeting)
+    return _saved_meeting_response(meeting)
+
+
+@router.delete("/saved-meetings/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_saved_meeting(meeting_id: int, request: Request, db: DbSession) -> Response:
+    session_id = _session_id_from_request(request)
+    if not session_id:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    meeting = db.scalar(
+        select(ZoomSavedMeeting).where(
+            ZoomSavedMeeting.id == meeting_id,
+            ZoomSavedMeeting.session_id == session_id,
+        )
+    )
+    if meeting is not None:
+        db.delete(meeting)
+        db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/meetings/{meeting_number}/check", response_model=ZoomMeetingCheckResponse)
-async def zoom_meeting_check(request: Request, meeting_number: str) -> ZoomMeetingCheckResponse:
-    normalized_meeting_number = "".join(character for character in meeting_number if character.isdigit())
+async def zoom_meeting_check(request: Request, db: DbSession, meeting_number: str) -> ZoomMeetingCheckResponse:
+    normalized_meeting_number = _normalized_meeting_number(meeting_number)
     if not normalized_meeting_number:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Meeting number must contain digits.")
 
     current_user: dict[str, object] = {}
     try:
-        current_user = _zoom_api_get(request, "/v2/users/me")
+        current_user = _zoom_api_get(db, request, "/v2/users/me")
     except HTTPException:
         current_user = {}
 
     try:
-        meeting = _zoom_api_get(request, f"/v2/meetings/{normalized_meeting_number}")
+        meeting = _zoom_api_get(db, request, f"/v2/meetings/{normalized_meeting_number}")
     except HTTPException as exc:
         return ZoomMeetingCheckResponse(
             meeting_number=normalized_meeting_number,
@@ -372,8 +504,8 @@ async def zoom_meeting_check(request: Request, meeting_number: str) -> ZoomMeeti
 
 
 @router.get("/oauth/zak", response_model=ZoomZakResponse)
-async def zoom_oauth_zak(request: Request) -> ZoomZakResponse:
-    payload = _zoom_api_get(request, "/v2/users/me/token?type=zak")
+async def zoom_oauth_zak(request: Request, db: DbSession) -> ZoomZakResponse:
+    payload = _zoom_api_get(db, request, "/v2/users/me/token?type=zak")
     zak = payload.get("token")
     if not zak:
         raise HTTPException(

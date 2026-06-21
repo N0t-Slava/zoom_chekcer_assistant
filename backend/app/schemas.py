@@ -205,6 +205,24 @@ class ZoomMeetingCheckResponse(BaseModel):
     settings: dict[str, object] = Field(default_factory=dict)
 
 
+class ZoomSavedMeetingCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    meeting_number: str = Field(..., min_length=6, max_length=32)
+    title: str | None = Field(default=None, max_length=255)
+    passcode: str | None = Field(default=None, max_length=255)
+    join_as_host: bool = True
+
+
+class ZoomSavedMeetingResponse(BaseModel):
+    id: int
+    meeting_number: str
+    title: str | None = None
+    passcode: str | None = None
+    join_as_host: bool
+    updated_at: datetime
+
+
 class ZoomZakResponse(BaseModel):
     zak: str
 
