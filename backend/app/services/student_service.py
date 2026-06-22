@@ -80,6 +80,35 @@ def list_students(db: Session, group_name: str | None = None) -> list[Student]:
     return db.scalars(stmt).all()
 
 
+def create_student(db: Session, full_name: str, group_name: str) -> Student:
+    now = utc_now()
+    normalized_name = normalize_student_name(full_name)
+    existing = db.scalars(
+        select(Student).where(
+            Student.normalized_name == normalized_name,
+            Student.group_name == group_name,
+        )
+    ).first()
+    if existing:
+        existing.full_name = full_name
+        existing.updated_at = now
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    student = Student(
+        full_name=full_name,
+        normalized_name=normalized_name,
+        group_name=group_name,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(student)
+    db.commit()
+    db.refresh(student)
+    return student
+
+
 def aliases_by_student_id(db: Session, student_ids: list[int]) -> dict[int, list[str]]:
     if not student_ids:
         return {}

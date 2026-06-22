@@ -94,9 +94,10 @@ async def get_attendance_history(
     db: DbSession,
     meeting_id: str | None = Query(default=None, min_length=1),
     meeting_session_id: int | None = Query(default=None, ge=1),
+    limit: int = Query(default=30, ge=1, le=30),
 ) -> list[AttendanceRecordResponse]:
     try:
-        records = list_attendance_history(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
+        records = list_attendance_history(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id, limit=limit)
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error while loading attendance history")

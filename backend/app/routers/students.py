@@ -10,11 +10,12 @@ from ..database import get_db
 from ..schemas import (
     StudentAliasCreateRequest,
     StudentAliasResponse,
+    StudentCreateRequest,
     StudentImportRequest,
     StudentImportResponse,
     StudentResponse,
 )
-from ..services.student_service import create_student_alias, import_students_csv, list_students
+from ..services.student_service import aliases_by_student_id, create_student, create_student_alias, import_students_csv, list_students
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,26 @@ async def get_students(
             detail="Unable to load students.",
         ) from exc
 
-    return [StudentResponse.model_validate(student) for student in students]
+    aliases = aliases_by_student_id(db, [student.id for student in students])
+    return [
+        StudentResponse.model_validate(student).model_copy(update={"aliases": aliases.get(student.id, [])})
+        for student in students
+    ]
+
+
+@router.post("", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
+async def create_roster_student(payload: StudentCreateRequest, db: DbSession) -> StudentResponse:
+    try:
+        student = create_student(db, full_name=payload.full_name, group_name=payload.group_name)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while creating student")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to create student.",
+        ) from exc
+
+    return StudentResponse.model_validate(student)
 
 
 @router.post("/aliases", response_model=StudentAliasResponse)

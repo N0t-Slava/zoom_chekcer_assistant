@@ -73,6 +73,14 @@ class StudentResponse(BaseModel):
     group_name: str
     created_at: datetime
     updated_at: datetime
+    aliases: list[str] = Field(default_factory=list)
+
+
+class StudentCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    full_name: str = Field(..., min_length=1, max_length=255)
+    group_name: str = Field(..., min_length=1, max_length=255)
 
 
 class StudentAliasCreateRequest(BaseModel):

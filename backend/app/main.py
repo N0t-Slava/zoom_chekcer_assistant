@@ -33,8 +33,8 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Content-Security-Policy": (
         "default-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zoom.us https://source.zoom.us https://*.zoom.us; "
-        "style-src 'self' 'unsafe-inline' https://source.zoom.us; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zoom.us https://source.zoom.us https://*.zoom.us https://cdn.tailwindcss.com https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline' https://source.zoom.us https://cdn.tailwindcss.com; "
         "img-src 'self' data: blob: https:; "
         "font-src 'self' data: https:; "
         "connect-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com wss://*.zoom.us wss://*.zoom.com; "
@@ -85,12 +85,12 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/", include_in_schema=False)
-async def dashboard() -> FileResponse:
+async def menu() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.head("/", include_in_schema=False)
-async def dashboard_head() -> FileResponse:
+async def menu_head() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 

@@ -333,6 +333,7 @@ def list_attendance_history(
     db: Session,
     meeting_id: str | None = None,
     meeting_session_id: int | None = None,
+    limit: int | None = None,
 ) -> list[AttendanceRecord]:
     expire_stale_active_records(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
 
@@ -348,6 +349,8 @@ def list_attendance_history(
         AttendanceRecord.first_seen.desc(),
         AttendanceRecord.participant_name,
     )
+    if limit is not None:
+        stmt = stmt.limit(limit)
     return db.scalars(stmt).all()
 
 

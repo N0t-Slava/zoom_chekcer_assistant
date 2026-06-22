@@ -1,4 +1,4 @@
-console.log("Teacher meeting JS loaded v2026-06-21-3");
+console.log("Teacher meeting JS loaded v2026-06-22-control-center");
 
 const savedMeetingSelect = document.querySelector("#saved-meeting-select");
 const meetingTitleInput = document.querySelector("#meeting-title");
@@ -20,6 +20,20 @@ const attendanceMessage = document.querySelector("#attendance-message");
 const savedMeetingsTable = document.querySelector("#saved-meetings-table");
 const savedMeetingsCount = document.querySelector("#saved-meetings-count");
 const savedMeetingsMessage = document.querySelector("#saved-meetings-message");
+const sidebarLiveStatus = document.querySelector("#sidebar-live-status");
+const liveParticipantCount = document.querySelector("#live-participant-count");
+const liveParticipantList = document.querySelector("#live-participant-list");
+const liveMatchedCount = document.querySelector("#live-matched-count");
+const liveMatchedList = document.querySelector("#live-matched-list");
+const liveUnmatchedCount = document.querySelector("#live-unmatched-count");
+const liveUnmatchedList = document.querySelector("#live-unmatched-list");
+const liveHistoryList = document.querySelector("#live-history-list");
+const healthSdkStatus = document.querySelector("#health-sdk-status");
+const healthJoinedStatus = document.querySelector("#health-joined-status");
+const healthParticipantsStatus = document.querySelector("#health-participants-status");
+const healthBackendStatus = document.querySelector("#health-backend-status");
+const healthIntervalStatus = document.querySelector("#health-interval-status");
+const liveLastSync = document.querySelector("#live-last-sync");
 
 const ATTENDANCE_SYNC_INTERVAL_MS = 5000;
 
@@ -31,9 +45,44 @@ let currentMeetingNumber = null;
 let participantCache = new Map();
 let savedMeetings = [];
 
+function setLiveText(target, value) {
+  if (target) {
+    target.textContent = value ?? "";
+  }
+}
+
+function toneForStatus(label) {
+  if (["Ready", "Joined", "Saved"].includes(label)) {
+    return "success";
+  }
+  if (["Error", "Join failed", "SDK failed", "SDK missing", "Missing"].includes(label)) {
+    return "danger";
+  }
+  if (["Preparing", "Loading", "Saving", "Waiting", "Deleted"].includes(label)) {
+    return "warning";
+  }
+  return "neutral";
+}
+
+function setPillTone(target, tone) {
+  if (!target) {
+    return;
+  }
+  target.classList.remove("success", "warning", "danger", "neutral");
+  target.classList.add(tone);
+}
+
 function setStatus(label, message) {
   sdkStatus.textContent = label;
   sdkMessage.textContent = message;
+  setPillTone(sdkStatus, toneForStatus(label));
+  setLiveText(healthSdkStatus, ["Missing", "SDK failed", "SDK missing"].includes(label) ? label : "Initialized");
+  setLiveText(healthJoinedStatus, label === "Joined" ? "Joined" : "Not joined");
+  if (sidebarLiveStatus) {
+    sidebarLiveStatus.textContent = label;
+    sidebarLiveStatus.classList.toggle("connected", label === "Joined");
+    sidebarLiveStatus.classList.toggle("danger", toneForStatus(label) === "danger");
+  }
 }
 
 function compactValue(value) {
@@ -305,8 +354,37 @@ function fillMeetingForm(meeting) {
   deleteMeetingButton.disabled = false;
 }
 
+function applyInitialMeetingParams() {
+  const params = new URLSearchParams(window.location.search);
+  const meetingNumber = params.get("meetingNumber");
+  const passcode = params.get("passcode");
+  const title = params.get("title");
+  const joinAsHost = params.get("joinAsHost");
+
+  if (meetingNumber) {
+    meetingNumberInput.value = meetingNumber.replace(/\D+/g, "");
+  }
+  if (passcode !== null) {
+    meetingPasswordInput.value = passcode;
+  }
+  if (title) {
+    meetingTitleInput.value = title;
+  }
+  if (joinAsHost !== null) {
+    joinAsHostInput.checked = joinAsHost === "1" || joinAsHost === "true";
+  }
+}
+
 function setAttendanceStatus(message) {
   attendanceMessage.textContent = message;
+  if (message.startsWith("Attendance synced")) {
+    setLiveText(healthBackendStatus, "Updated");
+    setLiveText(liveLastSync, liveFormatDate(new Date().toISOString()));
+  } else if (message.includes("failed")) {
+    setLiveText(healthBackendStatus, "Error");
+  } else if (message.includes("not started")) {
+    setLiveText(healthBackendStatus, "Idle");
+  }
 }
 
 function pickAttendeeName(attendee) {
@@ -349,6 +427,18 @@ function normalizeParticipantNames(participants) {
     names.push(name);
   }
   return names;
+}
+
+function normalizeName(value) {
+  return String(value || "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
+}
+
+function findStudentForParticipant(name, students) {
+  const key = normalizeName(name);
+  return students.find((student) => {
+    const names = [student.full_name, ...(student.aliases || [])].map(normalizeName);
+    return names.includes(key);
+  }) || null;
 }
 
 function rememberParticipantNames(names) {
@@ -460,6 +550,176 @@ async function sendAttendanceUpdate(meetingNumber, participants) {
   return response.json();
 }
 
+function renderPanelList(target, countTarget, items, emptyMessage, renderItem) {
+  if (countTarget) {
+    countTarget.textContent = String(items.length);
+  }
+  if (!target) {
+    return;
+  }
+  target.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = emptyMessage;
+    target.appendChild(empty);
+    return;
+  }
+  for (const item of items) {
+    target.appendChild(renderItem(item));
+  }
+}
+
+function livePanelItem(text, action = null) {
+  const item = document.createElement("div");
+  item.className = "live-list-item";
+  const label = document.createElement("span");
+  const [title, detail] = String(text).split(" · ");
+  const strong = document.createElement("strong");
+  strong.textContent = title || "";
+  label.appendChild(strong);
+  if (detail) {
+    const small = document.createElement("small");
+    small.textContent = detail;
+    label.appendChild(small);
+  }
+  item.appendChild(label);
+  if (action) {
+    item.appendChild(action);
+  }
+  return item;
+}
+
+function liveFormatDate(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleString([], {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+async function createLiveAlias(studentId, aliasName) {
+  const response = await fetch("/students/aliases", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      student_id: studentId,
+      alias_name: aliasName
+    })
+  });
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Unable to create alias: ${details}`);
+  }
+  await fetch("/reports/attendance-summary/generate", { method: "POST" });
+  await refreshLiveAttendancePanels();
+}
+
+async function refreshLiveAttendancePanels() {
+  if (!currentMeetingNumber) {
+    return;
+  }
+
+  const query = `?meeting_id=${encodeURIComponent(currentMeetingNumber)}`;
+  try {
+    const [currentResponse, unmatchedResponse, historyResponse, studentsResponse] = await Promise.all([
+      fetch(`/attendance/current${query}`),
+      fetch(`/attendance/unmatched${query}`),
+      fetch(`/attendance/history${query}`),
+      fetch("/students")
+    ]);
+    if (!currentResponse.ok || !unmatchedResponse.ok || !historyResponse.ok || !studentsResponse.ok) {
+      throw new Error("Unable to load live attendance panels.");
+    }
+    const [currentRecords, unmatchedRecords, historyRecords, students] = await Promise.all([
+      currentResponse.json(),
+      unmatchedResponse.json(),
+      historyResponse.json(),
+      studentsResponse.json()
+    ]);
+
+    const participantNames = normalizeParticipantNames([
+      ...cachedParticipantNames(),
+      ...currentRecords.map((record) => record.participant_name),
+      ...unmatchedRecords.map((record) => record.participant_name)
+    ]);
+    const unmatchedKeys = new Set(unmatchedRecords.map((record) => normalizeName(record.participant_name)));
+    const matchedRecords = currentRecords.filter((record) => !unmatchedKeys.has(normalizeName(record.participant_name)));
+    setLiveText(healthParticipantsStatus, participantNames.length ? `${participantNames.length} readable` : "Waiting");
+    setLiveText(healthBackendStatus, "Loaded");
+    renderPanelList(
+      liveParticipantList,
+      liveParticipantCount,
+      participantNames,
+      "No participants read yet.",
+      (name) => livePanelItem(name)
+    );
+
+    renderPanelList(
+      liveMatchedList,
+      liveMatchedCount,
+      matchedRecords,
+      "No matched students yet.",
+      (record) => {
+        const student = findStudentForParticipant(record.participant_name, students);
+        return livePanelItem(`${student?.full_name || record.participant_name} · ${record.group_name || student?.group_name || "Matched roster"} / ${liveFormatDate(record.last_seen)}`);
+      }
+    );
+
+    renderPanelList(
+      liveUnmatchedList,
+      liveUnmatchedCount,
+      unmatchedRecords,
+      "No unmatched names yet.",
+      (record) => {
+        const groupStudents = record.group_name
+          ? students.filter((student) => student.group_name === record.group_name)
+          : students;
+        const select = document.createElement("select");
+        for (const student of groupStudents) {
+          const option = document.createElement("option");
+          option.value = String(student.id);
+          option.textContent = `${student.full_name} (${student.group_name})`;
+          select.appendChild(option);
+        }
+        select.disabled = !groupStudents.length;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Alias";
+        button.disabled = !groupStudents.length;
+        button.addEventListener("click", () => {
+          createLiveAlias(Number(select.value), record.participant_name).catch((error) => {
+            console.error("Live alias creation failed", { error: zoomErrorDetails(error) });
+            setAttendanceStatus(error.message);
+          });
+        });
+        const actions = document.createElement("span");
+        actions.className = "actions";
+        actions.append(select, button);
+        return livePanelItem(`${record.participant_name} · ${record.group_name || "Any group"}`, actions);
+      }
+    );
+
+    renderPanelList(
+      liveHistoryList,
+      null,
+      historyRecords.slice(0, 10),
+      "No attendance history yet.",
+      (record) => livePanelItem(`${record.status}: ${record.participant_name} · ${liveFormatDate(record.last_seen)}`)
+    );
+  } catch (error) {
+    console.error("Live attendance panels failed", { error: zoomErrorDetails(error) });
+    setLiveText(healthBackendStatus, "Error");
+  }
+}
+
 async function syncAttendanceOnce() {
   const zoomMtg = window.ZoomMtg;
   if (!currentMeetingNumber || !zoomMtg) {
@@ -479,6 +739,7 @@ async function syncAttendanceOnce() {
     setAttendanceStatus(
       `Attendance synced: ${result.active_count} active, ${result.unmatched_participants.length} unmatched, ${participants.length} names read.`
     );
+    refreshLiveAttendancePanels();
     console.log("SDK attendance synced", { participants, result, attendeeResponse });
   } catch (error) {
     console.error("SDK attendance sync failed", {
@@ -499,6 +760,7 @@ function startAttendanceSync(meetingNumber) {
   }
 
   syncAttendanceOnce();
+  refreshLiveAttendancePanels();
   attendanceSyncTimer = window.setInterval(syncAttendanceOnce, ATTENDANCE_SYNC_INTERVAL_MS);
 }
 
@@ -937,6 +1199,7 @@ zoomLoginButton.addEventListener("click", () => {
   window.location.href = "/zoom/oauth/start?prompt=login";
 });
 zoomDisconnectButton.addEventListener("click", disconnectZoom);
+applyInitialMeetingParams();
 loadConfig().catch((error) => {
   console.error(error);
   setStatus("Error", error.message);
@@ -945,7 +1208,7 @@ loadConfig().catch((error) => {
 loadOAuthStatus().catch((error) => {
   console.error(error);
   oauthMessage.textContent = error.message;
-});
+}).then(applyInitialMeetingParams);
 loadSavedMeetings().catch((error) => {
   console.error("Load saved meetings failed", { error: zoomErrorDetails(error) });
 });

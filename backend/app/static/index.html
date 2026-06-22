@@ -4,219 +4,52 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Attendance Tracker</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <title>Zoom Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: "#F7F5EE",
+                        panel: "#FFFFFF",
+                        ink: "#241C15",
+                        muted: "#6B6B6B",
+                        line: "#DDD8C8",
+                        accent: "#FFE01B",
+                        success: "#007C5C",
+                        warning: "#A46A1F",
+                        danger: "#C62828"
+                    },
+                    boxShadow: {
+                        soft: "0 1px 2px rgba(36, 28, 21, 0.06), 0 10px 24px rgba(36, 28, 21, 0.05)"
+                    }
+                }
+            }
+        };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 
-<body>
-    <main class="page">
-        <section class="hero">
-            <div class="hero-actions">
-                <label class="field">
-                    <span>Zoom meeting filter</span>
-                    <input id="meeting-filter" type="text" placeholder="Optional meeting_id" />
-                </label>
-                <label class="field">
-                    <span>Meeting session</span>
-                    <span class="select-shell">
-                        <select id="meeting-session-filter">
-                            <option value="">All sessions</option>
-                        </select>
-                    </span>
-                </label>
-                <div class="button-row">
-                    <button id="refresh-button" type="button">Refresh Now</button>
-                    <a id="export-link" class="secondary-action" href="/attendance/export.csv">Export CSV</a>
-                    <a class="secondary-action" href="/teacher-meeting">Teacher Meeting</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="grid">
-            <article class="card">
-                <div class="card-header">
-                    <h2>Journal</h2>
-                    <span id="summary-count" class="pill">0</span>
-                </div>
-                <div class="import-panel">
-                    <button id="generate-summary-button" type="button">Generate Journal</button>
-                    <a id="matrix-export-link" class="secondary-action" href="/reports/attendance-matrix.csv">Export
-                        Matrix CSV</a>
-                    <p id="summary-status" class="subtle"></p>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Group</th>
-                                <th>Lesson</th>
-                                <th>Start</th>
-                                <th>Status</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summary-table"></tbody>
-                    </table>
-                </div>
-            </article>
-
-            <article class="card">
-                <div class="card-header">
-                    <h2>Schedule</h2>
-                    <span id="schedule-count" class="pill">0</span>
-                </div>
-                <div class="import-panel">
-                    <label class="file-picker">
-                        <input id="schedule-file" type="file" accept=".csv,text/csv" />
-                        <span>Choose Schedule CSV</span>
-                    </label>
-                    <label class="checkbox-field">
-                        <input id="replace-schedule" type="checkbox" />
-                        <span>Replace existing schedule</span>
-                    </label>
-                    <button id="import-schedule-button" type="button">Import Schedule</button>
-                    <p id="schedule-import-status" class="subtle"></p>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Group</th>
-                                <th>Start</th>
-                                <th>End</th>
-                            </tr>
-                        </thead>
-                        <tbody id="schedule-table"></tbody>
-                    </table>
-                </div>
-            </article>
-
-            <article class="card">
-                <div class="card-header">
-                    <h2>Students</h2>
-                    <span id="student-count" class="pill">0</span>
-                </div>
-                <div class="import-panel">
-                    <label class="file-picker">
-                        <input id="students-file" type="file" accept=".csv,text/csv" />
-                        <span>Choose Students CSV</span>
-                    </label>
-                    <label class="checkbox-field">
-                        <input id="replace-students" type="checkbox" />
-                        <span>Replace existing students</span>
-                    </label>
-                    <button id="import-students-button" type="button">Import Students</button>
-                    <p id="students-import-status" class="subtle"></p>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Group</th>
-                                <th>Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody id="students-table"></tbody>
-                    </table>
-                </div>
-            </article>
-
-            <article class="card">
-                <div class="card-header">
-                    <h2>Meetings</h2>
-                    <span id="meeting-count" class="pill">0</span>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Session</th>
-                                <th>Zoom ID</th>
-                                <th>Title</th>
-                                <th>Group</th>
-                                <th>Started</th>
-                                <th>Ended</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="meetings-table"></tbody>
-                    </table>
-                </div>
-            </article>
-
-            <article class="card">
-                <div class="card-header">
-                    <h2>Active Participants</h2>
-                    <span id="active-count" class="pill">0</span>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Meeting</th>
-                                <th>Session</th>
-                                <th>First Seen</th>
-                                <th>Last Seen</th>
-                                <th>Duration</th>
-                            </tr>
-                        </thead>
-                        <tbody id="current-table"></tbody>
-                    </table>
-                </div>
-            </article>
-
-            <article class="card">
-                <div class="card-header">
-                    <h2>Unmatched Names</h2>
-                    <span id="unmatched-count" class="pill">0</span>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Group</th>
-                                <th>Meeting</th>
-                                <th>Session</th>
-                                <th>Last Seen</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="unmatched-table"></tbody>
-                    </table>
-                </div>
-            </article>
-
-            <article class="card">
-                <div class="card-header">
-                    <h2>Attendance History</h2>
-                    <span id="history-count" class="pill">0</span>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Meeting</th>
-                                <th>Session</th>
-                                <th>Status</th>
-                                <th>First Seen</th>
-                                <th>Last Seen</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table"></tbody>
-                    </table>
-                </div>
-            </article>
-        </section>
-    </main>
-
-    <script src="/static/app.js" defer></script>
+<body class="min-h-screen overflow-x-auto bg-canvas text-ink antialiased">
+    <div id="root"></div>
+    <script>
+        fetch("/static/app.jsx?v=2026-06-22-react-menu")
+            .then((response) => response.text())
+            .then((source) => {
+                const compiled = Babel.transform(source, {
+                    presets: [["react", { runtime: "classic" }]]
+                }).code;
+                const script = document.createElement("script");
+                script.textContent = compiled;
+                document.body.appendChild(script);
+            })
+            .catch((error) => {
+                document.getElementById("root").textContent = `Unable to load app: ${error.message}`;
+            });
+    </script>
 </body>
 
 </html>
