@@ -4,9 +4,9 @@ const MAX_ATTENDANCE = 30;
 const REFRESH_INTERVAL_MS = 5000;
 
 const pages = [
-  { id: "menu", label: "Menu" },
+  { id: "menu", label: "Dashboard" },
   { id: "meetings", label: "Meetings" },
-  { id: "live-attendance", label: "Live Attendance" },
+  { id: "live-attendance", label: "Teacher Meeting" },
   { id: "students", label: "Students" },
   { id: "reports", label: "Reports" },
   { id: "settings", label: "Settings" }
@@ -21,17 +21,20 @@ const tones = {
   neutral: "border-line bg-[#FFFDF7] text-muted"
 };
 
-const buttonBase = "inline-flex min-h-9 items-center justify-center rounded-lg border px-3 text-sm font-black transition hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
+const buttonBase =
+  "inline-flex min-h-9 items-center justify-center rounded-lg border px-3 text-sm font-black transition hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
 const primaryButton = `${buttonBase} border-[#D9C300] bg-accent text-ink`;
 const secondaryButton = `${buttonBase} border-line bg-panel text-ink`;
 const dangerButton = `${buttonBase} border-red-200 bg-danger text-white`;
-const inputClass = "min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200";
+const inputClass =
+  "min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200";
 const labelClass = "grid gap-1 text-xs font-black uppercase text-muted";
 const cardClass = "overflow-hidden rounded-lg border border-line bg-panel shadow-soft";
 const cardHeaderClass = "flex items-start justify-between gap-3 border-b border-line px-5 py-4";
 const tableWrapClass = "overflow-x-auto";
 const tableClass = "min-w-full border-separate border-spacing-0 text-sm";
-const thClass = "border-b border-line bg-[#F2EFE3] px-3 py-3 text-left text-[11px] font-black uppercase text-muted whitespace-nowrap";
+const thClass =
+  "border-b border-line bg-[#F2EFE3] px-3 py-3 text-left text-[11px] font-black uppercase text-muted whitespace-nowrap";
 const tdClass = "border-b border-line px-3 py-3 align-middle whitespace-nowrap";
 
 function cx(...values) {
@@ -60,7 +63,10 @@ async function safeFetch(url, fallback, options = {}) {
 }
 
 function normalize(value) {
-  return String(value || "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase();
 }
 
 function formatShortDate(value) {
@@ -71,11 +77,11 @@ function formatShortDate(value) {
   return Number.isNaN(date.getTime())
     ? "Never"
     : date.toLocaleString([], {
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
 }
 
 function formatDuration(totalSeconds = 0) {
@@ -101,9 +107,11 @@ function matchStudent(students, participantName, groupName = "") {
   const groupStudents = groupName
     ? students.filter((student) => student.group_name === groupName)
     : students;
-  return groupStudents.find((student) => studentKeys(student).includes(key))
-    || students.find((student) => studentKeys(student).includes(key))
-    || null;
+  return (
+    groupStudents.find((student) => studentKeys(student).includes(key)) ||
+    students.find((student) => studentKeys(student).includes(key)) ||
+    null
+  );
 }
 
 function suggestStudent(students, record) {
@@ -166,7 +174,11 @@ function historyLimit(records) {
 
 function Badge({ children, tone = "neutral" }) {
   return (
-    <span className={cx("inline-flex min-h-7 items-center justify-center rounded-lg border px-2.5 text-xs font-black", tones[tone] || tones.neutral)}>
+    <span
+      className={cx(
+        "inline-flex min-h-7 items-center justify-center rounded-lg border px-2.5 text-xs font-black",
+        tones[tone] || tones.neutral
+      )}>
       {children}
     </span>
   );
@@ -191,7 +203,9 @@ function CardHeader({ title, meta, children }) {
 function EmptyRow({ colSpan, children }) {
   return (
     <tr>
-      <td className="border-b border-line px-3 py-3 text-sm italic leading-6 text-muted whitespace-normal" colSpan={colSpan}>
+      <td
+        className="border-b border-line px-3 py-3 text-sm italic leading-6 text-muted whitespace-normal"
+        colSpan={colSpan}>
         {children}
       </td>
     </tr>
@@ -202,7 +216,14 @@ function StatusTile({ label, value, tone = "neutral", wide = false }) {
   return (
     <div className={cx("rounded-lg border border-line bg-[#FFFDF7] p-3", wide && "sm:col-span-2")}>
       <div className="text-[11px] font-black uppercase text-muted">{label}</div>
-      <div className={cx("mt-2 truncate text-base font-black", tone === "success" && "text-success", tone === "warning" && "text-warning", tone === "danger" && "text-danger", tone === "neutral" && "text-ink")}>
+      <div
+        className={cx(
+          "mt-2 truncate text-base font-black",
+          tone === "success" && "text-success",
+          tone === "warning" && "text-warning",
+          tone === "danger" && "text-danger",
+          tone === "neutral" && "text-ink"
+        )}>
         {value}
       </div>
     </div>
@@ -211,6 +232,10 @@ function StatusTile({ label, value, tone = "neutral", wide = false }) {
 
 function Shell({ page, setPage, zoomConnected, children }) {
   function go(nextPage) {
+    if (nextPage === "live-attendance") {
+      window.location.href = "/teacher-meeting";
+      return;
+    }
     setPage(nextPage);
     window.location.hash = nextPage;
   }
@@ -219,10 +244,14 @@ function Shell({ page, setPage, zoomConnected, children }) {
     <div className="grid min-h-screen min-w-[1040px] grid-cols-[268px_minmax(760px,1fr)]">
       <aside className="sticky top-0 flex h-screen flex-col gap-5 overflow-y-auto border-r border-line bg-[#FFFDF7] px-4 py-5">
         <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-line bg-panel p-3">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-black">T</span>
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-black">
+            T
+          </span>
           <span className="min-w-0">
             <strong className="block truncate font-black">Teacher console</strong>
-            <small className="block truncate text-xs font-bold text-muted">Roster and live sync</small>
+            <small className="block truncate text-xs font-bold text-muted">
+              Roster and live sync
+            </small>
           </span>
         </div>
 
@@ -237,8 +266,7 @@ function Shell({ page, setPage, zoomConnected, children }) {
                   : "border-transparent text-muted hover:bg-panel hover:text-ink"
               )}
               type="button"
-              onClick={() => go(item.id)}
-            >
+              onClick={() => go(item.id)}>
               {item.label}
             </button>
           ))}
@@ -246,11 +274,18 @@ function Shell({ page, setPage, zoomConnected, children }) {
 
         <div className="mt-auto grid gap-2 border-t border-line pt-4 text-sm font-black">
           <span className="inline-flex items-center gap-2 text-muted">
-            <span className={cx("h-2.5 w-2.5 rounded-full", zoomConnected ? "bg-success" : "bg-warning")} />
+            <span
+              className={cx(
+                "h-2.5 w-2.5 rounded-full",
+                zoomConnected ? "bg-success" : "bg-warning"
+              )}
+            />
             {zoomConnected ? "Zoom connected" : "Zoom checking"}
           </span>
-          <a className="font-black underline decoration-accent decoration-4 underline-offset-4" href="/teacher-meeting">
-            Open live attendance
+          <a
+            className="font-black underline decoration-accent decoration-4 underline-offset-4"
+            href="/teacher-meeting">
+            Open teacher meeting
           </a>
         </div>
       </aside>
@@ -259,40 +294,18 @@ function Shell({ page, setPage, zoomConnected, children }) {
   );
 }
 
-function Header({ page, sessionValue, setSessionValue, meetings, refreshData }) {
+function Header({ page, refreshData }) {
   return (
     <header className="flex items-end justify-between gap-5">
-      <h1 className="text-5xl font-black leading-none">{pageTitles[page] || "Menu"}</h1>
+      <div>
+        <h1 className="text-5xl font-black leading-none">{pageTitles[page] || "Dashboard"}</h1>
+      </div>
       <div className="flex items-end gap-3">
-        <label className={labelClass}>
-          Session
-          <select className={cx(inputClass, "min-w-56")} value={sessionValue} onChange={(event) => setSessionValue(event.target.value)}>
-            <option value="">All sessions</option>
-            {meetings.map((meeting) => (
-              <option key={meeting.id} value={meeting.id}>
-                #{meeting.id} {meeting.title || meeting.zoom_meeting_id}
-              </option>
-            ))}
-          </select>
-        </label>
         <button className={primaryButton} type="button" onClick={refreshData}>
           Refresh
         </button>
       </div>
     </header>
-  );
-}
-
-function MetricStrip({ oauthStatus, syncActive, currentMeeting, currentRecords, unmatchedRecords, lastSync }) {
-  return (
-    <div className="grid grid-cols-6 gap-2 rounded-lg border border-line bg-panel p-2">
-      <StatusTile label="Zoom OAuth" value={oauthStatus?.authorized ? "Connected" : "Needs attention"} tone={oauthStatus?.authorized ? "success" : "warning"} />
-      <StatusTile label="Sync" value={syncActive ? "Active" : "Idle"} tone={syncActive ? "success" : "neutral"} />
-      <StatusTile label="Current meeting" value={meetingDisplayName(currentMeeting)} wide />
-      <StatusTile label="Present now" value={currentRecords.length} />
-      <StatusTile label="Not matched" value={unmatchedRecords.length} />
-      <StatusTile label="Last sync" value={formatShortDate(lastSync)} />
-    </div>
   );
 }
 
@@ -309,9 +322,11 @@ function trendDates() {
 }
 
 function sameDay(left, right) {
-  return left.getFullYear() === right.getFullYear()
-    && left.getMonth() === right.getMonth()
-    && left.getDate() === right.getDate();
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
 }
 
 function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
@@ -319,14 +334,17 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
     const days = trendDates();
     return days.map((day) => {
       const recordsForDay = records.filter((record) => sameDay(new Date(record.first_seen), day));
-      const meetingsForDay = meetings.filter((meeting) => sameDay(new Date(meeting.started_at), day));
-      const value = trendFilter === "meetings"
-        ? meetingsForDay.length
-        : trendFilter === "absent"
-          ? recordsForDay.filter((record) => record.status !== "active").length
-          : trendFilter === "unmatched"
-            ? recordsForDay.filter((record) => !record.meeting_session_id).length
-            : recordsForDay.filter((record) => record.status === "active").length;
+      const meetingsForDay = meetings.filter((meeting) =>
+        sameDay(new Date(meeting.started_at), day)
+      );
+      const value =
+        trendFilter === "meetings"
+          ? meetingsForDay.length
+          : trendFilter === "absent"
+            ? recordsForDay.filter((record) => record.status !== "active").length
+            : trendFilter === "unmatched"
+              ? recordsForDay.filter((record) => !record.meeting_session_id).length
+              : recordsForDay.filter((record) => record.status === "active").length;
       return {
         label: day.toLocaleDateString([], { weekday: "short" }),
         value
@@ -337,18 +355,19 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
 
   return (
     <Card>
-      <CardHeader title="Attendance Analytics" meta="Seven day attendance activity from tracked Zoom sessions.">
+      <CardHeader title="Attendance Analytics">
         <div className="flex flex-wrap gap-2">
           {["present", "absent", "unmatched", "meetings"].map((filter) => (
             <button
               key={filter}
               className={cx(
                 "min-h-8 rounded-full border px-3 text-xs font-black capitalize",
-                trendFilter === filter ? "border-ink bg-ink text-white" : "border-line bg-panel text-muted"
+                trendFilter === filter
+                  ? "border-ink bg-ink text-white"
+                  : "border-line bg-panel text-muted"
               )}
               type="button"
-              onClick={() => setTrendFilter(filter)}
-            >
+              onClick={() => setTrendFilter(filter)}>
               {filter}
             </button>
           ))}
@@ -362,85 +381,19 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
               <div
                 className={cx(
                   "min-h-1.5 rounded-t-md",
-                  trendFilter === "absent" ? "bg-danger" : trendFilter === "unmatched" ? "bg-warning" : trendFilter === "meetings" ? "bg-ink" : "bg-success"
+                  trendFilter === "absent"
+                    ? "bg-danger"
+                    : trendFilter === "unmatched"
+                      ? "bg-warning"
+                      : trendFilter === "meetings"
+                        ? "bg-ink"
+                        : "bg-success"
                 )}
                 style={{ height: `${Math.max(6, (point.value / max) * 160)}px` }}
               />
               <span className="text-center text-xs font-black text-muted">{point.label}</span>
             </div>
           ))}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function ReadinessCard({ oauthStatus, sdkConfig, currentMeeting, syncActive }) {
-  const alerts = [];
-  if (!oauthStatus?.authorized) {
-    alerts.push({ tone: "warning", message: "OAuth not connected. Host join and meeting ownership checks may fail." });
-  }
-  if (!sdkConfig?.configured) {
-    alerts.push({ tone: "danger", message: "Meeting SDK credentials are missing. Join readiness is blocked." });
-  }
-  const critical = alerts.some((alert) => alert.tone === "danger");
-
-  return (
-    <Card>
-      <CardHeader title="Zoom Readiness" meta="Connection, SDK, and host readiness.">
-        <Badge tone={critical ? "danger" : alerts.length ? "warning" : "success"}>{critical ? "Critical" : alerts.length ? "Attention" : "Ready"}</Badge>
-      </CardHeader>
-      <div className="grid grid-cols-2 gap-2 p-4">
-        <StatusTile label="OAuth" value={oauthStatus?.authorized ? "Connected" : "Needs attention"} tone={oauthStatus?.authorized ? "success" : "warning"} />
-        <StatusTile label="SDK" value={sdkConfig?.configured ? "Configured" : "Missing credentials"} tone={sdkConfig?.configured ? "success" : "danger"} />
-        <StatusTile label="Account" value={oauthStatus?.display_name || oauthStatus?.email || "Unknown"} wide />
-        <StatusTile label="Current meeting" value={meetingDisplayName(currentMeeting)} />
-        <StatusTile label="Host" value={oauthStatus?.authorized ? "Ready" : "Needs OAuth"} tone={oauthStatus?.authorized ? "success" : "warning"} />
-        <StatusTile label="Sync" value={syncActive ? "Active" : "Idle"} tone={syncActive ? "success" : "neutral"} />
-      </div>
-      {alerts.length ? (
-        <div className="grid gap-2 px-5 pb-5">
-          {alerts.map((alert) => (
-            <div key={alert.message} className={cx("rounded-lg border px-3 py-2 text-sm font-bold", tones[alert.tone])}>
-              {alert.message}
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </Card>
-  );
-}
-
-function RosterHealthCard({ students, currentRecords, unmatchedRecords }) {
-  const matched = currentRecords.filter((record) => matchStudent(students, record.participant_name)).length;
-  const activeTotal = currentRecords.length;
-  const matchRate = activeTotal ? Math.round((matched / activeTotal) * 100) : 0;
-  const aliases = students.reduce((total, student) => total + (student.aliases || []).length, 0);
-  const duplicateNames = new Map();
-  students.forEach((student) => {
-    const key = normalize(student.full_name);
-    if (key) {
-      duplicateNames.set(key, (duplicateNames.get(key) || 0) + 1);
-    }
-  });
-  const duplicates = [...duplicateNames.values()].filter((count) => count > 1).length;
-  const critical = unmatchedRecords.length > 0 || duplicates > 0;
-
-  return (
-    <Card>
-      <CardHeader title="Roster Match Health" meta="Current roster matching quality.">
-        <Badge tone={critical ? "danger" : "success"}>{critical ? "Critical" : "Healthy"}</Badge>
-      </CardHeader>
-      <div className="grid gap-3 p-4">
-        <div className="grid min-h-28 place-items-center rounded-lg border border-line bg-yellow-100">
-          <strong className="text-4xl font-black">{matchRate}%</strong>
-          <span className="text-xs font-black uppercase text-muted">Match rate</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <StatusTile label="Matched" value={matched} tone="success" />
-          <StatusTile label="Unmatched" value={unmatchedRecords.length} tone={unmatchedRecords.length ? "warning" : "neutral"} />
-          <StatusTile label="Aliases" value={aliases} />
-          <StatusTile label="Duplicates" value={duplicates} tone={duplicates ? "danger" : "neutral"} />
         </div>
       </div>
     </Card>
@@ -466,41 +419,6 @@ function MiniStats({ meetings, students, records }) {
   );
 }
 
-function RecentEventsTable({ records, students }) {
-  const rows = historyLimit(records);
-  return (
-    <Card>
-      <CardHeader title="Recent Attendance Events" meta="Joins, leaves, match state, and sync outcomes.">
-        <Badge>{rows.length}</Badge>
-      </CardHeader>
-      <div className={tableWrapClass}>
-        <table className={tableClass}>
-          <thead>
-            <tr>
-              {["Time", "Meeting", "Zoom name", "Student", "Event", "Status"].map((head) => <th key={head} className={thClass}>{head}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length ? rows.map((record) => {
-              const student = matchStudent(students, record.participant_name);
-              return (
-                <tr key={`${record.id}-${record.last_seen}`}>
-                  <td className={tdClass}>{formatShortDate(record.last_seen)}</td>
-                  <td className={tdClass}>{record.meeting_id}</td>
-                  <td className={tdClass}>{record.participant_name}</td>
-                  <td className={tdClass}>{student?.full_name || "Not matched"}</td>
-                  <td className={cx(tdClass, record.status === "active" ? "font-black text-success" : "font-black text-danger")}>{record.status}</td>
-                  <td className={tdClass}><Badge tone="neutral">Recorded</Badge></td>
-                </tr>
-              );
-            }) : <EmptyRow colSpan={6}>No attendance events yet.</EmptyRow>}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
 function UnmatchedTable({ records, students, createAlias }) {
   const rows = records.slice(0, MAX_ATTENDANCE);
   return (
@@ -508,23 +426,33 @@ function UnmatchedTable({ records, students, createAlias }) {
       <table className={tableClass}>
         <thead>
           <tr>
-            {["Zoom name", "Suggested student", "Action"].map((head) => <th key={head} className={thClass}>{head}</th>)}
+            {["Zoom name", "Suggested student", "Action"].map((head) => (
+              <th key={head} className={thClass}>
+                {head}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {rows.length ? rows.map((record) => {
-            const groupStudents = record.group_name ? students.filter((student) => student.group_name === record.group_name) : students;
-            const suggested = suggestStudent(students, record);
-            return (
-              <AliasRow
-                key={`${record.meeting_session_id || record.meeting_id}-${record.participant_name}`}
-                record={record}
-                students={groupStudents}
-                suggested={suggested}
-                createAlias={createAlias}
-              />
-            );
-          }) : <EmptyRow colSpan={3}>All active participants match the selected roster.</EmptyRow>}
+          {rows.length ? (
+            rows.map((record) => {
+              const groupStudents = record.group_name
+                ? students.filter((student) => student.group_name === record.group_name)
+                : students;
+              const suggested = suggestStudent(students, record);
+              return (
+                <AliasRow
+                  key={`${record.meeting_session_id || record.meeting_id}-${record.participant_name}`}
+                  record={record}
+                  students={groupStudents}
+                  suggested={suggested}
+                  createAlias={createAlias}
+                />
+              );
+            })
+          ) : (
+            <EmptyRow colSpan={3}>All active participants match the selected roster.</EmptyRow>
+          )}
         </tbody>
       </table>
     </div>
@@ -541,7 +469,11 @@ function AliasRow({ record, students, suggested, createAlias }) {
     <tr>
       <td className={tdClass}>{record.participant_name}</td>
       <td className={tdClass}>
-        <select className={cx(inputClass, "min-w-40")} value={studentId} disabled={!students.length} onChange={(event) => setStudentId(event.target.value)}>
+        <select
+          className={cx(inputClass, "min-w-40")}
+          value={studentId}
+          disabled={!students.length}
+          onChange={(event) => setStudentId(event.target.value)}>
           {students.map((student) => (
             <option key={student.id} value={student.id}>
               {student.full_name} ({student.group_name})
@@ -554,8 +486,7 @@ function AliasRow({ record, students, suggested, createAlias }) {
           className={secondaryButton}
           type="button"
           disabled={!studentId}
-          onClick={() => createAlias(Number(studentId), record.participant_name)}
-        >
+          onClick={() => createAlias(Number(studentId), record.participant_name)}>
           Create alias / Link
         </button>
       </td>
@@ -564,63 +495,53 @@ function AliasRow({ record, students, suggested, createAlias }) {
 }
 
 function MenuPage(props) {
-  const {
-    oauthStatus,
-    sdkConfig,
-    meetings,
-    students,
-    currentRecords,
-    unmatchedRecords,
-    historyRecords,
-    trendFilter,
-    setTrendFilter,
-    createAlias
-  } = props;
-  const currentMeeting = activeMeeting(meetings);
-  const lastSync = lastActivityTime(currentRecords, unmatchedRecords, historyRecords);
-  const syncActive = Boolean(currentRecords.length || currentMeeting);
+  const { meetings, students, historyRecords, trendFilter, setTrendFilter } = props;
 
   return (
     <section className="grid gap-5">
-      <MetricStrip
-        oauthStatus={oauthStatus}
-        syncActive={syncActive}
-        currentMeeting={currentMeeting}
-        currentRecords={currentRecords}
-        unmatchedRecords={unmatchedRecords}
-        lastSync={lastSync}
+      <AttendanceTrend
+        records={historyRecords}
+        meetings={meetings}
+        trendFilter={trendFilter}
+        setTrendFilter={setTrendFilter}
       />
-      <div className="grid grid-cols-[minmax(0,1fr)_360px] items-start gap-5">
-        <div className="grid min-w-0 gap-5">
-          <AttendanceTrend records={historyRecords} meetings={meetings} trendFilter={trendFilter} setTrendFilter={setTrendFilter} />
-          <MiniStats meetings={meetings} students={students} records={historyRecords} />
-          <RecentEventsTable records={historyRecords} students={students} />
-        </div>
-        <aside className="sticky top-7 grid gap-5">
-          <ReadinessCard oauthStatus={oauthStatus} sdkConfig={sdkConfig} currentMeeting={currentMeeting} syncActive={syncActive} />
-          <RosterHealthCard students={students} currentRecords={currentRecords} unmatchedRecords={unmatchedRecords} />
-          <Card>
-            <CardHeader title="Unmatched Names" meta="Alias fixes needed now." />
-            <UnmatchedTable records={unmatchedRecords} students={students} createAlias={createAlias} />
-          </Card>
-        </aside>
-      </div>
+      <MiniStats meetings={meetings} students={students} records={historyRecords} />
     </section>
   );
 }
 
-function MeetingsPage({ meetings, savedMeetings, ownershipChecks, refreshData, saveSavedMeeting, deleteSavedMeeting, checkSavedMeeting, updateMeeting, closeMeeting }) {
+function MeetingsPage({
+  meetings,
+  savedMeetings,
+  ownershipChecks,
+  refreshData,
+  saveSavedMeeting,
+  deleteSavedMeeting,
+  checkSavedMeeting,
+  updateMeeting,
+  closeMeeting
+}) {
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("all");
-  const [draft, setDraft] = useState({ title: "", meeting_number: "", passcode: "", join_as_host: true });
-  const filtered = savedMeetings.filter((meeting) => {
-    const matchesSearch = !search || normalize(`${meeting.title || ""} ${meeting.meeting_number}`).includes(normalize(search));
-    const matchesMode = mode === "all"
-      || (mode === "host" && meeting.join_as_host)
-      || (mode === "participant" && !meeting.join_as_host)
-      || mode === "recent";
-    return matchesSearch && matchesMode;
-  }).slice(0, mode === "recent" ? 5 : savedMeetings.length);
+  const [draft, setDraft] = useState({
+    title: "",
+    meeting_number: "",
+    passcode: "",
+    join_as_host: true
+  });
+  const filtered = savedMeetings
+    .filter((meeting) => {
+      const matchesSearch =
+        !search ||
+        normalize(`${meeting.title || ""} ${meeting.meeting_number}`).includes(normalize(search));
+      const matchesMode =
+        mode === "all" ||
+        (mode === "host" && meeting.join_as_host) ||
+        (mode === "participant" && !meeting.join_as_host) ||
+        mode === "recent";
+      return matchesSearch && matchesMode;
+    })
+    .slice(0, mode === "recent" ? 5 : savedMeetings.length);
 
   async function submitSavedMeeting(event) {
     event.preventDefault();
@@ -632,25 +553,72 @@ function MeetingsPage({ meetings, savedMeetings, ownershipChecks, refreshData, s
     <section className="grid gap-5">
       <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
         <div className="flex gap-3">
-          <input className={cx(inputClass, "w-64")} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search meetings" />
-          <select className={cx(inputClass, "w-52")} value={mode} onChange={(event) => setMode(event.target.value)}>
+          <input
+            className={cx(inputClass, "w-64")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search meetings"
+          />
+          <select
+            className={cx(inputClass, "w-52")}
+            value={mode}
+            onChange={(event) => setMode(event.target.value)}>
             <option value="all">All meetings</option>
             <option value="host">Host meetings</option>
             <option value="participant">Participant meetings</option>
             <option value="recent">Recently used</option>
           </select>
         </div>
-        <button className={secondaryButton} type="button" onClick={refreshData}>Refresh</button>
+        <button className={secondaryButton} type="button" onClick={refreshData}>
+          Refresh
+        </button>
       </div>
 
       <Card>
-        <CardHeader title="Save Meeting" meta="Create or update a Zoom room for quick joining." />
-        <form className="grid grid-cols-[1fr_180px_160px_150px_auto] items-end gap-3 p-5" onSubmit={submitSavedMeeting}>
-          <label className={labelClass}>Meeting name<input className={inputClass} value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
-          <label className={labelClass}>Meeting ID<input className={inputClass} value={draft.meeting_number} onChange={(event) => setDraft({ ...draft, meeting_number: event.target.value })} required /></label>
-          <label className={labelClass}>Passcode<input className={inputClass} value={draft.passcode} onChange={(event) => setDraft({ ...draft, passcode: event.target.value })} /></label>
-          <label className={labelClass}>Role<select className={inputClass} value={draft.join_as_host ? "host" : "participant"} onChange={(event) => setDraft({ ...draft, join_as_host: event.target.value === "host" })}><option value="host">Host</option><option value="participant">Participant</option></select></label>
-          <button className={primaryButton} type="submit">Save</button>
+        <CardHeader title="Save Meeting" />
+        <form
+          className="grid grid-cols-[1fr_180px_160px_150px_auto] items-end gap-3 p-5"
+          onSubmit={submitSavedMeeting}>
+          <label className={labelClass}>
+            Meeting name
+            <input
+              className={inputClass}
+              value={draft.title}
+              onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+            />
+          </label>
+          <label className={labelClass}>
+            Meeting ID
+            <input
+              className={inputClass}
+              value={draft.meeting_number}
+              onChange={(event) => setDraft({ ...draft, meeting_number: event.target.value })}
+              required
+            />
+          </label>
+          <label className={labelClass}>
+            Passcode
+            <input
+              className={inputClass}
+              value={draft.passcode}
+              onChange={(event) => setDraft({ ...draft, passcode: event.target.value })}
+            />
+          </label>
+          <label className={labelClass}>
+            Role
+            <select
+              className={inputClass}
+              value={draft.join_as_host ? "host" : "participant"}
+              onChange={(event) =>
+                setDraft({ ...draft, join_as_host: event.target.value === "host" })
+              }>
+              <option value="host">Host</option>
+              <option value="participant">Participant</option>
+            </select>
+          </label>
+          <button className={primaryButton} type="submit">
+            Save
+          </button>
         </form>
       </Card>
 
@@ -662,7 +630,11 @@ function MeetingsPage({ meetings, savedMeetings, ownershipChecks, refreshData, s
         deleteSavedMeeting={deleteSavedMeeting}
         checkSavedMeeting={checkSavedMeeting}
       />
-      <TrackedMeetingsTable meetings={meetings} updateMeeting={updateMeeting} closeMeeting={closeMeeting} />
+      <TrackedMeetingsTable
+        meetings={meetings}
+        updateMeeting={updateMeeting}
+        closeMeeting={closeMeeting}
+      />
     </section>
   );
 }
@@ -678,42 +650,111 @@ function meetingJoinUrl(meeting) {
   return `/teacher-meeting?${params.toString()}`;
 }
 
-function SavedMeetingsTable({ meetings, trackedMeetings, ownershipChecks, setDraft, deleteSavedMeeting, checkSavedMeeting }) {
+function SavedMeetingsTable({
+  meetings,
+  trackedMeetings,
+  ownershipChecks,
+  setDraft,
+  deleteSavedMeeting,
+  checkSavedMeeting
+}) {
   return (
     <Card>
-      <CardHeader title="Saved Meetings" meta={`${meetings.length} saved meeting${meetings.length === 1 ? "" : "s"} visible.`}>
+      <CardHeader
+        title="Saved Meetings"
+        meta={`${meetings.length} saved meeting${meetings.length === 1 ? "" : "s"} visible.`}>
         <Badge>{meetings.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
-            <tr>{["Meeting name", "Meeting ID", "Role", "Owner/access", "Last used", "Sync", "Actions"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+            <tr>
+              {[
+                "Meeting name",
+                "Meeting ID",
+                "Role",
+                "Owner/access",
+                "Last used",
+                "Sync",
+                "Actions"
+              ].map((head) => (
+                <th key={head} className={thClass}>
+                  {head}
+                </th>
+              ))}
+            </tr>
           </thead>
           <tbody>
-            {meetings.length ? meetings.map((meeting) => {
-              const check = ownershipChecks[meeting.meeting_number];
-              const tracked = trackedMeetings.find((item) => item.zoom_meeting_id === meeting.meeting_number);
-              return (
-                <tr key={meeting.id}>
-                  <td className={tdClass}>{meeting.title || "Untitled meeting"}</td>
-                  <td className={tdClass}>{meeting.meeting_number}</td>
-                  <td className={tdClass}><Badge tone={meeting.join_as_host ? "success" : "neutral"}>{meeting.join_as_host ? "Host" : "Participant"}</Badge></td>
-                  <td className={tdClass}>
-                    <Badge tone={!check ? "neutral" : !check.can_read ? "danger" : check.owner_matches_authorized_user ? "success" : "warning"}>
-                      {!check ? "Not checked" : !check.can_read ? "No access" : check.owner_matches_authorized_user ? "Owner match" : "Readable"}
-                    </Badge>
-                  </td>
-                  <td className={tdClass}>{formatShortDate(meeting.updated_at)}</td>
-                  <td className={tdClass}><Badge tone={tracked ? "success" : "neutral"}>{tracked ? (tracked.ended_at ? "Tracked" : "Active") : "Idle"}</Badge></td>
-                  <td className={cx(tdClass, "space-x-2")}>
-                    <a className={secondaryButton} href={meetingJoinUrl(meeting)}>Join</a>
-                    <button className={secondaryButton} type="button" onClick={() => setDraft(meeting)}>Edit</button>
-                    <button className={secondaryButton} type="button" onClick={() => checkSavedMeeting(meeting.meeting_number)}>Check</button>
-                    <button className={dangerButton} type="button" onClick={() => deleteSavedMeeting(meeting.id)}>Delete</button>
-                  </td>
-                </tr>
-              );
-            }) : <EmptyRow colSpan={7}>No saved meetings match this view.</EmptyRow>}
+            {meetings.length ? (
+              meetings.map((meeting) => {
+                const check = ownershipChecks[meeting.meeting_number];
+                const tracked = trackedMeetings.find(
+                  (item) => item.zoom_meeting_id === meeting.meeting_number
+                );
+                return (
+                  <tr key={meeting.id}>
+                    <td className={tdClass}>{meeting.title || "Untitled meeting"}</td>
+                    <td className={tdClass}>{meeting.meeting_number}</td>
+                    <td className={tdClass}>
+                      <Badge tone={meeting.join_as_host ? "success" : "neutral"}>
+                        {meeting.join_as_host ? "Host" : "Participant"}
+                      </Badge>
+                    </td>
+                    <td className={tdClass}>
+                      <Badge
+                        tone={
+                          !check
+                            ? "neutral"
+                            : !check.can_read
+                              ? "danger"
+                              : check.owner_matches_authorized_user
+                                ? "success"
+                                : "warning"
+                        }>
+                        {!check
+                          ? "Not checked"
+                          : !check.can_read
+                            ? "No access"
+                            : check.owner_matches_authorized_user
+                              ? "Owner match"
+                              : "Readable"}
+                      </Badge>
+                    </td>
+                    <td className={tdClass}>{formatShortDate(meeting.updated_at)}</td>
+                    <td className={tdClass}>
+                      <Badge tone={tracked ? "success" : "neutral"}>
+                        {tracked ? (tracked.ended_at ? "Tracked" : "Active") : "Idle"}
+                      </Badge>
+                    </td>
+                    <td className={cx(tdClass, "space-x-2")}>
+                      <a className={secondaryButton} href={meetingJoinUrl(meeting)}>
+                        Join
+                      </a>
+                      <button
+                        className={secondaryButton}
+                        type="button"
+                        onClick={() => setDraft(meeting)}>
+                        Edit
+                      </button>
+                      <button
+                        className={secondaryButton}
+                        type="button"
+                        onClick={() => checkSavedMeeting(meeting.meeting_number)}>
+                        Check
+                      </button>
+                      <button
+                        className={dangerButton}
+                        type="button"
+                        onClick={() => deleteSavedMeeting(meeting.id)}>
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <EmptyRow colSpan={7}>No saved meetings match this view.</EmptyRow>
+            )}
           </tbody>
         </table>
       </div>
@@ -722,20 +763,56 @@ function SavedMeetingsTable({ meetings, trackedMeetings, ownershipChecks, setDra
 }
 
 function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
+  const sortedMeetings = [...meetings].sort((left, right) => {
+    const rawLeftTime = new Date(left.started_at || left.updated_at || 0).getTime();
+    const rawRightTime = new Date(right.started_at || right.updated_at || 0).getTime();
+    const leftTime = Number.isNaN(rawLeftTime) ? 0 : rawLeftTime;
+    const rightTime = Number.isNaN(rawRightTime) ? 0 : rawRightTime;
+    if (rightTime !== leftTime) {
+      return rightTime - leftTime;
+    }
+    return right.id - left.id;
+  });
+  const visibleMeetings = sortedMeetings.slice(0, 5);
+
   return (
     <Card>
-      <CardHeader title="Tracked Meeting Sessions" meta="Sessions created by attendance sync.">
-        <Badge>{meetings.length}</Badge>
+      <CardHeader title="Tracked Meeting Sessions">
+        <Badge>{visibleMeetings.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
-            <tr>{["Session", "Zoom ID", "Title", "Group", "Started", "Last sync", "Status", "Actions"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+            <tr>
+              {[
+                "Session",
+                "Zoom ID",
+                "Title",
+                "Group",
+                "Started",
+                "Last sync",
+                "Status",
+                "Actions"
+              ].map((head) => (
+                <th key={head} className={thClass}>
+                  {head}
+                </th>
+              ))}
+            </tr>
           </thead>
           <tbody>
-            {meetings.length ? meetings.map((meeting) => (
-              <TrackedMeetingRow key={meeting.id} meeting={meeting} updateMeeting={updateMeeting} closeMeeting={closeMeeting} />
-            )) : <EmptyRow colSpan={8}>No tracked sessions yet.</EmptyRow>}
+            {visibleMeetings.length ? (
+              visibleMeetings.map((meeting) => (
+                <TrackedMeetingRow
+                  key={meeting.id}
+                  meeting={meeting}
+                  updateMeeting={updateMeeting}
+                  closeMeeting={closeMeeting}
+                />
+              ))
+            ) : (
+              <EmptyRow colSpan={8}>No tracked sessions yet.</EmptyRow>
+            )}
           </tbody>
         </table>
       </div>
@@ -755,21 +832,61 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
     <tr>
       <td className={tdClass}>#{meeting.id}</td>
       <td className={tdClass}>{meeting.zoom_meeting_id}</td>
-      <td className={tdClass}><input className={cx(inputClass, "min-w-48")} value={title} onChange={(event) => setTitle(event.target.value)} /></td>
-      <td className={tdClass}><input className={cx(inputClass, "min-w-36")} value={groupName} onChange={(event) => setGroupName(event.target.value)} /></td>
+      <td className={tdClass}>
+        <input
+          className={cx(inputClass, "min-w-48")}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+      </td>
+      <td className={tdClass}>
+        <input
+          className={cx(inputClass, "min-w-36")}
+          value={groupName}
+          onChange={(event) => setGroupName(event.target.value)}
+        />
+      </td>
       <td className={tdClass}>{formatShortDate(meeting.started_at)}</td>
-      <td className={tdClass}>{meeting.ended_at ? formatShortDate(meeting.ended_at) : "Syncing"}</td>
-      <td className={tdClass}><Badge tone={meeting.ended_at ? "neutral" : "success"}>{meeting.ended_at ? "Closed" : "Active"}</Badge></td>
+      <td className={tdClass}>
+        {meeting.ended_at ? formatShortDate(meeting.ended_at) : "Syncing"}
+      </td>
+      <td className={tdClass}>
+        <Badge tone={meeting.ended_at ? "neutral" : "success"}>
+          {meeting.ended_at ? "Closed" : "Active"}
+        </Badge>
+      </td>
       <td className={cx(tdClass, "space-x-2")}>
-        <button className={secondaryButton} type="button" onClick={() => updateMeeting(meeting.id, title, groupName)}>Save</button>
-        <button className={secondaryButton} type="button" disabled={Boolean(meeting.ended_at)} onClick={() => closeMeeting(meeting.id)}>Close</button>
-        <a className={secondaryButton} href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}>CSV</a>
+        <button
+          className={secondaryButton}
+          type="button"
+          onClick={() => updateMeeting(meeting.id, title, groupName)}>
+          Save
+        </button>
+        <button
+          className={secondaryButton}
+          type="button"
+          disabled={Boolean(meeting.ended_at)}
+          onClick={() => closeMeeting(meeting.id)}>
+          Close
+        </button>
+        <a
+          className={secondaryButton}
+          href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}>
+          CSV
+        </a>
       </td>
     </tr>
   );
 }
 
-function LiveAttendancePage({ currentRecords, unmatchedRecords, historyRecords, students, meetings, createAlias }) {
+function LiveAttendancePage({
+  currentRecords,
+  unmatchedRecords,
+  historyRecords,
+  students,
+  meetings,
+  createAlias
+}) {
   const currentMeeting = activeMeeting(meetings);
   const lastSync = lastActivityTime(currentRecords, unmatchedRecords, historyRecords);
 
@@ -777,27 +894,52 @@ function LiveAttendancePage({ currentRecords, unmatchedRecords, historyRecords, 
     <section className="grid gap-5">
       <div className="grid grid-cols-[minmax(220px,0.75fr)_minmax(320px,1.35fr)_minmax(260px,0.9fr)] items-start gap-5">
         <Card>
-          <CardHeader title="Meeting Control" meta="Host console and saved meeting controls for the current lesson." />
+          <CardHeader
+            title="Meeting Control"
+            meta="Host console and saved meeting controls for the current lesson."
+          />
           <div className="grid gap-3 p-5">
-            <a className={primaryButton} href="/teacher-meeting">Open join console</a>
-            <button className={secondaryButton} type="button" onClick={() => { window.location.hash = "meetings"; window.dispatchEvent(new HashChangeEvent("hashchange")); }}>Manage saved meetings</button>
+            <a className={primaryButton} href="/teacher-meeting">
+              Open join console
+            </a>
+            <button
+              className={secondaryButton}
+              type="button"
+              onClick={() => {
+                window.location.hash = "meetings";
+                window.dispatchEvent(new HashChangeEvent("hashchange"));
+              }}>
+              Manage saved meetings
+            </button>
             <div className="grid grid-cols-2 gap-2">
-              <StatusTile label="Sync" value={currentMeeting ? "Active" : "Idle"} tone={currentMeeting ? "success" : "neutral"} />
+              <StatusTile
+                label="Sync"
+                value={currentMeeting ? "Active" : "Idle"}
+                tone={currentMeeting ? "success" : "neutral"}
+              />
               <StatusTile label="Last sync" value={formatShortDate(lastSync)} />
             </div>
           </div>
         </Card>
         <Card>
-          <CardHeader title="Participants / Matched Students" meta="Current active Zoom names from the attendance sync.">
+          <CardHeader
+            title="Participants / Matched Students"
+            meta="Current active Zoom names from the attendance sync.">
             <Badge>{currentRecords.length}</Badge>
           </CardHeader>
           <ParticipantsTable records={currentRecords} />
         </Card>
         <Card>
           <CardHeader title="Unmatched Names" meta="Quick alias actions for unresolved Zoom names.">
-            <Badge tone={unmatchedRecords.length ? "warning" : "neutral"}>{unmatchedRecords.length}</Badge>
+            <Badge tone={unmatchedRecords.length ? "warning" : "neutral"}>
+              {unmatchedRecords.length}
+            </Badge>
           </CardHeader>
-          <UnmatchedTable records={unmatchedRecords} students={students} createAlias={createAlias} />
+          <UnmatchedTable
+            records={unmatchedRecords}
+            students={students}
+            createAlias={createAlias}
+          />
         </Card>
       </div>
       <HistoryTable title="Attendance Timeline" records={historyRecords} />
@@ -811,18 +953,30 @@ function ParticipantsTable({ records }) {
     <div className={tableWrapClass}>
       <table className={tableClass}>
         <thead>
-          <tr>{["Name", "Meeting", "Session", "Last seen", "Duration"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+          <tr>
+            {["Name", "Meeting", "Session", "Last seen", "Duration"].map((head) => (
+              <th key={head} className={thClass}>
+                {head}
+              </th>
+            ))}
+          </tr>
         </thead>
         <tbody>
-          {rows.length ? rows.map((record) => (
-            <tr key={`${record.id}-${record.participant_name}`}>
-              <td className={tdClass}>{record.participant_name}</td>
-              <td className={tdClass}>{record.meeting_id}</td>
-              <td className={tdClass}>{record.meeting_session_id ? `#${record.meeting_session_id}` : ""}</td>
-              <td className={tdClass}>{formatShortDate(record.last_seen)}</td>
-              <td className={tdClass}>{formatDuration(record.total_seconds)}</td>
-            </tr>
-          )) : <EmptyRow colSpan={5}>No active participants yet.</EmptyRow>}
+          {rows.length ? (
+            rows.map((record) => (
+              <tr key={`${record.id}-${record.participant_name}`}>
+                <td className={tdClass}>{record.participant_name}</td>
+                <td className={tdClass}>{record.meeting_id}</td>
+                <td className={tdClass}>
+                  {record.meeting_session_id ? `#${record.meeting_session_id}` : ""}
+                </td>
+                <td className={tdClass}>{formatShortDate(record.last_seen)}</td>
+                <td className={tdClass}>{formatDuration(record.total_seconds)}</td>
+              </tr>
+            ))
+          ) : (
+            <EmptyRow colSpan={5}>No active participants yet.</EmptyRow>
+          )}
         </tbody>
       </table>
     </div>
@@ -833,26 +987,48 @@ function HistoryTable({ title = "Attendance History", records }) {
   const rows = historyLimit(records);
   return (
     <Card>
-      <CardHeader title={title} meta={`Showing up to ${MAX_ATTENDANCE} attendance records.`}>
+      <CardHeader title={title}>
         <Badge>{rows.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
-            <tr>{["Name", "Meeting", "Session", "Status", "First seen", "Last seen", "Total"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+            <tr>
+              {["Name", "Meeting", "Session", "Status", "First seen", "Last seen", "Total"].map(
+                (head) => (
+                  <th key={head} className={thClass}>
+                    {head}
+                  </th>
+                )
+              )}
+            </tr>
           </thead>
           <tbody>
-            {rows.length ? rows.map((record) => (
-              <tr key={`${record.id}-${record.first_seen}`}>
-                <td className={tdClass}>{record.participant_name}</td>
-                <td className={tdClass}>{record.meeting_id}</td>
-                <td className={tdClass}>{record.meeting_session_id ? `#${record.meeting_session_id}` : ""}</td>
-                <td className={cx(tdClass, record.status === "active" ? "font-black text-success" : "font-black text-danger")}>{record.status}</td>
-                <td className={tdClass}>{formatShortDate(record.first_seen)}</td>
-                <td className={tdClass}>{formatShortDate(record.last_seen)}</td>
-                <td className={tdClass}>{formatDuration(record.total_seconds)}</td>
-              </tr>
-            )) : <EmptyRow colSpan={7}>No attendance history yet.</EmptyRow>}
+            {rows.length ? (
+              rows.map((record) => (
+                <tr key={`${record.id}-${record.first_seen}`}>
+                  <td className={tdClass}>{record.participant_name}</td>
+                  <td className={tdClass}>{record.meeting_id}</td>
+                  <td className={tdClass}>
+                    {record.meeting_session_id ? `#${record.meeting_session_id}` : ""}
+                  </td>
+                  <td
+                    className={cx(
+                      tdClass,
+                      record.status === "active"
+                        ? "font-black text-success"
+                        : "font-black text-danger"
+                    )}>
+                    {record.status}
+                  </td>
+                  <td className={tdClass}>{formatShortDate(record.first_seen)}</td>
+                  <td className={tdClass}>{formatShortDate(record.last_seen)}</td>
+                  <td className={tdClass}>{formatDuration(record.total_seconds)}</td>
+                </tr>
+              ))
+            ) : (
+              <EmptyRow colSpan={7}>No attendance history yet.</EmptyRow>
+            )}
           </tbody>
         </table>
       </div>
@@ -871,7 +1047,9 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
   const filtered = students.filter((student) => {
     const aliases = (student.aliases || []).join(" ");
     const haystack = normalize(`${student.full_name} ${student.group_name} ${aliases}`);
-    return (!group || student.group_name === group) && (!search || haystack.includes(normalize(search)));
+    return (
+      (!group || student.group_name === group) && (!search || haystack.includes(normalize(search)))
+    );
   });
 
   async function submitStudent(event) {
@@ -888,7 +1066,9 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
     }
     setStatus("Importing...");
     const result = await importStudents(file, replaceExisting);
-    setStatus(`Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}.`);
+    setStatus(
+      `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}.`
+    );
     setFile(null);
   }
 
@@ -896,10 +1076,22 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
     <section className="grid gap-5">
       <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
         <div className="flex gap-3">
-          <input className={cx(inputClass, "w-72")} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search students or aliases" />
-          <select className={cx(inputClass, "w-52")} value={group} onChange={(event) => setGroup(event.target.value)}>
+          <input
+            className={cx(inputClass, "w-72")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search students or aliases"
+          />
+          <select
+            className={cx(inputClass, "w-52")}
+            value={group}
+            onChange={(event) => setGroup(event.target.value)}>
             <option value="">All groups</option>
-            {groups.map((item) => <option key={item} value={item}>{item}</option>)}
+            {groups.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -907,38 +1099,102 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
       <div className="grid grid-cols-2 gap-5">
         <Card>
           <CardHeader title="Add Student" />
-          <form className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 p-5" onSubmit={submitStudent}>
-            <label className={labelClass}>Student name<input className={inputClass} value={newStudent.full_name} onChange={(event) => setNewStudent({ ...newStudent, full_name: event.target.value })} required /></label>
-            <label className={labelClass}>Group<input className={inputClass} value={newStudent.group_name} onChange={(event) => setNewStudent({ ...newStudent, group_name: event.target.value })} required /></label>
-            <button className={primaryButton} type="submit">Create</button>
+          <form
+            className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 p-5"
+            onSubmit={submitStudent}>
+            <label className={labelClass}>
+              Student name
+              <input
+                className={inputClass}
+                value={newStudent.full_name}
+                onChange={(event) =>
+                  setNewStudent({ ...newStudent, full_name: event.target.value })
+                }
+                required
+              />
+            </label>
+            <label className={labelClass}>
+              Group
+              <input
+                className={inputClass}
+                value={newStudent.group_name}
+                onChange={(event) =>
+                  setNewStudent({ ...newStudent, group_name: event.target.value })
+                }
+                required
+              />
+            </label>
+            <button className={primaryButton} type="submit">
+              Create
+            </button>
           </form>
         </Card>
         <Card>
           <CardHeader title="Import Students" meta={status} />
-          <form className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5" onSubmit={submitImport}>
-            <label className={labelClass}>CSV file<input className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm" type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] || null)} /></label>
-            <label className="inline-flex items-center gap-2 text-sm font-bold text-muted"><input type="checkbox" checked={replaceExisting} onChange={(event) => setReplaceExisting(event.target.checked)} /> Replace</label>
-            <button className={primaryButton} type="submit">Import</button>
+          <form
+            className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
+            onSubmit={submitImport}>
+            <label className={labelClass}>
+              CSV file
+              <input
+                className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event) => setFile(event.target.files?.[0] || null)}
+              />
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+              <input
+                type="checkbox"
+                checked={replaceExisting}
+                onChange={(event) => setReplaceExisting(event.target.checked)}
+              />{" "}
+              Replace
+            </label>
+            <button className={primaryButton} type="submit">
+              Import
+            </button>
           </form>
         </Card>
       </div>
 
       <Card>
-        <CardHeader title="Student Roster" meta={`${filtered.length} visible student${filtered.length === 1 ? "" : "s"}.`}>
+        <CardHeader
+          title="Student Roster"
+          meta={`${filtered.length} visible student${filtered.length === 1 ? "" : "s"}.`}>
           <Badge>{filtered.length}</Badge>
         </CardHeader>
         <div className={tableWrapClass}>
           <table className={tableClass}>
             <thead>
-              <tr>{["Student name", "Group", "Aliases", "Attendance status", "Actions"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+              <tr>
+                {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map(
+                  (head) => (
+                    <th key={head} className={thClass}>
+                      {head}
+                    </th>
+                  )
+                )}
+              </tr>
             </thead>
             <tbody>
-              {filtered.length ? filtered.map((student) => {
-                const present = currentRecords.some((record) => studentKeys(student).includes(normalize(record.participant_name)));
-                return (
-                  <StudentRow key={student.id} student={student} present={present} createAlias={createAlias} />
-                );
-              }) : <EmptyRow colSpan={5}>No students match this view.</EmptyRow>}
+              {filtered.length ? (
+                filtered.map((student) => {
+                  const present = currentRecords.some((record) =>
+                    studentKeys(student).includes(normalize(record.participant_name))
+                  );
+                  return (
+                    <StudentRow
+                      key={student.id}
+                      student={student}
+                      present={present}
+                      createAlias={createAlias}
+                    />
+                  );
+                })
+              ) : (
+                <EmptyRow colSpan={5}>No students match this view.</EmptyRow>
+              )}
             </tbody>
           </table>
         </div>
@@ -963,11 +1219,20 @@ function StudentRow({ student, present, createAlias }) {
       <td className={tdClass}>{student.full_name}</td>
       <td className={tdClass}>{student.group_name}</td>
       <td className={tdClass}>{(student.aliases || []).join(", ") || "None"}</td>
-      <td className={cx(tdClass, present ? "font-black text-success" : "text-muted")}>{present ? "Present" : "Not active"}</td>
+      <td className={cx(tdClass, present ? "font-black text-success" : "text-muted")}>
+        {present ? "Present" : "Not active"}
+      </td>
       <td className={tdClass}>
         <form className="flex gap-2" onSubmit={submitAlias}>
-          <input className={cx(inputClass, "min-w-48")} value={alias} onChange={(event) => setAlias(event.target.value)} placeholder="Zoom display name" />
-          <button className={secondaryButton} type="submit">Add alias</button>
+          <input
+            className={cx(inputClass, "min-w-48")}
+            value={alias}
+            onChange={(event) => setAlias(event.target.value)}
+            placeholder="Zoom display name"
+          />
+          <button className={secondaryButton} type="submit">
+            Add alias
+          </button>
         </form>
       </td>
     </tr>
@@ -982,39 +1247,101 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
     const startsAt = new Date(summary.lesson_starts_at);
     const from = filters.from ? new Date(`${filters.from}T00:00:00`) : null;
     const to = filters.to ? new Date(`${filters.to}T23:59:59`) : null;
-    const dateMatches = Number.isNaN(startsAt.getTime()) || ((!from || startsAt >= from) && (!to || startsAt <= to));
+    const dateMatches =
+      Number.isNaN(startsAt.getTime()) || ((!from || startsAt >= from) && (!to || startsAt <= to));
     return (!filters.group || summary.group_name === filters.group) && dateMatches;
   });
   const average = filteredSummaries.length
-    ? Math.round((filteredSummaries.filter((summary) => summary.status === "п").length / filteredSummaries.length) * 100)
+    ? Math.round(
+        (filteredSummaries.filter((summary) => summary.status === "п").length /
+          filteredSummaries.length) *
+          100
+      )
     : 0;
-  const exportQuery = filters.meetingId ? `?meeting_id=${encodeURIComponent(filters.meetingId)}` : "";
+  const exportQuery = filters.meetingId
+    ? `?meeting_id=${encodeURIComponent(filters.meetingId)}`
+    : "";
 
   async function submitSummary() {
     setStatus("Generating...");
     const result = await generateSummary();
-    setStatus(`Generated ${result.generated_count}: ${result.present_count} present, ${result.absent_count} absent.`);
+    setStatus(
+      `Generated ${result.generated_count}: ${result.present_count} present, ${result.absent_count} absent.`
+    );
   }
 
   return (
     <section className="grid gap-5">
       <div className="grid grid-cols-4 gap-3">
         <StatusTile label="Total sessions" value={filteredSummaries.length} />
-        <StatusTile label="Average attendance" value={`${average}%`} tone={average >= 70 ? "success" : "warning"} />
-        <StatusTile label="Absences" value={filteredSummaries.filter((summary) => summary.status !== "п").length} tone="warning" />
-        <StatusTile label="Attendance rows" value={Math.min(historyRecords.length, MAX_ATTENDANCE)} />
+        <StatusTile
+          label="Average attendance"
+          value={`${average}%`}
+          tone={average >= 70 ? "success" : "warning"}
+        />
+        <StatusTile
+          label="Absences"
+          value={filteredSummaries.filter((summary) => summary.status !== "п").length}
+          tone="warning"
+        />
+        <StatusTile
+          label="Attendance rows"
+          value={Math.min(historyRecords.length, MAX_ATTENDANCE)}
+        />
       </div>
       <div className="flex items-end justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
         <div className="flex gap-3">
-          <label className={labelClass}>From<input className={inputClass} type="date" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></label>
-          <label className={labelClass}>To<input className={inputClass} type="date" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></label>
-          <label className={labelClass}>Group<select className={cx(inputClass, "w-52")} value={filters.group} onChange={(event) => setFilters({ ...filters, group: event.target.value })}><option value="">All groups</option>{groups.map((group) => <option key={group} value={group}>{group}</option>)}</select></label>
-          <label className={labelClass}>Meeting ID<input className={inputClass} value={filters.meetingId} onChange={(event) => setFilters({ ...filters, meetingId: event.target.value })} /></label>
+          <label className={labelClass}>
+            Start date
+            <input
+              className={inputClass}
+              type="date"
+              value={filters.from}
+              onChange={(event) => setFilters({ ...filters, from: event.target.value })}
+            />
+          </label>
+          <label className={labelClass}>
+            End date
+            <input
+              className={inputClass}
+              type="date"
+              value={filters.to}
+              onChange={(event) => setFilters({ ...filters, to: event.target.value })}
+            />
+          </label>
+          <label className={labelClass}>
+            Group
+            <select
+              className={cx(inputClass, "w-52")}
+              value={filters.group}
+              onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
+              <option value="">All groups</option>
+              {groups.map((group) => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={labelClass}>
+            Meeting ID
+            <input
+              className={inputClass}
+              value={filters.meetingId}
+              onChange={(event) => setFilters({ ...filters, meetingId: event.target.value })}
+            />
+          </label>
         </div>
         <div className="flex gap-2">
-          <a className={secondaryButton} href={`/attendance/export.csv${exportQuery}`}>Attendance CSV</a>
-          <a className={secondaryButton} href="/reports/attendance-matrix.csv">Matrix CSV</a>
-          <button className={primaryButton} type="button" onClick={submitSummary}>Generate Journal</button>
+          <a className={secondaryButton} href={`/attendance/export.csv${exportQuery}`}>
+            Attendance CSV
+          </a>
+          <a className={secondaryButton} href="/reports/attendance-matrix.csv">
+            Matrix CSV
+          </a>
+          <button className={primaryButton} type="button" onClick={submitSummary}>
+            Generate Journal
+          </button>
         </div>
       </div>
       {status ? <p className="text-sm font-bold text-muted">{status}</p> : null}
@@ -1027,25 +1354,43 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
 function SummaryTable({ summaries }) {
   return (
     <Card>
-      <CardHeader title="Attendance Journal" meta="Generated attendance summaries by lesson and student.">
+      <CardHeader title="Attendance Journal">
         <Badge>{summaries.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
-            <tr>{["Student", "Group", "Lesson", "Start", "Status", "Total"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+            <tr>
+              {["Student", "Group", "Lesson", "Start", "Status", "Total"].map((head) => (
+                <th key={head} className={thClass}>
+                  {head}
+                </th>
+              ))}
+            </tr>
           </thead>
           <tbody>
-            {summaries.length ? summaries.map((summary) => (
-              <tr key={summary.id}>
-                <td className={tdClass}>{summary.student_name}</td>
-                <td className={tdClass}>{summary.group_name}</td>
-                <td className={tdClass}>{summary.lesson_title || ""}</td>
-                <td className={tdClass}>{formatShortDate(summary.lesson_starts_at)}</td>
-                <td className={cx(tdClass, summary.status === "п" ? "font-black text-success" : "font-black text-danger")}>{summary.status}</td>
-                <td className={tdClass}>{formatDuration(summary.total_seconds)}</td>
-              </tr>
-            )) : <EmptyRow colSpan={6}>Waiting for scheduled attendance updates, or generate the journal manually.</EmptyRow>}
+            {summaries.length ? (
+              summaries.map((summary) => (
+                <tr key={summary.id}>
+                  <td className={tdClass}>{summary.student_name}</td>
+                  <td className={tdClass}>{summary.group_name}</td>
+                  <td className={tdClass}>{summary.lesson_title || ""}</td>
+                  <td className={tdClass}>{formatShortDate(summary.lesson_starts_at)}</td>
+                  <td
+                    className={cx(
+                      tdClass,
+                      summary.status === "п" ? "font-black text-success" : "font-black text-danger"
+                    )}>
+                    {summary.status}
+                  </td>
+                  <td className={tdClass}>{formatDuration(summary.total_seconds)}</td>
+                </tr>
+              ))
+            ) : (
+              <EmptyRow colSpan={6}>
+                Waiting for scheduled attendance updates, or generate the journal manually.
+              </EmptyRow>
+            )}
           </tbody>
         </table>
       </div>
@@ -1053,7 +1398,14 @@ function SummaryTable({ summaries }) {
   );
 }
 
-function SettingsPage({ oauthStatus, sdkConfig, students, schedule, scheduleImport, disconnectZoom }) {
+function SettingsPage({
+  oauthStatus,
+  sdkConfig,
+  students,
+  schedule,
+  scheduleImport,
+  disconnectZoom
+}) {
   const [file, setFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [status, setStatus] = useState("Import schedule CSV for attendance journals.");
@@ -1067,7 +1419,9 @@ function SettingsPage({ oauthStatus, sdkConfig, students, schedule, scheduleImpo
     }
     setStatus("Importing...");
     const result = await scheduleImport(file, replaceExisting);
-    setStatus(`Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}.`);
+    setStatus(
+      `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}.`
+    );
     setFile(null);
   }
 
@@ -1076,41 +1430,93 @@ function SettingsPage({ oauthStatus, sdkConfig, students, schedule, scheduleImpo
       <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-5">
         <Card>
           <div className="grid gap-2 p-3">
-            {["Zoom", "Groups", "Schedule", "Advanced"].map((item) => <div key={item} className="rounded-lg bg-yellow-100 px-3 py-2 text-sm font-black">{item}</div>)}
+            {["Zoom", "Groups", "Schedule", "Advanced"].map((item) => (
+              <div key={item} className="rounded-lg bg-yellow-100 px-3 py-2 text-sm font-black">
+                {item}
+              </div>
+            ))}
           </div>
         </Card>
         <div className="grid gap-5">
           <Card>
-            <CardHeader title="Zoom Integration" meta="OAuth and Meeting SDK readiness.">
-              <Badge tone={oauthStatus?.authorized ? "success" : "warning"}>{oauthStatus?.authorized ? "Connected" : "Needs OAuth"}</Badge>
+            <CardHeader title="Zoom Integration">
+              <Badge tone={oauthStatus?.authorized ? "success" : "warning"}>
+                {oauthStatus?.authorized ? "Connected" : "Needs OAuth"}
+              </Badge>
             </CardHeader>
             <div className="grid grid-cols-4 gap-3 p-5">
-              <StatusTile label="OAuth" value={oauthStatus?.authorized ? "Connected" : "Not connected"} tone={oauthStatus?.authorized ? "success" : "warning"} />
-              <StatusTile label="Account" value={oauthStatus?.display_name || oauthStatus?.email || "Unknown"} />
-              <StatusTile label="SDK" value={sdkConfig?.configured ? "Configured" : "Missing credentials"} tone={sdkConfig?.configured ? "success" : "danger"} />
-              <StatusTile label="ZAK" value={oauthStatus?.authorized ? "Available" : "Requires OAuth"} />
+              <StatusTile
+                label="OAuth"
+                value={oauthStatus?.authorized ? "Connected" : "Not connected"}
+                tone={oauthStatus?.authorized ? "success" : "warning"}
+              />
+              <StatusTile
+                label="Account"
+                value={oauthStatus?.display_name || oauthStatus?.email || "Unknown"}
+              />
+              <StatusTile
+                label="SDK"
+                value={sdkConfig?.configured ? "Configured" : "Missing credentials"}
+                tone={sdkConfig?.configured ? "success" : "danger"}
+              />
+              <StatusTile
+                label="ZAK"
+                value={oauthStatus?.authorized ? "Available" : "Requires OAuth"}
+              />
             </div>
             <div className="flex gap-2 px-5 pb-5">
-              <button className={primaryButton} type="button" onClick={() => { window.location.href = "/zoom/oauth/start?prompt=login"; }}>
+              <button
+                className={primaryButton}
+                type="button"
+                onClick={() => {
+                  window.location.href = "/zoom/oauth/start?prompt=login";
+                }}>
                 {oauthStatus?.authorized ? "Authorize different account" : "Authorize Zoom"}
               </button>
-              {oauthStatus?.authorized ? <button className={dangerButton} type="button" onClick={disconnectZoom}>Disconnect Zoom</button> : null}
+              {oauthStatus?.authorized ? (
+                <button className={dangerButton} type="button" onClick={disconnectZoom}>
+                  Disconnect Zoom
+                </button>
+              ) : null}
             </div>
           </Card>
 
           <Card>
-            <CardHeader title="Groups" meta="Groups detected from the current roster." />
+            <CardHeader title="Groups" />
             <div className="flex flex-wrap gap-2 p-5">
-              {groups.length ? groups.map((group) => <Badge key={group}>{group}</Badge>) : <span className="text-sm text-muted">No groups imported yet.</span>}
+              {groups.length ? (
+                groups.map((group) => <Badge key={group}>{group}</Badge>)
+              ) : (
+                <span className="text-sm text-muted">No groups imported yet.</span>
+              )}
             </div>
           </Card>
 
           <Card>
             <CardHeader title="Schedule Import" meta={status} />
-            <form className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5" onSubmit={submitSchedule}>
-              <label className={labelClass}>Schedule CSV<input className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm" type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] || null)} /></label>
-              <label className="inline-flex items-center gap-2 text-sm font-bold text-muted"><input type="checkbox" checked={replaceExisting} onChange={(event) => setReplaceExisting(event.target.checked)} /> Replace</label>
-              <button className={primaryButton} type="submit">Import</button>
+            <form
+              className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
+              onSubmit={submitSchedule}>
+              <label className={labelClass}>
+                Schedule CSV
+                <input
+                  className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm"
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) => setFile(event.target.files?.[0] || null)}
+                />
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+                <input
+                  type="checkbox"
+                  checked={replaceExisting}
+                  onChange={(event) => setReplaceExisting(event.target.checked)}
+                />{" "}
+                Replace
+              </label>
+              <button className={primaryButton} type="submit">
+                Import
+              </button>
             </form>
             <ScheduleTable entries={schedule} />
           </Card>
@@ -1125,17 +1531,27 @@ function ScheduleTable({ entries }) {
     <div className={tableWrapClass}>
       <table className={tableClass}>
         <thead>
-          <tr>{["Title", "Group", "Starts", "Ends"].map((head) => <th key={head} className={thClass}>{head}</th>)}</tr>
+          <tr>
+            {["Title", "Group", "Starts", "Ends"].map((head) => (
+              <th key={head} className={thClass}>
+                {head}
+              </th>
+            ))}
+          </tr>
         </thead>
         <tbody>
-          {entries.length ? entries.map((entry) => (
-            <tr key={entry.id}>
-              <td className={tdClass}>{entry.title || ""}</td>
-              <td className={tdClass}>{entry.group_name}</td>
-              <td className={tdClass}>{formatShortDate(entry.starts_at)}</td>
-              <td className={tdClass}>{formatShortDate(entry.ends_at)}</td>
-            </tr>
-          )) : <EmptyRow colSpan={4}>No schedule imported yet.</EmptyRow>}
+          {entries.length ? (
+            entries.map((entry) => (
+              <tr key={entry.id}>
+                <td className={tdClass}>{entry.title || ""}</td>
+                <td className={tdClass}>{entry.group_name}</td>
+                <td className={tdClass}>{formatShortDate(entry.starts_at)}</td>
+                <td className={tdClass}>{formatShortDate(entry.ends_at)}</td>
+              </tr>
+            ))
+          ) : (
+            <EmptyRow colSpan={4}>No schedule imported yet.</EmptyRow>
+          )}
         </tbody>
       </table>
     </div>
@@ -1144,8 +1560,9 @@ function ScheduleTable({ entries }) {
 
 function App() {
   const initialPage = window.location.hash.replace("#", "") || "menu";
-  const [page, setPage] = useState(pages.some((item) => item.id === initialPage) ? initialPage : "menu");
-  const [sessionValue, setSessionValue] = useState("");
+  const [page, setPage] = useState(
+    pages.some((item) => item.id === initialPage) ? initialPage : "menu"
+  );
   const [trendFilter, setTrendFilter] = useState("present");
   const [data, setData] = useState({
     summaries: [],
@@ -1172,12 +1589,9 @@ function App() {
 
   const buildAttendanceQuery = useCallback(() => {
     const params = new URLSearchParams();
-    if (sessionValue) {
-      params.set("meeting_session_id", sessionValue);
-    }
     params.set("limit", String(MAX_ATTENDANCE));
     return `?${params.toString()}`;
-  }, [sessionValue]);
+  }, []);
 
   const refreshData = useCallback(async () => {
     const query = buildAttendanceQuery();
@@ -1344,7 +1758,7 @@ function App() {
 
   return (
     <Shell page={page} setPage={setPage} zoomConnected={Boolean(data.oauthStatus?.authorized)}>
-      <Header page={page} sessionValue={sessionValue} setSessionValue={setSessionValue} meetings={data.meetings} refreshData={refreshData} />
+      <Header page={page} refreshData={refreshData} />
       {page === "menu" ? <MenuPage {...commonPageProps} /> : null}
       {page === "meetings" ? (
         <MeetingsPage

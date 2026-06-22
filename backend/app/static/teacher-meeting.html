@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live Attendance</title>
+    <title>Teacher Meeting</title>
     <link rel="stylesheet" href="/static/styles.css" />
 </head>
 
@@ -22,7 +22,7 @@
             <nav class="sidebar-nav" aria-label="Primary navigation">
                 <a href="/#menu">Menu</a>
                 <a href="/#meetings">Meetings</a>
-                <a class="active" href="/teacher-meeting">Live Attendance</a>
+                <a class="active" href="/teacher-meeting">Teacher Meeting</a>
                 <a href="/#students">Students</a>
                 <a href="/#reports">Reports</a>
                 <a href="/#settings">Settings</a>
@@ -36,13 +36,13 @@
         <main class="workspace meeting-page">
             <header class="topbar">
                 <div>
-                    <p class="eyebrow">Live Attendance</p>
-                    <h1>Lesson Control Center</h1>
+                    <h1>Teacher Meeting</h1>
                 </div>
                 <div class="topbar-actions">
                     <span id="sdk-status" class="pill warning">Checking</span>
                     <button id="zoom-login-button" class="secondary-button" type="button">Authorize Zoom</button>
-                    <button id="zoom-disconnect-button" class="danger-button" type="button" hidden>Disconnect Zoom</button>
+                    <button id="zoom-disconnect-button" class="danger-button" type="button" hidden>Disconnect
+                        Zoom</button>
                 </div>
             </header>
 
@@ -52,7 +52,7 @@
                         <div class="card-header">
                             <div>
                                 <h2>Meeting Control</h2>
-                                <p class="subtle">Select a saved room or enter meeting details for this lesson.</p>
+
                             </div>
                         </div>
                         <div class="meeting-actions">
@@ -85,16 +85,18 @@
                             <div class="button-row">
                                 <button id="join-button" type="button">Join</button>
                                 <button id="save-meeting-button" class="secondary-button" type="button">Save</button>
-                                <button id="delete-meeting-button" class="secondary-button" type="button" disabled>Delete</button>
+                                <button id="delete-meeting-button" class="secondary-button" type="button"
+                                    disabled>Delete</button>
                             </div>
                         </div>
                     </article>
+                </div>
 
+                <div class="live-center">
                     <article class="card">
                         <div class="card-header">
                             <div>
                                 <h2>Live Sync Health</h2>
-                                <p class="subtle">SDK, Zoom join, participant reads, and backend update state.</p>
                             </div>
                         </div>
                         <div class="meeting-status">
@@ -134,12 +136,11 @@
                     </article>
                 </div>
 
-                <div class="live-center">
+                <div class="live-right">
                     <article class="card">
                         <div class="card-header">
                             <div>
                                 <h2>Participants</h2>
-                                <p class="subtle">Current Zoom names read from the Meeting SDK.</p>
                             </div>
                             <span id="live-participant-count" class="pill">0</span>
                         </div>
@@ -152,7 +153,6 @@
                         <div class="card-header">
                             <div>
                                 <h2>Matched Students</h2>
-                                <p class="subtle">Active participants that can be tied to roster records.</p>
                             </div>
                             <span id="live-matched-count" class="pill success">0</span>
                         </div>
@@ -160,14 +160,11 @@
                             <div class="empty-state">No matched students yet.</div>
                         </div>
                     </article>
-                </div>
 
-                <div class="live-right">
                     <article class="card">
                         <div class="card-header">
                             <div>
                                 <h2>Unmatched Names</h2>
-                                <p class="subtle">Create aliases or link Zoom names while the lesson is running.</p>
                             </div>
                             <span id="live-unmatched-count" class="pill warning">0</span>
                         </div>
@@ -177,53 +174,10 @@
                     </article>
                 </div>
             </section>
-
-            <section class="content-grid two-column">
-                <article class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2>Attendance Timeline</h2>
-                            <p class="subtle">Recent sync events, joins, leaves, matches, and unresolved names.</p>
-                        </div>
-                    </div>
-                    <div id="live-history-list" class="panel-list">
-                        <div class="empty-state">No attendance history yet.</div>
-                    </div>
-                </article>
-
-                <article class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2>Saved Meetings</h2>
-                            <p id="saved-meetings-message" class="subtle meeting-table-message">Saved meetings are loading...</p>
-                        </div>
-                        <span id="saved-meetings-count" class="pill">0</span>
-                    </div>
-                    <div class="table-wrap">
-                        <table class="dense-table">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Meeting number</th>
-                                    <th>Password</th>
-                                    <th>Mode</th>
-                                    <th>Updated</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="saved-meetings-table">
-                                <tr>
-                                    <td class="empty" colspan="6">No saved meetings yet.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </article>
-            </section>
         </main>
     </div>
 
-    <script src="/static/teacher-meeting.js?v=2026-06-22-control-center"></script>
+    <script src="/static/teacher-meeting.js?v=2026-06-22-three-column"></script>
 </body>
 
 </html>

@@ -38,26 +38,83 @@ def _meetings_for_schedule(db: Session, entry: ScheduleEntry) -> list[Meeting]:
     return db.scalars(stmt).all()
 
 
-def _attendance_by_name(db: Session, meetings: list[Meeting]) -> tuple[dict[str, int], set[str]]:
-    meeting_ids = [meeting.id for meeting in meetings]
-    if not meeting_ids:
-        return {}, set()
-
-    records = db.scalars(
-        select(AttendanceRecord).where(AttendanceRecord.meeting_session_id.in_(meeting_ids))
-    ).all()
-    seconds_by_name: dict[str, int] = {}
-    seen_names: set[str] = set()
-    for record in records:
-        keys = {
+def _record_name_keys(record: AttendanceRecord) -> set[str]:
+    return {
+        key
+        for key in {
             normalize_student_name(record.participant_name),
             canonical_name_key(record.participant_name),
         }
-        for key in {key for key in keys if key}:
+        if key
+    }
+
+
+def _record_interval(record: AttendanceRecord) -> tuple[datetime, datetime] | None:
+    start = record.first_seen
+    end = record.last_seen
+    if end < start:
+        return None
+    return start, end
+
+
+def _union_interval_seconds(intervals: list[tuple[datetime, datetime]]) -> int:
+    if not intervals:
+        return 0
+
+    merged: list[list[datetime]] = []
+    for start, end in sorted(intervals, key=lambda interval: interval[0]):
+        if not merged or start > merged[-1][1]:
+            merged.append([start, end])
+            continue
+        if end > merged[-1][1]:
+            merged[-1][1] = end
+
+    return sum(max(0, int((end - start).total_seconds())) for start, end in merged)
+
+
+def _attendance_records_for_meetings(db: Session, meetings: list[Meeting]) -> list[AttendanceRecord]:
+    meeting_ids = [meeting.id for meeting in meetings]
+    if not meeting_ids:
+        return []
+
+    return db.scalars(
+        select(AttendanceRecord).where(AttendanceRecord.meeting_session_id.in_(meeting_ids))
+    ).all()
+
+
+def _attendance_by_name(db: Session, meetings: list[Meeting]) -> tuple[dict[str, int], set[str]]:
+    records = _attendance_records_for_meetings(db, meetings)
+    seconds_by_name: dict[str, int] = {}
+    seen_names: set[str] = set()
+    intervals_by_session_name: dict[tuple[int | None, str], list[tuple[datetime, datetime]]] = {}
+    for record in records:
+        interval = _record_interval(record)
+        for key in _record_name_keys(record):
             seen_names.add(key)
-            seconds_by_name[key] = seconds_by_name.get(key, 0) + record.total_seconds
+            session_key = (record.meeting_session_id, key)
+            if interval:
+                intervals_by_session_name.setdefault(session_key, []).append(interval)
+
+    for (_meeting_session_id, key), intervals in intervals_by_session_name.items():
+        seconds_by_name[key] = seconds_by_name.get(key, 0) + _union_interval_seconds(intervals)
 
     return seconds_by_name, seen_names
+
+
+def _student_attendance_seconds_and_seen(
+    records: list[AttendanceRecord],
+    student_keys: set[str],
+) -> tuple[int, bool]:
+    intervals: list[tuple[datetime, datetime]] = []
+    seen = False
+    for record in records:
+        if not (_record_name_keys(record) & student_keys):
+            continue
+        seen = True
+        interval = _record_interval(record)
+        if interval:
+            intervals.append(interval)
+    return _union_interval_seconds(intervals), seen
 
 
 def refresh_attendance_summary_for_schedule(
@@ -79,13 +136,13 @@ def refresh_attendance_summary_for_schedule(
     ).all()
     student_aliases = aliases_by_student_id(db, [student.id for student in students])
     meetings = _meetings_for_schedule(db, entry)
-    seconds_by_name, seen_names = _attendance_by_name(db, meetings)
+    attendance_records = _attendance_records_for_meetings(db, meetings)
     meeting_session_id = meetings[0].id if len(meetings) == 1 else None
 
     for student in students:
         student_keys = build_student_name_keys(student, student_aliases.get(student.id))
-        total_seconds = max((seconds_by_name.get(key, 0) for key in student_keys), default=0)
-        status = "п" if student_keys & seen_names else "н"
+        total_seconds, seen = _student_attendance_seconds_and_seen(attendance_records, student_keys)
+        status = "п" if seen else "н"
         if status == "п":
             present_count += 1
         else:

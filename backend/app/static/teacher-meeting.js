@@ -44,6 +44,7 @@ let attendanceSyncTimer = null;
 let currentMeetingNumber = null;
 let participantCache = new Map();
 let savedMeetings = [];
+let lastAttendanceSyncLog = null;
 
 function setLiveText(target, value) {
   if (target) {
@@ -76,7 +77,10 @@ function setStatus(label, message) {
   sdkStatus.textContent = label;
   sdkMessage.textContent = message;
   setPillTone(sdkStatus, toneForStatus(label));
-  setLiveText(healthSdkStatus, ["Missing", "SDK failed", "SDK missing"].includes(label) ? label : "Initialized");
+  setLiveText(
+    healthSdkStatus,
+    ["Missing", "SDK failed", "SDK missing"].includes(label) ? label : "Initialized"
+  );
   setLiveText(healthJoinedStatus, label === "Joined" ? "Joined" : "Not joined");
   if (sidebarLiveStatus) {
     sidebarLiveStatus.textContent = label;
@@ -150,8 +154,21 @@ function zoomErrorDetails(error) {
   }
 
   return {
-    code: pickNestedValue(error, [["errorCode"], ["code"], ["status"], ["result", "errorCode"], ["error", "errorCode"]]),
-    message: pickNestedValue(error, [["errorMessage"], ["reason"], ["message"], ["result", "errorMessage"], ["result", "message"], ["error", "message"]]),
+    code: pickNestedValue(error, [
+      ["errorCode"],
+      ["code"],
+      ["status"],
+      ["result", "errorCode"],
+      ["error", "errorCode"]
+    ]),
+    message: pickNestedValue(error, [
+      ["errorMessage"],
+      ["reason"],
+      ["message"],
+      ["result", "errorMessage"],
+      ["result", "message"],
+      ["error", "message"]
+    ]),
     method: pickNestedValue(error, [["method"], ["result", "method"]]),
     type: pickNestedValue(error, [["type"], ["name"]]),
     raw: safeJson(error)
@@ -430,15 +447,32 @@ function normalizeParticipantNames(participants) {
 }
 
 function normalizeName(value) {
-  return String(value || "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase();
+}
+
+function teacherParticipantKey() {
+  return normalizeName(teacherNameInput?.value || "Teacher");
+}
+
+function excludeTeacherParticipantNames(participants) {
+  const teacherKey = teacherParticipantKey();
+  if (!teacherKey) {
+    return normalizeParticipantNames(participants);
+  }
+  return normalizeParticipantNames(participants).filter((name) => normalizeName(name) !== teacherKey);
 }
 
 function findStudentForParticipant(name, students) {
   const key = normalizeName(name);
-  return students.find((student) => {
-    const names = [student.full_name, ...(student.aliases || [])].map(normalizeName);
-    return names.includes(key);
-  }) || null;
+  return (
+    students.find((student) => {
+      const names = [student.full_name, ...(student.aliases || [])].map(normalizeName);
+      return names.includes(key);
+    }) || null
+  );
 }
 
 function rememberParticipantNames(names) {
@@ -521,7 +555,14 @@ function collectParticipantNames(value, names = []) {
     return names;
   }
 
-  for (const key of ["attendeesList", "attendeeList", "attendees", "participants", "users", "result"]) {
+  for (const key of [
+    "attendeesList",
+    "attendeeList",
+    "attendees",
+    "participants",
+    "users",
+    "result"
+  ]) {
     if (value[key]) {
       collectParticipantNames(value[key], names);
     }
@@ -595,12 +636,14 @@ function liveFormatDate(value) {
     return "";
   }
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toLocaleString([], {
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleString([], {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
 }
 
 async function createLiveAlias(studentId, aliasName) {
@@ -629,13 +672,19 @@ async function refreshLiveAttendancePanels() {
 
   const query = `?meeting_id=${encodeURIComponent(currentMeetingNumber)}`;
   try {
-    const [currentResponse, unmatchedResponse, historyResponse, studentsResponse] = await Promise.all([
-      fetch(`/attendance/current${query}`),
-      fetch(`/attendance/unmatched${query}`),
-      fetch(`/attendance/history${query}`),
-      fetch("/students")
-    ]);
-    if (!currentResponse.ok || !unmatchedResponse.ok || !historyResponse.ok || !studentsResponse.ok) {
+    const [currentResponse, unmatchedResponse, historyResponse, studentsResponse] =
+      await Promise.all([
+        fetch(`/attendance/current${query}`),
+        fetch(`/attendance/unmatched${query}`),
+        fetch(`/attendance/history${query}`),
+        fetch("/students")
+      ]);
+    if (
+      !currentResponse.ok ||
+      !unmatchedResponse.ok ||
+      !historyResponse.ok ||
+      !studentsResponse.ok
+    ) {
       throw new Error("Unable to load live attendance panels.");
     }
     const [currentRecords, unmatchedRecords, historyRecords, students] = await Promise.all([
@@ -650,9 +699,16 @@ async function refreshLiveAttendancePanels() {
       ...currentRecords.map((record) => record.participant_name),
       ...unmatchedRecords.map((record) => record.participant_name)
     ]);
-    const unmatchedKeys = new Set(unmatchedRecords.map((record) => normalizeName(record.participant_name)));
-    const matchedRecords = currentRecords.filter((record) => !unmatchedKeys.has(normalizeName(record.participant_name)));
-    setLiveText(healthParticipantsStatus, participantNames.length ? `${participantNames.length} readable` : "Waiting");
+    const unmatchedKeys = new Set(
+      unmatchedRecords.map((record) => normalizeName(record.participant_name))
+    );
+    const matchedRecords = currentRecords.filter(
+      (record) => !unmatchedKeys.has(normalizeName(record.participant_name))
+    );
+    setLiveText(
+      healthParticipantsStatus,
+      participantNames.length ? `${participantNames.length} readable` : "Waiting"
+    );
     setLiveText(healthBackendStatus, "Loaded");
     renderPanelList(
       liveParticipantList,
@@ -669,7 +725,9 @@ async function refreshLiveAttendancePanels() {
       "No matched students yet.",
       (record) => {
         const student = findStudentForParticipant(record.participant_name, students);
-        return livePanelItem(`${student?.full_name || record.participant_name} · ${record.group_name || student?.group_name || "Matched roster"} / ${liveFormatDate(record.last_seen)}`);
+        return livePanelItem(
+          `${student?.full_name || record.participant_name} · ${record.group_name || student?.group_name || "Matched roster"} / ${liveFormatDate(record.last_seen)}`
+        );
       }
     );
 
@@ -703,7 +761,10 @@ async function refreshLiveAttendancePanels() {
         const actions = document.createElement("span");
         actions.className = "actions";
         actions.append(select, button);
-        return livePanelItem(`${record.participant_name} · ${record.group_name || "Any group"}`, actions);
+        return livePanelItem(
+          `${record.participant_name} · ${record.group_name || "Any group"}`,
+          actions
+        );
       }
     );
 
@@ -712,7 +773,10 @@ async function refreshLiveAttendancePanels() {
       null,
       historyRecords.slice(0, 10),
       "No attendance history yet.",
-      (record) => livePanelItem(`${record.status}: ${record.participant_name} · ${liveFormatDate(record.last_seen)}`)
+      (record) =>
+        livePanelItem(
+          `${record.status}: ${record.participant_name} · ${liveFormatDate(record.last_seen)}`
+        )
     );
   } catch (error) {
     console.error("Live attendance panels failed", { error: zoomErrorDetails(error) });
@@ -734,13 +798,18 @@ async function syncAttendanceOnce() {
       participants = normalizeParticipantNames(collectParticipantNames(attendeeResponse));
     }
     rememberParticipantNames(participants);
-    participants = normalizeParticipantNames([...participants, ...cachedParticipantNames()]);
+    participants = excludeTeacherParticipantNames([...participants, ...cachedParticipantNames()]);
     const result = await sendAttendanceUpdate(currentMeetingNumber, participants);
+    lastAttendanceSyncLog = {
+      checkedAt: new Date().toISOString(),
+      meetingNumber: currentMeetingNumber,
+      participants,
+      result
+    };
     setAttendanceStatus(
       `Attendance synced: ${result.active_count} active, ${result.unmatched_participants.length} unmatched, ${participants.length} names read.`
     );
     refreshLiveAttendancePanels();
-    console.log("SDK attendance synced", { participants, result, attendeeResponse });
   } catch (error) {
     console.error("SDK attendance sync failed", {
       error: zoomErrorDetails(error),
@@ -754,7 +823,6 @@ async function syncAttendanceOnce() {
 function startAttendanceSync(meetingNumber) {
   currentMeetingNumber = meetingNumber;
   participantCache = new Map();
-  rememberParticipantNames([teacherNameInput.value.trim() || "Teacher"]);
   if (attendanceSyncTimer) {
     clearInterval(attendanceSyncTimer);
   }
@@ -848,10 +916,7 @@ async function loadConfig() {
     return;
   }
 
-  setStatus(
-    "Ready",
-    "Credentials are configured. Enter a meeting number to prepare the teacher join."
-  );
+  setStatus("Ready");
   joinButton.disabled = false;
 }
 
@@ -872,7 +937,8 @@ async function loadOAuthStatus() {
     const label = status.display_name || status.email || status.user_id;
     zoomUserMessage.textContent = `Authorized as ${label}${status.email && status.email !== label ? ` <${status.email}>` : ""}.`;
   } else {
-    zoomUserMessage.textContent = "Zoom is authorized, but the account identity could not be verified. Add a user profile read scope, save the app, then disconnect and authorize again.";
+    zoomUserMessage.textContent =
+      "Zoom is authorized, but the account identity could not be verified. Add a user profile read scope, save the app, then disconnect and authorize again.";
     console.warn("Zoom OAuth profile is unavailable", {
       profileError: status.profile_error,
       scopes: status.scopes || []
@@ -898,9 +964,11 @@ async function loadSavedMeetings() {
   }
   savedMeetings = await response.json();
   renderSavedMeetings(savedMeetingSelect?.value);
-  setSavedMeetingsMessage(savedMeetings.length
-    ? `${savedMeetings.length} saved meeting${savedMeetings.length === 1 ? "" : "s"} available.`
-    : "No saved meetings yet.");
+  setSavedMeetingsMessage(
+    savedMeetings.length
+      ? `${savedMeetings.length} saved meeting${savedMeetings.length === 1 ? "" : "s"} available.`
+      : "No saved meetings yet."
+  );
 }
 
 async function saveCurrentMeeting() {
@@ -1113,15 +1181,14 @@ function prepareClientJoin(signaturePayload, zak, role, joinData = {}) {
             `zak ${zak ? "yes" : "no"}`,
             `meeting ${signaturePayload.meeting_number}`,
             hint
-          ].filter(Boolean).join(" | ");
+          ]
+            .filter(Boolean)
+            .join(" | ");
           console.error("Zoom SDK join failed", {
             error: zoomErrorDetails(error),
             context: zoomJoinContext(signaturePayload, role, zak, joinData)
           });
-          setStatus(
-            "Join failed",
-            message
-          );
+          setStatus("Join failed", message);
         }
       };
       if (zak) {
@@ -1149,7 +1216,10 @@ async function prepareJoin(joinData = {}) {
   joinButton.disabled = true;
   const joinAsHost = joinData.joinAsHost ?? joinAsHostInput.checked;
   const role = joinAsHost ? 1 : 0;
-  setStatus("Preparing", joinAsHost ? "Creating host signature and ZAK token..." : "Creating a Meeting SDK signature...");
+  setStatus(
+    "Preparing",
+    joinAsHost ? "Creating host signature and ZAK token..." : "Creating a Meeting SDK signature..."
+  );
   try {
     if (oauthAuthorized) {
       const meetingCheck = await checkZoomMeeting(meetingNumber);
@@ -1205,10 +1275,12 @@ loadConfig().catch((error) => {
   setStatus("Error", error.message);
   joinButton.disabled = true;
 });
-loadOAuthStatus().catch((error) => {
-  console.error(error);
-  oauthMessage.textContent = error.message;
-}).then(applyInitialMeetingParams);
+loadOAuthStatus()
+  .catch((error) => {
+    console.error(error);
+    oauthMessage.textContent = error.message;
+  })
+  .then(applyInitialMeetingParams);
 loadSavedMeetings().catch((error) => {
   console.error("Load saved meetings failed", { error: zoomErrorDetails(error) });
 });

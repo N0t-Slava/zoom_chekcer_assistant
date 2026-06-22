@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 from ..models import AttendanceRecord, AttendanceStatus, Meeting, ScheduleEntry, Student
 from .report_service import refresh_attendance_summary_for_schedule
 from .schedule_service import find_schedule_for_time
-from .student_service import aliases_by_student_id, build_roster_name_keys, participant_matches_roster
+from .student_service import (
+    aliases_by_student_id,
+    build_roster_name_keys,
+    build_student_name_keys,
+    canonical_name_key,
+    normalize_student_name,
+    participant_matches_roster,
+)
 from .time_service import app_now
 
 
@@ -59,7 +66,50 @@ def _active_records_query(meeting_session_id: int) -> Select[tuple[AttendanceRec
     )
 
 
-def _merge_duplicate_records(db: Session, meeting_session_id: int) -> None:
+def _participant_keys(participant_name: str) -> set[str]:
+    return {
+        key
+        for key in {
+            normalize_student_name(participant_name),
+            canonical_name_key(participant_name),
+        }
+        if key
+    }
+
+
+def _student_identity_lookup(
+    students: list[Student],
+    student_aliases: dict[int, list[str]],
+) -> dict[str, int | None]:
+    identity_by_key: dict[str, int | None] = {}
+    for student in students:
+        for key in build_student_name_keys(student, student_aliases.get(student.id)):
+            existing = identity_by_key.get(key)
+            if existing is None and key in identity_by_key:
+                continue
+            if existing is not None and existing != student.id:
+                identity_by_key[key] = None
+                continue
+            identity_by_key[key] = student.id
+    return identity_by_key
+
+
+def _participant_identity_key(
+    participant_name: str,
+    identity_by_key: dict[str, int | None] | None = None,
+) -> str:
+    for key in _participant_keys(participant_name):
+        student_id = (identity_by_key or {}).get(key)
+        if student_id is not None:
+            return f"student:{student_id}"
+    return f"name:{canonical_name_key(participant_name) or normalize_student_name(participant_name)}"
+
+
+def _merge_duplicate_records(
+    db: Session,
+    meeting_session_id: int,
+    identity_by_key: dict[str, int | None] | None = None,
+) -> bool:
     records = db.scalars(
         select(AttendanceRecord)
         .where(AttendanceRecord.meeting_session_id == meeting_session_id)
@@ -73,7 +123,7 @@ def _merge_duplicate_records(db: Session, meeting_session_id: int) -> None:
     deleted_any = False
 
     for record in records:
-        key = record.participant_name.casefold()
+        key = _participant_identity_key(record.participant_name, identity_by_key)
         existing = by_name.get(key)
         if existing is None:
             by_name[key] = record
@@ -93,6 +143,36 @@ def _merge_duplicate_records(db: Session, meeting_session_id: int) -> None:
 
     if deleted_any:
         db.flush()
+    return deleted_any
+
+
+def merge_duplicate_attendance_records(
+    db: Session,
+    meeting_id: str | None = None,
+    meeting_session_id: int | None = None,
+) -> bool:
+    stmt = select(AttendanceRecord.meeting_session_id).where(
+        AttendanceRecord.meeting_session_id.is_not(None)
+    )
+    if meeting_session_id:
+        stmt = stmt.where(AttendanceRecord.meeting_session_id == meeting_session_id)
+    if meeting_id:
+        stmt = stmt.where(AttendanceRecord.meeting_id == meeting_id)
+
+    session_ids = [session_id for session_id in db.scalars(stmt.distinct()).all() if session_id]
+    merged_any = False
+    for session_id in session_ids:
+        meeting = db.get(Meeting, session_id)
+        identity_by_key = None
+        if meeting and meeting.group_name:
+            students = db.scalars(select(Student).where(Student.group_name == meeting.group_name)).all()
+            student_aliases = aliases_by_student_id(db, [student.id for student in students])
+            identity_by_key = _student_identity_lookup(students, student_aliases)
+        merged_any = _merge_duplicate_records(db, session_id, identity_by_key) or merged_any
+
+    if merged_any:
+        db.commit()
+    return merged_any
 
 
 def expire_stale_active_records(
@@ -159,6 +239,14 @@ def process_attendance_update(
     meeting = get_or_create_current_meeting(db, meeting_id, now)
     expire_stale_active_records(db, meeting_session_id=meeting.id)
     participant_names = normalize_participant_names(participants)
+    schedule_entry = db.get(ScheduleEntry, meeting.schedule_entry_id) if meeting.schedule_entry_id else None
+    roster_students = (
+        db.scalars(select(Student).where(Student.group_name == schedule_entry.group_name)).all()
+        if schedule_entry
+        else []
+    )
+    student_aliases = aliases_by_student_id(db, [student.id for student in roster_students])
+    identity_by_key = _student_identity_lookup(roster_students, student_aliases)
 
     legacy_active_records = db.scalars(
         select(AttendanceRecord).where(
@@ -170,7 +258,7 @@ def process_attendance_update(
         record.meeting_session_id = meeting.id
 
     db.flush()
-    _merge_duplicate_records(db, meeting.id)
+    _merge_duplicate_records(db, meeting.id, identity_by_key)
     session_records = db.scalars(
         select(AttendanceRecord)
         .where(AttendanceRecord.meeting_session_id == meeting.id)
@@ -179,9 +267,11 @@ def process_attendance_update(
 
     records_by_name: dict[str, AttendanceRecord] = {}
     for record in session_records:
-        records_by_name.setdefault(record.participant_name.casefold(), record)
+        records_by_name.setdefault(_participant_identity_key(record.participant_name, identity_by_key), record)
 
-    incoming_by_name = {name.casefold(): name for name in participant_names}
+    incoming_by_name: dict[str, str] = {}
+    for name in participant_names:
+        incoming_by_name.setdefault(_participant_identity_key(name, identity_by_key), name)
     joined: list[str] = []
     left: list[str] = []
     unmatched_participants: list[str] = []
@@ -221,24 +311,20 @@ def process_attendance_update(
         record.status = AttendanceStatus.LEFT.value
         left.append(record.participant_name)
 
-    if meeting.schedule_entry_id:
-        schedule_entry = db.get(ScheduleEntry, meeting.schedule_entry_id)
-        if schedule_entry:
-            refresh_attendance_summary_for_schedule(db, schedule_entry, now)
-            students = db.scalars(
-                select(Student).where(Student.group_name == schedule_entry.group_name)
-            ).all()
-            student_aliases = aliases_by_student_id(db, [student.id for student in students])
-            roster_keys = build_roster_name_keys(students, student_aliases)
-            unmatched_participants = [
-                name for name in participant_names if not participant_matches_roster(name, roster_keys)
-            ]
+    if schedule_entry:
+        refresh_attendance_summary_for_schedule(db, schedule_entry, now)
+        roster_keys = build_roster_name_keys(roster_students, student_aliases)
+        unmatched_participants = [
+            name for name in participant_names if not participant_matches_roster(name, roster_keys)
+        ]
 
     db.commit()
 
-    logger.info(
-        "Processed attendance update for meeting '%s': active=%s joined=%s left=%s",
+    log_method = logger.info if joined or left else logger.debug
+    log_method(
+        "Processed attendance update for meeting '%s': session=%s active=%s joined=%s left=%s",
         meeting_id,
+        meeting.id,
         len(incoming_by_name),
         joined,
         left,
@@ -263,6 +349,7 @@ def list_current_attendance(
     meeting_session_id: int | None = None,
 ) -> list[AttendanceRecord]:
     expire_stale_active_records(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
+    merge_duplicate_attendance_records(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
 
     stmt = select(AttendanceRecord).where(
         AttendanceRecord.status == AttendanceStatus.ACTIVE.value
@@ -336,6 +423,7 @@ def list_attendance_history(
     limit: int | None = None,
 ) -> list[AttendanceRecord]:
     expire_stale_active_records(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
+    merge_duplicate_attendance_records(db, meeting_id=meeting_id, meeting_session_id=meeting_session_id)
 
     stmt = select(AttendanceRecord)
     if meeting_session_id:
