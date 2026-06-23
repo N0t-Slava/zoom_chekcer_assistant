@@ -135,6 +135,18 @@ export ZOOM_OAUTH_REDIRECT_URL="http://127.0.0.1:8000/zoom/oauth/callback"
 export APP_SECRET_KEY="use_a_long_random_string_for_token_encryption"
 ```
 
+For production, also set:
+
+```bash
+export APP_ENV="production"
+export ALLOWED_ZOOM_EMAILS="teacher1@example.com,teacher2@example.com"
+export FORCE_SECURE_COOKIES="true"
+export CORS_ALLOWED_ORIGINS="https://your-domain.example"
+```
+
+When `APP_ENV=production`, the app requires `ALLOWED_ZOOM_EMAILS`. Only approved Zoom
+accounts can access the dashboard and APIs after OAuth.
+
 Optional:
 
 ```bash

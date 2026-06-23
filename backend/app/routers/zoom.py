@@ -16,6 +16,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..config import allowed_zoom_emails, force_secure_cookies, is_production, session_cookie_name
 from ..database import get_db
 from ..models import ZoomSavedMeeting
 from ..schemas import (
@@ -46,7 +47,7 @@ DEFAULT_SDK_JS_URL = "https://source.zoom.us/3.13.2/zoom-meeting-3.13.2.min.js"
 JWT_TTL_SECONDS = 2 * 60 * 60
 ZOOM_AUTHORIZE_URL = "https://zoom.us/oauth/authorize"
 ZOOM_TOKEN_URL = "https://zoom.us/oauth/token"
-SESSION_COOKIE_NAME = "class_tracker_teacher_session"
+SESSION_COOKIE_NAME = session_cookie_name()
 
 oauth_states: dict[str, str] = {}
 
@@ -72,11 +73,21 @@ def _include_legacy_sdk_key_claim() -> bool:
 
 
 def _cookie_secure(request: Request) -> bool:
-    return request.url.scheme == "https"
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    return force_secure_cookies() or request.url.scheme == "https" or forwarded_proto == "https"
+
+
+def _zoom_email_allowed(email: str | None) -> bool:
+    allowlist = allowed_zoom_emails()
+    if is_production() and not allowlist:
+        return False
+    if not allowlist:
+        return True
+    return bool(email and email.casefold() in allowlist)
 
 
 def _session_id_from_request(request: Request) -> str | None:
-    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    session_id = request.cookies.get(session_cookie_name())
     if not session_id:
         return None
     return session_id
@@ -88,7 +99,7 @@ def _new_session_id() -> str:
 
 def _set_session_cookie(response: Response, request: Request, session_id: str) -> None:
     response.set_cookie(
-        SESSION_COOKIE_NAME,
+        session_cookie_name(),
         session_id,
         httponly=True,
         secure=_cookie_secure(request),
@@ -335,6 +346,13 @@ async def zoom_oauth_callback(
         user = _zoom_api_get_with_token(token_payload, "/v2/users/me")
     except HTTPException:
         user = None
+    user_email = str(user.get("email")) if user and user.get("email") else None
+    if not _zoom_email_allowed(user_email):
+        delete_token(db, session_id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This Zoom account is not allowed to access this app.",
+        )
     save_token_payload(db, session_id, token_payload, user=user)
     response = RedirectResponse("/teacher-meeting?zoom_oauth=connected")
     _set_session_cookie(response, request, session_id)
@@ -368,6 +386,14 @@ async def zoom_oauth_status(request: Request, db: DbSession) -> ZoomOAuthStatusR
         user = {}
         profile_error = str(exc.detail)
 
+    email = str(user.get("email") or token_row.zoom_email) if user.get("email") or token_row.zoom_email else None
+    if not _zoom_email_allowed(email):
+        return ZoomOAuthStatusResponse(
+            authorized=False,
+            profile_error="This Zoom account is not allowed to access this app.",
+            email=email,
+        )
+
     return ZoomOAuthStatusResponse(
         authorized=True,
         expires_at=oauth_token.get("expires_at"),
@@ -375,7 +401,7 @@ async def zoom_oauth_status(request: Request, db: DbSession) -> ZoomOAuthStatusR
         scopes=scopes,
         user_id=str(user.get("id") or token_row.zoom_user_id) if user.get("id") or token_row.zoom_user_id else None,
         account_id=str(user.get("account_id") or token_row.zoom_account_id) if user.get("account_id") or token_row.zoom_account_id else None,
-        email=str(user.get("email") or token_row.zoom_email) if user.get("email") or token_row.zoom_email else None,
+        email=email,
         display_name=str(user.get("display_name") or token_row.zoom_display_name) if user.get("display_name") or token_row.zoom_display_name else None,
         profile_error=profile_error,
     )
