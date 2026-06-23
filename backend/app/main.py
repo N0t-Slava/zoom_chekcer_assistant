@@ -1,4 +1,7 @@
+import asyncio
 import logging
+import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -8,16 +11,19 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 
 from .auth import is_public_path, zoom_session_auth
-from .config import allowed_zoom_emails, cors_allowed_origins, is_production, log_level
+from .config import allowed_zoom_emails, cors_allowed_origins, google_sheet_auto_sync_enabled, is_production, log_level
 from .database import init_db
 from .env_loader import load_env_file
 from .routers.attendance import router as attendance_router
+from .routers.google_sheets import router as google_sheets_router
+from .routers.imports import router as imports_router
 from .routers.meetings import router as meetings_router
 from .routers.reports import router as reports_router
 from .routers.schedule import router as schedule_router
 from .routers.students import router as students_router
 from .routers.zoom import router as zoom_router
 from .schemas import HealthResponse
+from .services.google_sheet_scheduler import run_google_sheet_auto_sync, stop_google_sheet_auto_sync
 
 
 load_env_file()
@@ -51,10 +57,16 @@ SECURITY_HEADERS = {
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+    google_sheet_sync_task: asyncio.Task[None] | None = None
     if is_production() and not allowed_zoom_emails():
         logger.warning("APP_ENV=production requires ALLOWED_ZOOM_EMAILS before users can access the app")
+    if google_sheet_auto_sync_enabled():
+        google_sheet_sync_task = asyncio.create_task(run_google_sheet_auto_sync())
     logger.info("Database initialized; env=%s", "production" if is_production() else "development")
-    yield
+    try:
+        yield
+    finally:
+        await stop_google_sheet_auto_sync(google_sheet_sync_task)
 
 
 app = FastAPI(
@@ -78,6 +90,8 @@ app.add_middleware(
 
 @app.middleware("http")
 async def protect_app_and_add_security_headers(request: Request, call_next) -> Response:
+    started_at = time.perf_counter()
+    request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
     if not is_public_path(request.url.path):
         auth_result = zoom_session_auth(request)
         if not auth_result.authorized:
@@ -106,14 +120,34 @@ async def protect_app_and_add_security_headers(request: Request, call_next) -> R
                 )
             for header, value in SECURITY_HEADERS.items():
                 response.headers.setdefault(header, value)
+            response.headers.setdefault("X-Request-ID", request_id)
+            logger.info(
+                "request complete request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
+                request_id,
+                request.method,
+                request.url.path,
+                response.status_code,
+                (time.perf_counter() - started_at) * 1000,
+            )
             return response
 
     response = await call_next(request)
     for header, value in SECURITY_HEADERS.items():
         response.headers.setdefault(header, value)
+    response.headers.setdefault("X-Request-ID", request_id)
+    logger.info(
+        "request complete request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
+        request_id,
+        request.method,
+        request.url.path,
+        response.status_code,
+        (time.perf_counter() - started_at) * 1000,
+    )
     return response
 
 app.include_router(attendance_router)
+app.include_router(google_sheets_router)
+app.include_router(imports_router)
 app.include_router(meetings_router)
 app.include_router(reports_router)
 app.include_router(schedule_router)

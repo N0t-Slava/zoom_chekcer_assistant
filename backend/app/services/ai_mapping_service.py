@@ -23,6 +23,28 @@ SCHEDULE_MAPPING_ALIASES = {
     "title": ["title", "lesson", "name", "topic", "назва", "урок", "тема"],
 }
 ALL_FIELDS = ("full_name", "group_name", "aliases", "date", "start_time", "end_time", "title")
+AI_MAPPING_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "table_type": {"type": "string", "enum": ["students", "schedule", "mixed", "unknown"]},
+        "mapping": {
+            "type": "object",
+            "properties": {
+                field: {"type": ["string", "null"]}
+                for field in ALL_FIELDS
+            },
+            "required": list(ALL_FIELDS),
+            "additionalProperties": False,
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "warnings": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+    },
+    "required": ["table_type", "mapping", "confidence", "warnings"],
+    "additionalProperties": False,
+}
 
 
 @dataclass(frozen=True)
@@ -105,28 +127,6 @@ def _openai_detection(
     sample_rows: list[dict[str, str]],
     import_kind: str,
 ) -> MappingDetection:
-    schema = {
-        "type": "object",
-        "properties": {
-            "table_type": {"type": "string", "enum": ["students", "schedule", "mixed", "unknown"]},
-            "mapping": {
-                "type": "object",
-                "properties": {
-                    field: {"type": ["string", "null"]}
-                    for field in ALL_FIELDS
-                },
-                "required": list(ALL_FIELDS),
-                "additionalProperties": False,
-            },
-            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-            "warnings": {
-                "type": "array",
-                "items": {"type": "string"},
-            },
-        },
-        "required": ["table_type", "mapping", "confidence", "warnings"],
-        "additionalProperties": False,
-    }
     body = {
         "model": openai_mapping_model(),
         "input": [
@@ -158,7 +158,7 @@ def _openai_detection(
                 "type": "json_schema",
                 "name": "import_column_mapping",
                 "strict": True,
-                "schema": schema,
+                "schema": AI_MAPPING_RESPONSE_SCHEMA,
             }
         },
     }

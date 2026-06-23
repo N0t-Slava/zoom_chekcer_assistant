@@ -1044,6 +1044,10 @@ function formatImportSummary(result) {
   return `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}${aliasText}.`;
 }
 
+function formatSyncSummary(result) {
+  return formatImportSummary(result?.result || result || {});
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1139,12 +1143,236 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
   );
 }
 
+function GoogleSheetImportPanel({
+  title,
+  importKind,
+  fields,
+  googleConfig,
+  sources,
+  importHistory,
+  loadGoogleSheetTabs,
+  previewGoogleSheetImport,
+  saveGoogleSheetSource,
+  syncGoogleSheetSource
+}) {
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [tabs, setTabs] = useState([]);
+  const [selectedTab, setSelectedTab] = useState("");
+  const [preview, setPreview] = useState(null);
+  const [mapping, setMapping] = useState({});
+  const [status, setStatus] = useState("Share the sheet with the bot as Editor, then paste the URL.");
+  const [replaceExisting, setReplaceExisting] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+  const botEmail = googleConfig?.bot_email || googleConfig?.service_account_email || "";
+  const historyRows = (importHistory || []).filter((run) => run.import_kind === importKind).slice(0, 5);
+
+  async function loadTabs(event) {
+    event.preventDefault();
+    setStatus("Reading sheet tabs...");
+    setPreview(null);
+    setMapping({});
+    const result = await loadGoogleSheetTabs(sheetUrl);
+    setTabs(result.tabs || []);
+    setSelectedTab((result.tabs || [])[0] || "");
+    setStatus(result.tabs?.length ? "Choose a tab and preview mapping." : "No tabs found.");
+  }
+
+  async function previewSheet() {
+    if (!sheetUrl || !selectedTab) {
+      setStatus("Paste a Sheet URL and choose a tab first.");
+      return;
+    }
+    setStatus("Reading sample rows...");
+    const result = await previewGoogleSheetImport(sheetUrl, selectedTab, importKind);
+    setPreview(result.preview);
+    setMapping(result.preview?.suggested_mapping || {});
+    setStatus(`Preview ready: ${result.preview?.total_rows || 0} rows detected.`);
+  }
+
+  async function saveSource() {
+    if (!preview || !selectedTab) {
+      setStatus("Preview and confirm mapping before saving.");
+      return;
+    }
+    setStatus("Saving Google Sheet connection...");
+    await saveGoogleSheetSource(importKind, sheetUrl, selectedTab, mapping, preview, autoSyncEnabled);
+    setStatus("Google Sheet connection saved.");
+  }
+
+  async function syncSource(sourceId) {
+    setStatus("Syncing Google Sheet...");
+    const result = await syncGoogleSheetSource(sourceId, replaceExisting);
+    setStatus(formatSyncSummary(result));
+  }
+
+  return (
+    <Card>
+      <CardHeader title={title} meta={status}>
+        <Badge tone={googleConfig?.configured ? "success" : "warning"}>
+          {googleConfig?.configured ? "Bot ready" : "Bot missing"}
+        </Badge>
+      </CardHeader>
+      <div className="grid gap-4 p-5">
+        <label className={labelClass}>
+          Bot email
+          <input
+            className={inputClass}
+            value={botEmail || "Bot email is not configured"}
+            readOnly
+          />
+        </label>
+        <form className="grid grid-cols-[1fr_auto] items-end gap-3" onSubmit={loadTabs}>
+          <label className={labelClass}>
+            Google Sheet URL
+            <input
+              className={inputClass}
+              value={sheetUrl}
+              onChange={(event) => {
+                setSheetUrl(event.target.value);
+                setTabs([]);
+                setSelectedTab("");
+                setPreview(null);
+                setMapping({});
+              }}
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+            />
+          </label>
+          <button className={primaryButton} type="submit" disabled={!googleConfig?.configured}>
+            Load tabs
+          </button>
+        </form>
+        {tabs.length ? (
+          <div className="grid grid-cols-[1fr_auto_auto] items-end gap-3">
+            <label className={labelClass}>
+              Sheet tab
+              <select
+                className={inputClass}
+                value={selectedTab}
+                onChange={(event) => {
+                  setSelectedTab(event.target.value);
+                  setPreview(null);
+                  setMapping({});
+                }}>
+                {tabs.map((tab) => (
+                  <option key={tab} value={tab}>
+                    {tab}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className={secondaryButton} type="button" onClick={previewSheet}>
+              Preview
+            </button>
+            <label className="inline-flex items-center gap-2 pb-2 text-sm font-bold text-muted">
+              <input
+                type="checkbox"
+                checked={autoSyncEnabled}
+                onChange={(event) => setAutoSyncEnabled(event.target.checked)}
+              />{" "}
+              Auto-sync
+            </label>
+          </div>
+        ) : null}
+      </div>
+      <ImportPreviewPanel
+        preview={preview}
+        mapping={mapping}
+        setMapping={setMapping}
+        fields={fields}
+        onConfirm={saveSource}
+        confirmLabel="Save connection"
+      />
+      <div className="grid gap-3 border-t border-line p-5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-black text-ink">Saved Google Sheets</span>
+          <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+            <input
+              type="checkbox"
+              checked={replaceExisting}
+              onChange={(event) => setReplaceExisting(event.target.checked)}
+            />{" "}
+            Replace on sync
+          </label>
+        </div>
+        {sources?.length ? (
+          <div className={tableWrapClass}>
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  {["Tab", "Type", "Auto", "Last sync", ""].map((head) => (
+                    <th key={head} className={thClass}>
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sources.map((source) => (
+                  <tr key={source.id}>
+                    <td className={tdClass}>{source.selected_tab}</td>
+                    <td className={tdClass}>{source.table_type}</td>
+                    <td className={tdClass}>{source.auto_sync_enabled ? "On" : "Off"}</td>
+                    <td className={tdClass}>
+                      {source.last_synced_at ? formatShortDate(source.last_synced_at) : "Never"}
+                    </td>
+                    <td className={tdClass}>
+                      <button className={secondaryButton} type="button" onClick={() => syncSource(source.id)}>
+                        Sync now
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <span className="text-sm text-muted">No saved Google Sheet connection yet.</span>
+        )}
+        {historyRows.length ? (
+          <div className={tableWrapClass}>
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  {["When", "Source", "Status", "Rows", "Imported", "Skipped"].map((head) => (
+                    <th key={head} className={thClass}>
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {historyRows.map((run) => (
+                  <tr key={run.id}>
+                    <td className={tdClass}>{formatShortDate(run.finished_at || run.started_at)}</td>
+                    <td className={tdClass}>{run.source_type}</td>
+                    <td className={tdClass}>{run.status}</td>
+                    <td className={tdClass}>{run.row_count}</td>
+                    <td className={tdClass}>{run.imported_count}</td>
+                    <td className={tdClass}>{run.skipped_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
+
 function StudentsPage({
   students,
   currentRecords,
   createStudent,
   previewStudentsImport,
   commitStudentsImport,
+  googleConfig,
+  googleStudentSources,
+  importHistory,
+  loadGoogleSheetTabs,
+  previewGoogleSheetImport,
+  saveGoogleSheetSource,
+  syncGoogleSheetSource,
   createAlias
 }) {
   const [search, setSearch] = useState("");
@@ -1296,6 +1524,23 @@ function StudentsPage({
           />
         </Card>
       </div>
+
+      <GoogleSheetImportPanel
+        title="Google Sheet Students"
+        importKind="students"
+        googleConfig={googleConfig}
+        sources={googleStudentSources}
+        importHistory={importHistory}
+        loadGoogleSheetTabs={loadGoogleSheetTabs}
+        previewGoogleSheetImport={previewGoogleSheetImport}
+        saveGoogleSheetSource={saveGoogleSheetSource}
+        syncGoogleSheetSource={syncGoogleSheetSource}
+        fields={[
+          { key: "full_name", label: "Student name" },
+          { key: "group_name", label: "Group" },
+          { key: "aliases", label: "Aliases / Zoom names" }
+        ]}
+      />
 
       <Card>
         <CardHeader
@@ -1544,6 +1789,13 @@ function SettingsPage({
   schedule,
   previewScheduleImport,
   commitScheduleImport,
+  googleConfig,
+  googleScheduleSources,
+  importHistory,
+  loadGoogleSheetTabs,
+  previewGoogleSheetImport,
+  saveGoogleSheetSource,
+  syncGoogleSheetSource,
   disconnectZoom
 }) {
   const [file, setFile] = useState(null);
@@ -1580,17 +1832,7 @@ function SettingsPage({
 
   return (
     <section className="grid gap-5">
-      <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-5">
-        <Card>
-          <div className="grid gap-2 p-3">
-            {["Zoom", "Groups", "Schedule", "Advanced"].map((item) => (
-              <div key={item} className="rounded-lg bg-yellow-100 px-3 py-2 text-sm font-black">
-                {item}
-              </div>
-            ))}
-          </div>
-        </Card>
-        <div className="grid gap-5">
+      <div className="grid gap-5">
           <Card>
             <CardHeader title="Zoom Integration">
               <Badge tone={oauthStatus?.authorized ? "success" : "warning"}>
@@ -1691,7 +1933,25 @@ function SettingsPage({
             />
             <ScheduleTable entries={schedule} />
           </Card>
-        </div>
+
+          <GoogleSheetImportPanel
+            title="Google Sheet Schedule"
+            importKind="schedule"
+            googleConfig={googleConfig}
+            sources={googleScheduleSources}
+            importHistory={importHistory}
+            loadGoogleSheetTabs={loadGoogleSheetTabs}
+            previewGoogleSheetImport={previewGoogleSheetImport}
+            saveGoogleSheetSource={saveGoogleSheetSource}
+            syncGoogleSheetSource={syncGoogleSheetSource}
+            fields={[
+              { key: "date", label: "Lesson date" },
+              { key: "start_time", label: "Start time" },
+              { key: "end_time", label: "End time" },
+              { key: "group_name", label: "Group" },
+              { key: "title", label: "Title" }
+            ]}
+          />
       </div>
     </section>
   );
@@ -1746,6 +2006,10 @@ function App() {
     historyRecords: [],
     oauthStatus: null,
     sdkConfig: null,
+    googleConfig: null,
+    googleStudentSources: [],
+    googleScheduleSources: [],
+    importHistory: [],
     ownershipChecks: {}
   });
 
@@ -1776,7 +2040,11 @@ function App() {
       unmatchedRecords,
       historyRecords,
       oauthStatus,
-      sdkConfig
+      sdkConfig,
+      googleConfig,
+      googleStudentSources,
+      googleScheduleSources,
+      importHistory
     ] = await Promise.all([
       safeFetch("/reports/attendance-summary", []),
       safeFetch("/schedule", []),
@@ -1787,7 +2055,11 @@ function App() {
       safeFetch(`/attendance/unmatched${query}`, []),
       safeFetch(`/attendance/history${query}`, []),
       safeFetch("/zoom/oauth/status", null),
-      safeFetch("/zoom/meeting-sdk/config", null)
+      safeFetch("/zoom/meeting-sdk/config", null),
+      safeFetch("/google-sheets/config", null),
+      safeFetch("/google-sheets/sources?import_kind=students", []),
+      safeFetch("/google-sheets/sources?import_kind=schedule", []),
+      safeFetch("/imports/history", [])
     ]);
 
     setData((previous) => ({
@@ -1801,7 +2073,11 @@ function App() {
       unmatchedRecords: unmatchedRecords.slice(0, MAX_ATTENDANCE),
       historyRecords: historyRecords.slice(0, MAX_ATTENDANCE),
       oauthStatus,
-      sdkConfig
+      sdkConfig,
+      googleConfig,
+      googleStudentSources,
+      googleScheduleSources,
+      importHistory
     }));
   }, [buildAttendanceQuery]);
 
@@ -1876,6 +2152,56 @@ function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting, preview))
+    });
+    await refreshData();
+    return result;
+  }
+
+  async function loadGoogleSheetTabs(sheetUrl) {
+    return fetchJson("/google-sheets/tabs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sheet_url: sheetUrl })
+    });
+  }
+
+  async function previewGoogleSheetImport(sheetUrl, selectedTab, importKind) {
+    return fetchJson("/google-sheets/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sheet_url: sheetUrl,
+        selected_tab: selectedTab,
+        import_kind: importKind
+      })
+    });
+  }
+
+  async function saveGoogleSheetSource(importKind, sheetUrl, selectedTab, mapping, preview, autoSyncEnabled = false) {
+    const result = await fetchJson("/google-sheets/sources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sheet_url: sheetUrl,
+        selected_tab: selectedTab,
+        import_kind: importKind,
+        mapping,
+        headers: preview?.headers || [],
+        table_type: preview?.table_type || importKind,
+        confidence: typeof preview?.confidence === "number" ? preview.confidence : null,
+        warnings: preview?.warnings || [],
+        auto_sync_enabled: autoSyncEnabled
+      })
+    });
+    await refreshData();
+    return result;
+  }
+
+  async function syncGoogleSheetSource(sourceId, replaceExisting = false) {
+    const result = await fetchJson(`/google-sheets/sources/${sourceId}/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ replace_existing: replaceExisting })
     });
     await refreshData();
     return result;
@@ -1974,6 +2300,13 @@ function App() {
           createStudent={createStudent}
           previewStudentsImport={previewStudentsImport}
           commitStudentsImport={commitStudentsImport}
+          googleConfig={data.googleConfig}
+          googleStudentSources={data.googleStudentSources}
+          importHistory={data.importHistory}
+          loadGoogleSheetTabs={loadGoogleSheetTabs}
+          previewGoogleSheetImport={previewGoogleSheetImport}
+          saveGoogleSheetSource={saveGoogleSheetSource}
+          syncGoogleSheetSource={syncGoogleSheetSource}
           createAlias={createAlias}
         />
       ) : null}
@@ -1993,6 +2326,13 @@ function App() {
           schedule={data.schedule}
           previewScheduleImport={previewScheduleImport}
           commitScheduleImport={commitScheduleImport}
+          googleConfig={data.googleConfig}
+          googleScheduleSources={data.googleScheduleSources}
+          importHistory={data.importHistory}
+          loadGoogleSheetTabs={loadGoogleSheetTabs}
+          previewGoogleSheetImport={previewGoogleSheetImport}
+          saveGoogleSheetSource={saveGoogleSheetSource}
+          syncGoogleSheetSource={syncGoogleSheetSource}
           disconnectZoom={disconnectZoom}
         />
       ) : null}

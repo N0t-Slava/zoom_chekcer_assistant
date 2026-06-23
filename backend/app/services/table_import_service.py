@@ -34,8 +34,11 @@ def decode_file_content(file_content_base64: str) -> bytes:
 def parse_table_file(file_name: str, file_content: bytes) -> ParsedTable:
     suffix = Path(file_name).suffix.casefold()
     if suffix == ".xlsx":
-        return parse_xlsx_table(file_content)
-    return parse_csv_table(file_content)
+        table = parse_xlsx_table(file_content)
+    else:
+        table = parse_csv_table(file_content)
+    validate_table(table)
+    return table
 
 
 def parse_csv_table(file_content: bytes) -> ParsedTable:
@@ -46,7 +49,7 @@ def parse_csv_table(file_content: bytes) -> ParsedTable:
     except csv.Error:
         dialect = csv.excel
     reader = csv.DictReader(io.StringIO(text), dialect=dialect)
-    headers = [clean_cell(header) for header in reader.fieldnames or [] if clean_cell(header)]
+    headers = [clean_cell(header) for header in reader.fieldnames or []]
     rows: list[dict[str, str]] = []
     for row in reader:
         rows.append({header: clean_cell(row.get(header)) for header in headers})
@@ -134,7 +137,7 @@ def parse_xlsx_table(file_content: bytes) -> ParsedTable:
             if header:
                 row[header] = clean_cell(raw_row[index] if index < len(raw_row) else "")
         rows.append(row)
-    return ParsedTable(headers=[header for header in headers if header], rows=rows)
+    return ParsedTable(headers=headers, rows=rows)
 
 
 def suggest_mapping(headers: list[str], aliases: dict[str, list[str]]) -> dict[str, str]:
@@ -150,3 +153,23 @@ def suggest_mapping(headers: list[str], aliases: dict[str, list[str]]) -> dict[s
 
 def preview_rows(rows: list[dict[str, str]], limit: int = 5) -> list[dict[str, str]]:
     return rows[:limit]
+
+
+def validate_table(table: ParsedTable) -> None:
+    if not table.headers:
+        raise ValueError("Imported table must include a header row.")
+    normalized_headers = [header.strip().casefold() for header in table.headers if header.strip()]
+    if len(normalized_headers) != len(table.headers):
+        raise ValueError("Imported table contains an empty header.")
+    duplicates = sorted({header for header in normalized_headers if normalized_headers.count(header) > 1})
+    if duplicates:
+        raise ValueError(f"Imported table contains duplicate headers: {', '.join(duplicates)}.")
+    if not table.rows:
+        raise ValueError("Imported table must include at least one data row.")
+    if all(not any(value for value in row.values()) for row in table.rows):
+        raise ValueError("Imported table data rows are empty.")
+
+
+def mapping_missing_columns(mapping: dict[str, str], headers: list[str]) -> list[str]:
+    header_set = set(headers)
+    return [column for column in mapping.values() if column and column not in header_set]

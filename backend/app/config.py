@@ -54,3 +54,31 @@ def openai_api_key() -> str | None:
 
 def openai_mapping_model() -> str:
     return os.getenv("OPENAI_MAPPING_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+
+
+def google_service_account_json() -> str | None:
+    return os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+
+
+def google_service_account_email() -> str | None:
+    return os.getenv("GOOGLE_SERVICE_ACCOUNT_EMAIL")
+
+
+def google_service_account_private_key() -> str | None:
+    return os.getenv("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY")
+
+
+def google_sheet_auto_sync_enabled() -> bool:
+    return _bool_env("GOOGLE_SHEETS_AUTO_SYNC_ENABLED", False)
+
+
+def google_sheet_auto_sync_interval_seconds() -> int:
+    value = os.getenv("GOOGLE_SHEETS_AUTO_SYNC_INTERVAL_SECONDS", "900")
+    try:
+        return max(60, int(value))
+    except ValueError:
+        return 900
+
+
+def google_sheet_auto_sync_replace_existing() -> bool:
+    return _bool_env("GOOGLE_SHEETS_AUTO_SYNC_REPLACE_EXISTING", False)

@@ -6,13 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from ..config import session_cookie_name
 from ..database import get_db
 from ..schemas import ImportFileRequest, ImportPreviewResponse, ScheduleEntryResponse, ScheduleImportRequest, ScheduleImportResponse
 from ..services.ai_mapping_service import SCHEDULE_MAPPING_ALIASES, detect_import_mapping
+from ..services.import_history_service import record_import_run
 from ..services.import_mapping_store import load_confirmed_mapping, mapping_dict, save_confirmed_mapping
 from ..services.schedule_service import import_schedule_csv, import_schedule_rows, list_schedule_entries
-from ..services.table_import_service import decode_file_content, parse_table_file, preview_rows
+from ..services.table_import_service import decode_file_content, mapping_missing_columns, parse_table_file, preview_rows
+from ..services.teacher_identity import teacher_owner_key
 
 
 logger = logging.getLogger(__name__)
@@ -81,8 +82,8 @@ async def preview_schedule_import(payload: ImportFileRequest, request: Request, 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     sample_rows = preview_rows(table.rows)
-    session_id = request.cookies.get(session_cookie_name())
-    saved_mapping = load_confirmed_mapping(db, session_id=session_id, import_kind="schedule", headers=table.headers)
+    owner_key = teacher_owner_key(db, request)
+    saved_mapping = load_confirmed_mapping(db, session_id=owner_key, import_kind="schedule", headers=table.headers)
     if saved_mapping is not None:
         suggested_mapping = mapping_dict(saved_mapping)
         warnings = _schedule_mapping_warnings(suggested_mapping)
@@ -116,15 +117,19 @@ async def preview_schedule_import(payload: ImportFileRequest, request: Request, 
 async def commit_schedule_import(payload: ImportFileRequest, request: Request, db: DbSession) -> ScheduleImportResponse:
     try:
         table = parse_table_file(payload.file_name, decode_file_content(payload.file_content_base64))
+        missing_columns = mapping_missing_columns(payload.mapping, table.headers)
+        if missing_columns:
+            raise ValueError(f"Mapping references missing columns: {', '.join(missing_columns)}.")
         result = import_schedule_rows(
             db=db,
             rows=table.rows,
             mapping=payload.mapping,
             replace_existing=payload.replace_existing,
         )
+        owner_key = teacher_owner_key(db, request)
         save_confirmed_mapping(
             db,
-            session_id=request.cookies.get(session_cookie_name()),
+            session_id=owner_key,
             import_kind="schedule",
             file_name=payload.file_name,
             headers=table.headers,
@@ -132,6 +137,16 @@ async def commit_schedule_import(payload: ImportFileRequest, request: Request, d
             table_type=payload.table_type or "schedule",
             confidence=payload.confidence,
             warnings=payload.warnings,
+        )
+        record_import_run(
+            db,
+            owner_key=owner_key,
+            import_kind="schedule",
+            source_type="file",
+            source_name=payload.file_name,
+            source_id=None,
+            row_count=len(table.rows),
+            result=result,
         )
     except (ValueError, csv.Error) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

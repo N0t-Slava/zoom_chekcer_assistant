@@ -129,6 +129,91 @@ class ImportPreviewResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class GoogleSheetsConfigResponse(BaseModel):
+    configured: bool
+    bot_email: str | None = None
+    service_account_email: str | None = None
+
+
+class GoogleSheetTabsRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    sheet_url: str = Field(..., min_length=1)
+
+
+class GoogleSheetTabsResponse(BaseModel):
+    sheet_id: str
+    tabs: list[str]
+
+
+class GoogleSheetPreviewRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    sheet_url: str = Field(..., min_length=1)
+    selected_tab: str = Field(..., min_length=1)
+    import_kind: str = Field(default="students", pattern="^(students|schedule)$")
+
+
+class GoogleSheetPreviewResponse(BaseModel):
+    sheet_id: str
+    selected_tab: str
+    preview: ImportPreviewResponse
+
+
+class GoogleSheetSourceSaveRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    sheet_url: str = Field(..., min_length=1)
+    selected_tab: str = Field(..., min_length=1)
+    import_kind: str = Field(default="students", pattern="^(students|schedule)$")
+    mapping: dict[str, str] = Field(default_factory=dict)
+    headers: list[str] = Field(default_factory=list)
+    table_type: str | None = Field(default=None, max_length=32)
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    warnings: list[str] = Field(default_factory=list)
+    auto_sync_enabled: bool = False
+
+
+class GoogleSheetSourceResponse(BaseModel):
+    id: int
+    import_kind: str
+    sheet_id: str
+    sheet_url: str
+    selected_tab: str
+    table_type: str
+    mapping: dict[str, str]
+    confidence: float
+    auto_sync_enabled: bool = False
+    updated_at: datetime
+    last_synced_at: datetime | None = None
+
+
+class GoogleSheetSyncRequest(BaseModel):
+    replace_existing: bool = False
+
+
+class GoogleSheetSyncResponse(BaseModel):
+    source: GoogleSheetSourceResponse
+    result: dict[str, object]
+
+
+class ImportRunResponse(BaseModel):
+    id: int
+    import_kind: str
+    source_type: str
+    source_name: str | None = None
+    source_id: int | None = None
+    status: str
+    row_count: int
+    imported_count: int
+    created_count: int
+    updated_count: int
+    skipped_count: int
+    errors: list[str] = Field(default_factory=list)
+    started_at: datetime
+    finished_at: datetime | None = None
+
+
 class StudentImportResponse(BaseModel):
     imported_count: int
     created_count: int

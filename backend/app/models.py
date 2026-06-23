@@ -124,6 +124,46 @@ class ImportMapping(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
+class GoogleSheetSource(Base):
+    __tablename__ = "google_sheet_sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    import_kind: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    sheet_id: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    sheet_url: Mapped[str] = mapped_column(Text, nullable=False)
+    selected_tab: Mapped[str] = mapped_column(String(255), nullable=False)
+    headers_signature: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    table_type: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    mapping_json: Mapped[str] = mapped_column(Text, nullable=False)
+    warnings_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidence_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    auto_sync_enabled: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class ImportRun(Base):
+    __tablename__ = "import_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    import_kind: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    source_type: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    source_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    row_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    updated_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    skipped_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    errors_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class AttendanceRecord(Base):
     __tablename__ = "attendance_records"
 
