@@ -106,11 +106,30 @@ class StudentImportRequest(BaseModel):
     replace_existing: bool = False
 
 
+class ImportFileRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    file_name: str = Field(..., min_length=1, max_length=255)
+    file_content_base64: str = Field(..., min_length=1)
+    mapping: dict[str, str] = Field(default_factory=dict)
+    replace_existing: bool = False
+
+
+class ImportPreviewResponse(BaseModel):
+    headers: list[str]
+    suggested_mapping: dict[str, str]
+    sample_rows: list[dict[str, str]]
+    total_rows: int
+    warnings: list[str] = Field(default_factory=list)
+
+
 class StudentImportResponse(BaseModel):
     imported_count: int
     created_count: int
     updated_count: int
     skipped_count: int
+    aliases_created_count: int = 0
+    aliases_updated_count: int = 0
     errors: list[str]
 
 

@@ -71,6 +71,20 @@ def _pick_value(row: dict[str, str], *keys: str) -> str:
     return ""
 
 
+def _split_aliases(value: str) -> list[str]:
+    aliases = re.split(r"[,;\n|]+", value or "")
+    seen: set[str] = set()
+    result: list[str] = []
+    for alias in aliases:
+        cleaned = WHITESPACE_RE.sub(" ", alias).strip()
+        key = normalize_student_name(cleaned)
+        if not cleaned or key in seen:
+            continue
+        seen.add(key)
+        result.append(cleaned)
+    return result
+
+
 def list_students(db: Session, group_name: str | None = None) -> list[Student]:
     stmt = select(Student)
     if group_name:
@@ -171,10 +185,33 @@ def import_students_csv(
             "errors": ["CSV must include a header row."],
         }
 
+    rows = [{header: value for header, value in row.items() if header} for row in reader]
+    return import_students_rows(
+        db=db,
+        rows=rows,
+        mapping={
+            "full_name": "full_name",
+            "group_name": "group_name",
+            "aliases": "aliases",
+        },
+        replace_existing=replace_existing,
+        fallback_keys=True,
+    )
+
+
+def import_students_rows(
+    db: Session,
+    rows: list[dict[str, str]],
+    mapping: dict[str, str],
+    replace_existing: bool = False,
+    fallback_keys: bool = False,
+) -> dict[str, object]:
     now = utc_now()
     created_count = 0
     updated_count = 0
     skipped_count = 0
+    aliases_created_count = 0
+    aliases_updated_count = 0
     errors: list[str] = []
 
     if replace_existing:
@@ -186,20 +223,27 @@ def import_students_csv(
         for student in db.scalars(select(Student)).all()
     }
 
-    for line_number, row in enumerate(reader, start=2):
-        full_name = _pick_value(row, "full_name", "name", "student", "student_name")
-        group_name = _pick_value(row, "group_name", "group", "group_id")
+    def mapped_value(row: dict[str, str], field: str, *fallbacks: str) -> str:
+        column = mapping.get(field)
+        if column and column in row:
+            return WHITESPACE_RE.sub(" ", row.get(column) or "").strip()
+        return _pick_value(row, *fallbacks) if fallback_keys else ""
+
+    for line_number, row in enumerate(rows, start=2):
+        full_name = mapped_value(row, "full_name", "full_name", "name", "student", "student_name")
+        group_name = mapped_value(row, "group_name", "group_name", "group", "group_id")
+        alias_values = _split_aliases(mapped_value(row, "aliases", "aliases", "alias", "zoom_name", "zoom_names"))
 
         if not full_name or not group_name:
             skipped_count += 1
-            errors.append(f"Line {line_number}: missing full_name/name or group_name/group.")
+            errors.append(f"Line {line_number}: missing student name or group.")
             continue
 
         normalized_name = normalize_student_name(full_name)
         key = (normalized_name, group_name.casefold())
-        existing = existing_students.get(key)
+        student = existing_students.get(key)
 
-        if existing is None:
+        if student is None:
             student = Student(
                 full_name=full_name,
                 normalized_name=normalized_name,
@@ -208,14 +252,37 @@ def import_students_csv(
                 updated_at=now,
             )
             db.add(student)
+            db.flush()
             existing_students[key] = student
             created_count += 1
-            continue
+        else:
+            student.full_name = full_name
+            student.group_name = group_name
+            student.updated_at = now
+            updated_count += 1
 
-        existing.full_name = full_name
-        existing.group_name = group_name
-        existing.updated_at = now
-        updated_count += 1
+        existing_aliases = {
+            alias.normalized_name: alias
+            for alias in db.scalars(select(StudentAlias).where(StudentAlias.student_id == student.id)).all()
+        }
+        for alias_name in alias_values:
+            normalized_alias = normalize_student_name(alias_name)
+            existing_alias = existing_aliases.get(normalized_alias)
+            if existing_alias is None:
+                alias = StudentAlias(
+                    student_id=student.id,
+                    alias_name=alias_name,
+                    normalized_name=normalized_alias,
+                    created_at=now,
+                    updated_at=now,
+                )
+                db.add(alias)
+                existing_aliases[normalized_alias] = alias
+                aliases_created_count += 1
+            else:
+                existing_alias.alias_name = alias_name
+                existing_alias.updated_at = now
+                aliases_updated_count += 1
 
     db.commit()
 
@@ -224,5 +291,7 @@ def import_students_csv(
         "created_count": created_count,
         "updated_count": updated_count,
         "skipped_count": skipped_count,
+        "aliases_created_count": aliases_created_count,
+        "aliases_updated_count": aliases_updated_count,
         "errors": errors,
     }

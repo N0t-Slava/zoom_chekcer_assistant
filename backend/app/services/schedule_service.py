@@ -1,7 +1,7 @@
 import csv
 import io
 import re
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -33,6 +33,12 @@ def _pick_value(row: dict[str, str], *keys: str) -> str:
 
 
 def _parse_date(value: str) -> date:
+    try:
+        numeric_value = float(value)
+        if numeric_value > 1:
+            return (datetime(1899, 12, 30) + timedelta(days=int(numeric_value))).date()
+    except ValueError:
+        pass
     for date_format in DATE_FORMATS:
         try:
             return datetime.strptime(value, date_format).date()
@@ -42,6 +48,15 @@ def _parse_date(value: str) -> date:
 
 
 def _parse_time(value: str) -> time:
+    try:
+        numeric_value = float(value)
+        if 0 <= numeric_value < 1:
+            total_seconds = round(numeric_value * 24 * 60 * 60)
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            return time(hour=hours % 24, minute=minutes, second=seconds)
+    except ValueError:
+        pass
     for time_format in TIME_FORMATS:
         try:
             return datetime.strptime(value, time_format).time()
@@ -87,6 +102,29 @@ def import_schedule_csv(
             "errors": ["CSV must include a header row."],
         }
 
+    rows = [{header: value for header, value in row.items() if header} for row in reader]
+    return import_schedule_rows(
+        db=db,
+        rows=rows,
+        mapping={
+            "date": "date",
+            "start_time": "start_time",
+            "end_time": "end_time",
+            "group_name": "group_name",
+            "title": "title",
+        },
+        replace_existing=replace_existing,
+        fallback_keys=True,
+    )
+
+
+def import_schedule_rows(
+    db: Session,
+    rows: list[dict[str, str]],
+    mapping: dict[str, str],
+    replace_existing: bool = False,
+    fallback_keys: bool = False,
+) -> dict[str, object]:
     now = current_time()
     created_count = 0
     updated_count = 0
@@ -101,16 +139,22 @@ def import_schedule_csv(
         for entry in db.scalars(select(ScheduleEntry)).all()
     }
 
-    for line_number, row in enumerate(reader, start=2):
-        date_value = _pick_value(row, "date", "day")
-        start_value = _pick_value(row, "start_time", "start", "starts_at")
-        end_value = _pick_value(row, "end_time", "end", "ends_at")
-        group_name = _pick_value(row, "group_name", "group", "group_id")
-        title = _pick_value(row, "title", "lesson", "name") or None
+    def mapped_value(row: dict[str, str], field: str, *fallbacks: str) -> str:
+        column = mapping.get(field)
+        if column and column in row:
+            return clean_value(row.get(column))
+        return _pick_value(row, *fallbacks) if fallback_keys else ""
+
+    for line_number, row in enumerate(rows, start=2):
+        date_value = mapped_value(row, "date", "date", "day")
+        start_value = mapped_value(row, "start_time", "start_time", "start", "starts_at")
+        end_value = mapped_value(row, "end_time", "end_time", "end", "ends_at")
+        group_name = mapped_value(row, "group_name", "group_name", "group", "group_id")
+        title = mapped_value(row, "title", "title", "lesson", "name") or None
 
         if not date_value or not start_value or not end_value or not group_name:
             skipped_count += 1
-            errors.append(f"Line {line_number}: missing date, start_time, end_time, or group_name.")
+            errors.append(f"Line {line_number}: missing date, start time, end time, or group.")
             continue
 
         try:
@@ -123,7 +167,7 @@ def import_schedule_csv(
 
         if ends_at <= starts_at:
             skipped_count += 1
-            errors.append(f"Line {line_number}: end_time must be after start_time.")
+            errors.append(f"Line {line_number}: end time must be after start time.")
             continue
 
         key = (group_name.casefold(), starts_at, ends_at)

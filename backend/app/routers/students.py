@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..schemas import (
+    ImportFileRequest,
+    ImportPreviewResponse,
     StudentAliasCreateRequest,
     StudentAliasResponse,
     StudentCreateRequest,
@@ -15,13 +17,26 @@ from ..schemas import (
     StudentImportResponse,
     StudentResponse,
 )
-from ..services.student_service import aliases_by_student_id, create_student, create_student_alias, import_students_csv, list_students
+from ..services.student_service import (
+    aliases_by_student_id,
+    create_student,
+    create_student_alias,
+    import_students_csv,
+    import_students_rows,
+    list_students,
+)
+from ..services.table_import_service import decode_file_content, parse_table_file, preview_rows, suggest_mapping
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/students", tags=["students"])
 DbSession = Annotated[Session, Depends(get_db)]
+STUDENT_MAPPING_ALIASES = {
+    "full_name": ["full_name", "name", "student", "student_name", "student name", "піб", "учень"],
+    "group_name": ["group_name", "group", "group_id", "class", "група", "клас"],
+    "aliases": ["aliases", "alias", "zoom_name", "zoom_names", "zoom name", "нік", "псевдонім"],
+}
 
 
 @router.get("", response_model=list[StudentResponse])
@@ -102,6 +117,51 @@ async def import_students(payload: StudentImportRequest, db: DbSession) -> Stude
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error while importing students")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to import students.",
+        ) from exc
+
+    return StudentImportResponse(**result)
+
+
+@router.post("/import/preview", response_model=ImportPreviewResponse)
+async def preview_students_import(payload: ImportFileRequest) -> ImportPreviewResponse:
+    try:
+        table = parse_table_file(payload.file_name, decode_file_content(payload.file_content_base64))
+    except (ValueError, csv.Error) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    warnings = []
+    suggested_mapping = suggest_mapping(table.headers, STUDENT_MAPPING_ALIASES)
+    if "full_name" not in suggested_mapping:
+        warnings.append("Student name column was not detected.")
+    if "group_name" not in suggested_mapping:
+        warnings.append("Group column was not detected.")
+    return ImportPreviewResponse(
+        headers=table.headers,
+        suggested_mapping=suggested_mapping,
+        sample_rows=preview_rows(table.rows),
+        total_rows=len(table.rows),
+        warnings=warnings,
+    )
+
+
+@router.post("/import/commit", response_model=StudentImportResponse)
+async def commit_students_import(payload: ImportFileRequest, db: DbSession) -> StudentImportResponse:
+    try:
+        table = parse_table_file(payload.file_name, decode_file_content(payload.file_content_base64))
+        result = import_students_rows(
+            db=db,
+            rows=table.rows,
+            mapping=payload.mapping,
+            replace_existing=payload.replace_existing,
+        )
+    except (ValueError, csv.Error) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while committing students import")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to import students.",

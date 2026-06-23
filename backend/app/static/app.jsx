@@ -1036,12 +1036,114 @@ function HistoryTable({ title = "Attendance History", records }) {
   );
 }
 
-function StudentsPage({ students, currentRecords, createStudent, importStudents, createAlias }) {
+function formatImportSummary(result) {
+  const aliasText =
+    result.aliases_created_count || result.aliases_updated_count
+      ? `, aliases created ${result.aliases_created_count || 0}, aliases updated ${result.aliases_updated_count || 0}`
+      : "";
+  return `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}${aliasText}.`;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result || "");
+      resolve(value.includes(",") ? value.split(",").pop() : value);
+    };
+    reader.onerror = () => reject(reader.error || new Error("Unable to read file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, confirmLabel }) {
+  if (!preview) {
+    return null;
+  }
+  const sampleHeaders = preview.headers || [];
+  const sampleRows = preview.sample_rows || [];
+  return (
+    <div className="grid gap-4 border-t border-line p-5">
+      <div className="grid grid-cols-3 gap-3">
+        {fields.map((field) => (
+          <label className={labelClass} key={field.key}>
+            {field.label}
+            <select
+              className={inputClass}
+              value={mapping[field.key] || ""}
+              onChange={(event) => setMapping({ ...mapping, [field.key]: event.target.value })}>
+              <option value="">Not mapped</option>
+              {preview.headers.map((header) => (
+                <option key={header} value={header}>
+                  {header}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+      {preview.warnings?.length ? (
+        <div className="grid gap-2">
+          {preview.warnings.map((warning) => (
+            <div key={warning} className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-bold text-warning">
+              {warning}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <div className={tableWrapClass}>
+        <table className={tableClass}>
+          <thead>
+            <tr>
+              {sampleHeaders.map((header) => (
+                <th key={header} className={thClass}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sampleRows.length ? (
+              sampleRows.map((row, index) => (
+                <tr key={index}>
+                  {sampleHeaders.map((header) => (
+                    <td key={header} className={tdClass}>
+                      {row[header] || ""}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <EmptyRow colSpan={Math.max(1, sampleHeaders.length)}>No rows detected.</EmptyRow>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-bold text-muted">{preview.total_rows} rows detected.</span>
+        <button className={primaryButton} type="button" onClick={onConfirm}>
+          {confirmLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function StudentsPage({
+  students,
+  currentRecords,
+  createStudent,
+  previewStudentsImport,
+  commitStudentsImport,
+  createAlias
+}) {
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState("");
   const [newStudent, setNewStudent] = useState({ full_name: "", group_name: "" });
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [mapping, setMapping] = useState({});
   const [status, setStatus] = useState("Import a roster or add students manually.");
   const groups = uniqueGroups(students);
   const filtered = students.filter((student) => {
@@ -1058,18 +1160,29 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
     setNewStudent({ full_name: "", group_name: "" });
   }
 
-  async function submitImport(event) {
+  async function submitImportPreview(event) {
     event.preventDefault();
     if (!file) {
-      setStatus("Choose a CSV file first.");
+      setStatus("Choose a CSV or XLSX file first.");
+      return;
+    }
+    setStatus("Reading file...");
+    const nextPreview = await previewStudentsImport(file);
+    setPreview(nextPreview);
+    setMapping(nextPreview.suggested_mapping || {});
+    setStatus(`Preview ready: ${nextPreview.total_rows} rows detected.`);
+  }
+
+  async function confirmImport() {
+    if (!file || !preview) {
       return;
     }
     setStatus("Importing...");
-    const result = await importStudents(file, replaceExisting);
-    setStatus(
-      `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}.`
-    );
+    const result = await commitStudentsImport(file, mapping, replaceExisting);
+    setStatus(formatImportSummary(result));
     setFile(null);
+    setPreview(null);
+    setMapping({});
   }
 
   return (
@@ -1133,14 +1246,18 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
           <CardHeader title="Import Students" meta={status} />
           <form
             className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
-            onSubmit={submitImport}>
+            onSubmit={submitImportPreview}>
             <label className={labelClass}>
-              CSV file
+              CSV or Excel file
               <input
                 className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm"
                 type="file"
-                accept=".csv,text/csv"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] || null);
+                  setPreview(null);
+                  setMapping({});
+                }}
               />
             </label>
             <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
@@ -1152,9 +1269,21 @@ function StudentsPage({ students, currentRecords, createStudent, importStudents,
               Replace
             </label>
             <button className={primaryButton} type="submit">
-              Import
+              Preview
             </button>
           </form>
+          <ImportPreviewPanel
+            preview={preview}
+            mapping={mapping}
+            setMapping={setMapping}
+            fields={[
+              { key: "full_name", label: "Student name" },
+              { key: "group_name", label: "Group" },
+              { key: "aliases", label: "Aliases / Zoom names" }
+            ]}
+            onConfirm={confirmImport}
+            confirmLabel="Confirm import"
+          />
         </Card>
       </div>
 
@@ -1403,26 +1532,40 @@ function SettingsPage({
   sdkConfig,
   students,
   schedule,
-  scheduleImport,
+  previewScheduleImport,
+  commitScheduleImport,
   disconnectZoom
 }) {
   const [file, setFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [mapping, setMapping] = useState({});
   const [status, setStatus] = useState("Import schedule CSV for attendance journals.");
   const groups = uniqueGroups(students);
 
-  async function submitSchedule(event) {
+  async function submitSchedulePreview(event) {
     event.preventDefault();
     if (!file) {
-      setStatus("Choose a CSV file first.");
+      setStatus("Choose a CSV or XLSX file first.");
+      return;
+    }
+    setStatus("Reading file...");
+    const nextPreview = await previewScheduleImport(file);
+    setPreview(nextPreview);
+    setMapping(nextPreview.suggested_mapping || {});
+    setStatus(`Preview ready: ${nextPreview.total_rows} rows detected.`);
+  }
+
+  async function confirmScheduleImport() {
+    if (!file || !preview) {
       return;
     }
     setStatus("Importing...");
-    const result = await scheduleImport(file, replaceExisting);
-    setStatus(
-      `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}.`
-    );
+    const result = await commitScheduleImport(file, mapping, replaceExisting);
+    setStatus(formatImportSummary(result));
     setFile(null);
+    setPreview(null);
+    setMapping({});
   }
 
   return (
@@ -1496,14 +1639,18 @@ function SettingsPage({
             <CardHeader title="Schedule Import" meta={status} />
             <form
               className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
-              onSubmit={submitSchedule}>
+              onSubmit={submitSchedulePreview}>
               <label className={labelClass}>
-                Schedule CSV
+                Schedule CSV or Excel
                 <input
                   className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm"
                   type="file"
-                  accept=".csv,text/csv"
-                  onChange={(event) => setFile(event.target.files?.[0] || null)}
+                  accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  onChange={(event) => {
+                    setFile(event.target.files?.[0] || null);
+                    setPreview(null);
+                    setMapping({});
+                  }}
                 />
               </label>
               <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
@@ -1515,9 +1662,23 @@ function SettingsPage({
                 Replace
               </label>
               <button className={primaryButton} type="submit">
-                Import
+                Preview
               </button>
             </form>
+            <ImportPreviewPanel
+              preview={preview}
+              mapping={mapping}
+              setMapping={setMapping}
+              fields={[
+                { key: "date", label: "Lesson date" },
+                { key: "start_time", label: "Start time" },
+                { key: "end_time", label: "End time" },
+                { key: "group_name", label: "Group" },
+                { key: "title", label: "Title" }
+              ]}
+              onConfirm={confirmScheduleImport}
+              confirmLabel="Confirm schedule import"
+            />
             <ScheduleTable entries={schedule} />
           </Card>
         </div>
@@ -1659,27 +1820,46 @@ function App() {
     await refreshData();
   }
 
-  async function importStudents(file, replaceExisting) {
-    const result = await fetchJson("/students/import.csv", {
+  async function importPreviewPayload(file, mapping = {}, replaceExisting = false) {
+    return {
+      file_name: file.name,
+      file_content_base64: await fileToBase64(file),
+      mapping,
+      replace_existing: replaceExisting
+    };
+  }
+
+  async function previewStudentsImport(file) {
+    return fetchJson("/students/import/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        csv_content: await file.text(),
-        replace_existing: replaceExisting
-      })
+      body: JSON.stringify(await importPreviewPayload(file))
+    });
+  }
+
+  async function commitStudentsImport(file, mapping, replaceExisting) {
+    const result = await fetchJson("/students/import/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting))
     });
     await refreshData();
     return result;
   }
 
-  async function scheduleImport(file, replaceExisting) {
-    const result = await fetchJson("/schedule/import.csv", {
+  async function previewScheduleImport(file) {
+    return fetchJson("/schedule/import/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        csv_content: await file.text(),
-        replace_existing: replaceExisting
-      })
+      body: JSON.stringify(await importPreviewPayload(file))
+    });
+  }
+
+  async function commitScheduleImport(file, mapping, replaceExisting) {
+    const result = await fetchJson("/schedule/import/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting))
     });
     await refreshData();
     return result;
@@ -1776,7 +1956,8 @@ function App() {
           students={data.students}
           currentRecords={data.currentRecords}
           createStudent={createStudent}
-          importStudents={importStudents}
+          previewStudentsImport={previewStudentsImport}
+          commitStudentsImport={commitStudentsImport}
           createAlias={createAlias}
         />
       ) : null}
@@ -1794,7 +1975,8 @@ function App() {
           sdkConfig={data.sdkConfig}
           students={data.students}
           schedule={data.schedule}
-          scheduleImport={scheduleImport}
+          previewScheduleImport={previewScheduleImport}
+          commitScheduleImport={commitScheduleImport}
           disconnectZoom={disconnectZoom}
         />
       ) : null}
