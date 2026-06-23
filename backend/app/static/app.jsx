@@ -1062,8 +1062,16 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
   }
   const sampleHeaders = preview.headers || [];
   const sampleRows = preview.sample_rows || [];
+  const confidence =
+    typeof preview.confidence === "number" ? `${Math.round(preview.confidence * 100)}% confidence` : null;
+  const metadata = [
+    preview.table_type ? `Type: ${preview.table_type}` : null,
+    preview.mapping_source ? `Mapping: ${preview.mapping_source}` : null,
+    confidence
+  ].filter(Boolean);
   return (
     <div className="grid gap-4 border-t border-line p-5">
+      {metadata.length ? <div className="text-sm font-bold text-muted">{metadata.join(" / ")}</div> : null}
       <div className="grid grid-cols-3 gap-3">
         {fields.map((field) => (
           <label className={labelClass} key={field.key}>
@@ -1120,7 +1128,9 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
         </table>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-bold text-muted">{preview.total_rows} rows detected.</span>
+        <span className="text-sm font-bold text-muted">
+          {preview.total_rows} rows detected. Confirm mapping before saving.
+        </span>
         <button className={primaryButton} type="button" onClick={onConfirm}>
           {confirmLabel}
         </button>
@@ -1178,7 +1188,7 @@ function StudentsPage({
       return;
     }
     setStatus("Importing...");
-    const result = await commitStudentsImport(file, mapping, replaceExisting);
+    const result = await commitStudentsImport(file, mapping, replaceExisting, preview);
     setStatus(formatImportSummary(result));
     setFile(null);
     setPreview(null);
@@ -1561,7 +1571,7 @@ function SettingsPage({
       return;
     }
     setStatus("Importing...");
-    const result = await commitScheduleImport(file, mapping, replaceExisting);
+    const result = await commitScheduleImport(file, mapping, replaceExisting, preview);
     setStatus(formatImportSummary(result));
     setFile(null);
     setPreview(null);
@@ -1820,13 +1830,19 @@ function App() {
     await refreshData();
   }
 
-  async function importPreviewPayload(file, mapping = {}, replaceExisting = false) {
-    return {
+  async function importPreviewPayload(file, mapping = {}, replaceExisting = false, preview = null) {
+    const payload = {
       file_name: file.name,
       file_content_base64: await fileToBase64(file),
       mapping,
       replace_existing: replaceExisting
     };
+    if (preview) {
+      payload.table_type = preview.table_type || null;
+      payload.confidence = typeof preview.confidence === "number" ? preview.confidence : null;
+      payload.warnings = preview.warnings || [];
+    }
+    return payload;
   }
 
   async function previewStudentsImport(file) {
@@ -1837,11 +1853,11 @@ function App() {
     });
   }
 
-  async function commitStudentsImport(file, mapping, replaceExisting) {
+  async function commitStudentsImport(file, mapping, replaceExisting, preview = null) {
     const result = await fetchJson("/students/import/commit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting))
+      body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting, preview))
     });
     await refreshData();
     return result;
@@ -1855,11 +1871,11 @@ function App() {
     });
   }
 
-  async function commitScheduleImport(file, mapping, replaceExisting) {
+  async function commitScheduleImport(file, mapping, replaceExisting, preview = null) {
     const result = await fetchJson("/schedule/import/commit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting))
+      body: JSON.stringify(await importPreviewPayload(file, mapping, replaceExisting, preview))
     });
     await refreshData();
     return result;

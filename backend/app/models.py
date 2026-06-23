@@ -108,6 +108,22 @@ class ZoomSavedMeeting(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
+class ImportMapping(Base):
+    __tablename__ = "import_mappings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    import_kind: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    table_type: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    source_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    headers_signature: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    mapping_json: Mapped[str] = mapped_column(Text, nullable=False)
+    warnings_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidence_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
 class AttendanceRecord(Base):
     __tablename__ = "attendance_records"
 

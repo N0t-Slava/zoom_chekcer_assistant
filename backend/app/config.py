@@ -46,3 +46,11 @@ def cors_allowed_origins() -> list[str]:
 
 def log_level() -> str:
     return os.getenv("LOG_LEVEL", "INFO").upper()
+
+
+def openai_api_key() -> str | None:
+    return os.getenv("OPENAI_API_KEY")
+
+
+def openai_mapping_model() -> str:
+    return os.getenv("OPENAI_MAPPING_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"

@@ -3,11 +3,14 @@ import io
 import unittest
 import zipfile
 from datetime import datetime
+from unittest.mock import patch
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from backend.app.models import Base, ScheduleEntry, Student, StudentAlias
+from backend.app.models import Base, ImportMapping, ScheduleEntry, Student, StudentAlias
+from backend.app.services.ai_mapping_service import detect_import_mapping
+from backend.app.services.import_mapping_store import load_confirmed_mapping, mapping_dict, save_confirmed_mapping
 from backend.app.services.schedule_service import import_schedule_rows
 from backend.app.services.student_service import import_students_rows
 from backend.app.services.table_import_service import decode_file_content, parse_table_file
@@ -133,6 +136,48 @@ class ImportServicesTest(unittest.TestCase):
         table = parse_table_file("students.xlsx", _xlsx_bytes())
         self.assertEqual(table.headers, ["Name", "Group"])
         self.assertEqual(table.rows, [{"Name": "Alice", "Group": "A"}])
+
+    def test_ai_mapping_falls_back_to_local_detection_without_api_key(self):
+        with patch("backend.app.services.ai_mapping_service.openai_api_key", return_value=None):
+            detection = detect_import_mapping(
+                ["Name", "Group", "Zoom name"],
+                [{"Name": "Alice", "Group": "A", "Zoom name": "Alice Z"}],
+                "students",
+            )
+
+        self.assertEqual(detection.source, "local")
+        self.assertEqual(detection.table_type, "students")
+        self.assertEqual(detection.mapping["full_name"], "Name")
+        self.assertEqual(detection.mapping["group_name"], "Group")
+        self.assertEqual(detection.mapping["aliases"], "Zoom name")
+        self.assertTrue(detection.warnings)
+
+    def test_confirmed_mapping_can_be_saved_and_reused(self):
+        headers = ["Name", "Group", "Zoom name"]
+        with self.session_factory() as db:
+            save_confirmed_mapping(
+                db,
+                session_id="teacher-session",
+                import_kind="students",
+                file_name="students.csv",
+                headers=headers,
+                mapping={"full_name": "Name", "group_name": "Group", "aliases": "Zoom name"},
+                table_type="students",
+                confidence=0.91,
+                warnings=[],
+            )
+            stored = load_confirmed_mapping(
+                db,
+                session_id="teacher-session",
+                import_kind="students",
+                headers=headers,
+            )
+            mappings = db.scalars(select(ImportMapping)).all()
+
+        self.assertEqual(len(mappings), 1)
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored.confidence_percent, 91)
+        self.assertEqual(mapping_dict(stored)["aliases"], "Zoom name")
 
 
 if __name__ == "__main__":

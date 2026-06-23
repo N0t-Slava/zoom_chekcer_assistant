@@ -113,6 +113,9 @@ class ImportFileRequest(BaseModel):
     file_content_base64: str = Field(..., min_length=1)
     mapping: dict[str, str] = Field(default_factory=dict)
     replace_existing: bool = False
+    table_type: str | None = Field(default=None, max_length=32)
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    warnings: list[str] = Field(default_factory=list)
 
 
 class ImportPreviewResponse(BaseModel):
@@ -120,6 +123,9 @@ class ImportPreviewResponse(BaseModel):
     suggested_mapping: dict[str, str]
     sample_rows: list[dict[str, str]]
     total_rows: int
+    table_type: str = "unknown"
+    confidence: float = 0
+    mapping_source: str = "local"
     warnings: list[str] = Field(default_factory=list)
 
 

@@ -2,10 +2,11 @@ import csv
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from ..config import session_cookie_name
 from ..database import get_db
 from ..schemas import (
     ImportFileRequest,
@@ -17,6 +18,8 @@ from ..schemas import (
     StudentImportResponse,
     StudentResponse,
 )
+from ..services.ai_mapping_service import STUDENT_MAPPING_ALIASES, detect_import_mapping
+from ..services.import_mapping_store import load_confirmed_mapping, mapping_dict, save_confirmed_mapping
 from ..services.student_service import (
     aliases_by_student_id,
     create_student,
@@ -25,18 +28,22 @@ from ..services.student_service import (
     import_students_rows,
     list_students,
 )
-from ..services.table_import_service import decode_file_content, parse_table_file, preview_rows, suggest_mapping
+from ..services.table_import_service import decode_file_content, parse_table_file, preview_rows
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/students", tags=["students"])
 DbSession = Annotated[Session, Depends(get_db)]
-STUDENT_MAPPING_ALIASES = {
-    "full_name": ["full_name", "name", "student", "student_name", "student name", "піб", "учень"],
-    "group_name": ["group_name", "group", "group_id", "class", "група", "клас"],
-    "aliases": ["aliases", "alias", "zoom_name", "zoom_names", "zoom name", "нік", "псевдонім"],
-}
+
+
+def _student_mapping_warnings(mapping: dict[str, str]) -> list[str]:
+    warnings = []
+    if "full_name" not in mapping:
+        warnings.append("Student name column was not detected.")
+    if "group_name" not in mapping:
+        warnings.append("Group column was not detected.")
+    return warnings
 
 
 @router.get("", response_model=list[StudentResponse])
@@ -126,29 +133,46 @@ async def import_students(payload: StudentImportRequest, db: DbSession) -> Stude
 
 
 @router.post("/import/preview", response_model=ImportPreviewResponse)
-async def preview_students_import(payload: ImportFileRequest) -> ImportPreviewResponse:
+async def preview_students_import(payload: ImportFileRequest, request: Request, db: DbSession) -> ImportPreviewResponse:
     try:
         table = parse_table_file(payload.file_name, decode_file_content(payload.file_content_base64))
     except (ValueError, csv.Error) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    warnings = []
-    suggested_mapping = suggest_mapping(table.headers, STUDENT_MAPPING_ALIASES)
-    if "full_name" not in suggested_mapping:
-        warnings.append("Student name column was not detected.")
-    if "group_name" not in suggested_mapping:
-        warnings.append("Group column was not detected.")
+    sample_rows = preview_rows(table.rows)
+    session_id = request.cookies.get(session_cookie_name())
+    saved_mapping = load_confirmed_mapping(db, session_id=session_id, import_kind="students", headers=table.headers)
+    if saved_mapping is not None:
+        suggested_mapping = mapping_dict(saved_mapping)
+        warnings = _student_mapping_warnings(suggested_mapping)
+        return ImportPreviewResponse(
+            headers=table.headers,
+            suggested_mapping=suggested_mapping,
+            sample_rows=sample_rows,
+            total_rows=len(table.rows),
+            table_type=saved_mapping.table_type,
+            confidence=saved_mapping.confidence_percent / 100,
+            mapping_source="saved",
+            warnings=warnings,
+        )
+
+    detection = detect_import_mapping(table.headers, sample_rows, "students")
+    suggested_mapping = {field: header for field, header in detection.mapping.items() if field in STUDENT_MAPPING_ALIASES}
+    warnings = detection.warnings + _student_mapping_warnings(suggested_mapping)
     return ImportPreviewResponse(
         headers=table.headers,
         suggested_mapping=suggested_mapping,
-        sample_rows=preview_rows(table.rows),
+        sample_rows=sample_rows,
         total_rows=len(table.rows),
+        table_type=detection.table_type,
+        confidence=detection.confidence,
+        mapping_source=detection.source,
         warnings=warnings,
     )
 
 
 @router.post("/import/commit", response_model=StudentImportResponse)
-async def commit_students_import(payload: ImportFileRequest, db: DbSession) -> StudentImportResponse:
+async def commit_students_import(payload: ImportFileRequest, request: Request, db: DbSession) -> StudentImportResponse:
     try:
         table = parse_table_file(payload.file_name, decode_file_content(payload.file_content_base64))
         result = import_students_rows(
@@ -156,6 +180,17 @@ async def commit_students_import(payload: ImportFileRequest, db: DbSession) -> S
             rows=table.rows,
             mapping=payload.mapping,
             replace_existing=payload.replace_existing,
+        )
+        save_confirmed_mapping(
+            db,
+            session_id=request.cookies.get(session_cookie_name()),
+            import_kind="students",
+            file_name=payload.file_name,
+            headers=table.headers,
+            mapping=payload.mapping,
+            table_type=payload.table_type or "students",
+            confidence=payload.confidence,
+            warnings=payload.warnings,
         )
     except (ValueError, csv.Error) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
