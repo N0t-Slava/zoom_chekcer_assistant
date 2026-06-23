@@ -21,6 +21,7 @@ class Meeting(Base):
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     group_name: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    owner_joined_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -122,6 +123,22 @@ class ImportMapping(Base):
     confidence_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class LearnedColumnAlias(Base):
+    __tablename__ = "learned_column_aliases"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    import_kind: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    field_name: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    header_text: Mapped[str] = mapped_column(String(255), nullable=False)
+    normalized_header: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    source: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    confidence_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class GoogleSheetSource(Base):

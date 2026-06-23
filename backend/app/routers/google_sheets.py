@@ -32,6 +32,7 @@ from ..services.google_sheets_service import (
     utcnow_naive,
 )
 from ..services.import_mapping_store import headers_signature, load_confirmed_mapping, mapping_dict, save_confirmed_mapping
+from ..services.learned_column_alias_store import load_learned_aliases, save_learned_aliases
 from ..services.teacher_identity import teacher_owner_key
 from ..services.table_import_service import mapping_missing_columns, preview_rows
 
@@ -148,7 +149,13 @@ async def google_sheet_preview(
             ),
         )
 
-    detection = detect_import_mapping(table.headers, sample_rows, payload.import_kind)
+    learned_aliases = load_learned_aliases(db, session_id=owner_key, import_kind=payload.import_kind)
+    detection = detect_import_mapping(
+        table.headers,
+        sample_rows,
+        payload.import_kind,
+        learned_aliases=learned_aliases,
+    )
     allowed_fields = _allowed_fields(payload.import_kind)
     suggested_mapping = {field: header for field, header in detection.mapping.items() if field in allowed_fields}
     warnings = detection.warnings + _mapping_warnings(payload.import_kind, suggested_mapping)
@@ -248,6 +255,13 @@ async def save_google_sheet_source(
             table_type=source.table_type,
             confidence=payload.confidence,
             warnings=payload.warnings,
+        )
+        save_learned_aliases(
+            db,
+            session_id=owner_key,
+            import_kind=payload.import_kind,
+            headers=payload.headers,
+            mapping=payload.mapping,
         )
     except SQLAlchemyError as exc:
         db.rollback()

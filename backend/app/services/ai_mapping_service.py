@@ -56,8 +56,13 @@ class MappingDetection:
     source: str
 
 
-def detect_import_mapping(headers: list[str], sample_rows: list[dict[str, str]], import_kind: str) -> MappingDetection:
-    local_detection = _local_detection(headers, import_kind)
+def detect_import_mapping(
+    headers: list[str],
+    sample_rows: list[dict[str, str]],
+    import_kind: str,
+    learned_aliases: dict[str, list[str]] | None = None,
+) -> MappingDetection:
+    local_detection = _local_detection(headers, import_kind, learned_aliases=learned_aliases)
     api_key = openai_api_key()
     if not api_key:
         return local_detection
@@ -74,7 +79,7 @@ def detect_import_mapping(headers: list[str], sample_rows: list[dict[str, str]],
             source="local",
         )
 
-    merged = {**local_detection.mapping, **ai_detection.mapping}
+    merged = {**ai_detection.mapping, **local_detection.mapping}
     warnings = ai_detection.warnings
     if not merged:
         warnings = ["No confident mapping was detected."] + warnings
@@ -83,24 +88,50 @@ def detect_import_mapping(headers: list[str], sample_rows: list[dict[str, str]],
         mapping=merged,
         confidence=ai_detection.confidence,
         warnings=warnings,
-        source="openai",
+        source="openai" if ai_detection.mapping else local_detection.source,
     )
 
 
-def _local_detection(headers: list[str], import_kind: str) -> MappingDetection:
-    student_mapping = suggest_mapping(headers, STUDENT_MAPPING_ALIASES)
-    schedule_mapping = suggest_mapping(headers, SCHEDULE_MAPPING_ALIASES)
+def _local_detection(
+    headers: list[str],
+    import_kind: str,
+    learned_aliases: dict[str, list[str]] | None = None,
+) -> MappingDetection:
+    student_mapping = _suggest_local_mapping(headers, STUDENT_MAPPING_ALIASES, learned_aliases, import_kind, "students")
+    schedule_mapping = _suggest_local_mapping(headers, SCHEDULE_MAPPING_ALIASES, learned_aliases, import_kind, "schedule")
     table_type = _detect_table_type(student_mapping, schedule_mapping)
     mapping = student_mapping if import_kind == "students" else schedule_mapping
     confidence = _local_confidence(student_mapping, schedule_mapping, import_kind)
+    source = "learned" if _mapping_uses_learned(mapping, learned_aliases) else "local"
     warnings = ["OpenAI mapping is not configured; using local suggestions."]
     return MappingDetection(
         table_type=table_type,
         mapping=mapping,
         confidence=confidence,
         warnings=warnings,
-        source="local",
+        source=source,
     )
+
+
+def _suggest_local_mapping(
+    headers: list[str],
+    built_in_aliases: dict[str, list[str]],
+    learned_aliases: dict[str, list[str]] | None,
+    requested_import_kind: str,
+    aliases_import_kind: str,
+) -> dict[str, str]:
+    learned_mapping = suggest_mapping(headers, learned_aliases or {}) if requested_import_kind == aliases_import_kind else {}
+    built_in_mapping = suggest_mapping(headers, built_in_aliases)
+    return {**built_in_mapping, **learned_mapping}
+
+
+def _mapping_uses_learned(mapping: dict[str, str], learned_aliases: dict[str, list[str]] | None) -> bool:
+    learned_lookup = {
+        (field, alias.casefold())
+        for field, aliases in (learned_aliases or {}).items()
+        for alias in aliases
+    }
+    return any((field, header.casefold()) in learned_lookup for field, header in mapping.items())
 
 
 def _detect_table_type(student_mapping: dict[str, str], schedule_mapping: dict[str, str]) -> str:

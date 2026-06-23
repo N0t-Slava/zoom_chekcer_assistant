@@ -8,6 +8,7 @@ class AttendanceUpdateRequest(BaseModel):
 
     meeting_id: str = Field(..., min_length=1, max_length=255)
     participants: list[str] = Field(default_factory=list)
+    owner_present: bool = False
 
 
 class AttendanceRecordResponse(BaseModel):
@@ -38,6 +39,7 @@ class AttendanceUpdateResponse(BaseModel):
     meeting_title: str | None = None
     meeting_group_name: str | None = None
     schedule_entry_id: int | None = None
+    owner_joined: bool = False
     active_count: int
     joined: list[str]
     left: list[str]
@@ -270,6 +272,8 @@ class AttendanceSummaryGenerateResponse(BaseModel):
     generated_count: int
     present_count: int
     absent_count: int
+    sheets_written_count: int = 0
+    sheets_write_errors: list[str] = Field(default_factory=list)
 
 
 class ZoomSdkConfigResponse(BaseModel):

@@ -20,6 +20,7 @@ from ..schemas import (
 from ..services.ai_mapping_service import STUDENT_MAPPING_ALIASES, detect_import_mapping
 from ..services.import_history_service import record_import_run
 from ..services.import_mapping_store import load_confirmed_mapping, mapping_dict, save_confirmed_mapping
+from ..services.learned_column_alias_store import load_learned_aliases, save_learned_aliases
 from ..services.student_service import (
     aliases_by_student_id,
     create_student,
@@ -157,7 +158,8 @@ async def preview_students_import(payload: ImportFileRequest, request: Request, 
             warnings=warnings,
         )
 
-    detection = detect_import_mapping(table.headers, sample_rows, "students")
+    learned_aliases = load_learned_aliases(db, session_id=owner_key, import_kind="students")
+    detection = detect_import_mapping(table.headers, sample_rows, "students", learned_aliases=learned_aliases)
     suggested_mapping = {field: header for field, header in detection.mapping.items() if field in STUDENT_MAPPING_ALIASES}
     warnings = detection.warnings + _student_mapping_warnings(suggested_mapping)
     return ImportPreviewResponse(
@@ -196,6 +198,13 @@ async def commit_students_import(payload: ImportFileRequest, request: Request, d
             table_type=payload.table_type or "students",
             confidence=payload.confidence,
             warnings=payload.warnings,
+        )
+        save_learned_aliases(
+            db,
+            session_id=owner_key,
+            import_kind="students",
+            headers=table.headers,
+            mapping=payload.mapping,
         )
         record_import_run(
             db,

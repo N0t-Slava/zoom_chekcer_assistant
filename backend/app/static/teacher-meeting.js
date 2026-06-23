@@ -45,6 +45,7 @@ let currentMeetingNumber = null;
 let participantCache = new Map();
 let savedMeetings = [];
 let lastAttendanceSyncLog = null;
+let teacherClientJoined = false;
 
 function setLiveText(target, value) {
   if (target) {
@@ -571,7 +572,7 @@ function collectParticipantNames(value, names = []) {
   return names;
 }
 
-async function sendAttendanceUpdate(meetingNumber, participants) {
+async function sendAttendanceUpdate(meetingNumber, participants, ownerPresent = false) {
   const response = await fetch("/attendance/update", {
     method: "POST",
     headers: {
@@ -579,7 +580,8 @@ async function sendAttendanceUpdate(meetingNumber, participants) {
     },
     body: JSON.stringify({
       meeting_id: meetingNumber,
-      participants
+      participants,
+      owner_present: ownerPresent
     })
   });
 
@@ -799,7 +801,7 @@ async function syncAttendanceOnce() {
     }
     rememberParticipantNames(participants);
     participants = excludeTeacherParticipantNames([...participants, ...cachedParticipantNames()]);
-    const result = await sendAttendanceUpdate(currentMeetingNumber, participants);
+    const result = await sendAttendanceUpdate(currentMeetingNumber, participants, teacherClientJoined);
     lastAttendanceSyncLog = {
       checkedAt: new Date().toISOString(),
       meetingNumber: currentMeetingNumber,
@@ -1069,6 +1071,7 @@ async function disconnectZoom() {
       throw new Error(`Unable to disconnect Zoom: ${details}`);
     }
     oauthAuthorized = false;
+    teacherClientJoined = false;
     oauthMessage.textContent = "Zoom authorization was cleared.";
     zoomUserMessage.textContent = "";
     joinAsHostInput.checked = false;
@@ -1170,6 +1173,7 @@ function prepareClientJoin(signaturePayload, zak, role, joinData = {}) {
         passWord: joinData.passcode ?? meetingPasswordInput.value,
         userName: teacherNameInput.value.trim() || "Teacher",
         success: () => {
+          teacherClientJoined = true;
           setStatus("Joined", "Teacher client joined the meeting through the SDK.");
           startAttendanceSync(signaturePayload.meeting_number);
         },
@@ -1213,6 +1217,7 @@ async function prepareJoin(joinData = {}) {
     return;
   }
 
+  teacherClientJoined = false;
   joinButton.disabled = true;
   const joinAsHost = joinData.joinAsHost ?? joinAsHostInput.checked;
   const role = joinAsHost ? 1 : 0;

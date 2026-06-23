@@ -11,6 +11,7 @@ from ..schemas import ImportFileRequest, ImportPreviewResponse, ScheduleEntryRes
 from ..services.ai_mapping_service import SCHEDULE_MAPPING_ALIASES, detect_import_mapping
 from ..services.import_history_service import record_import_run
 from ..services.import_mapping_store import load_confirmed_mapping, mapping_dict, save_confirmed_mapping
+from ..services.learned_column_alias_store import load_learned_aliases, save_learned_aliases
 from ..services.schedule_service import import_schedule_csv, import_schedule_rows, list_schedule_entries
 from ..services.table_import_service import decode_file_content, mapping_missing_columns, parse_table_file, preview_rows
 from ..services.teacher_identity import teacher_owner_key
@@ -98,7 +99,8 @@ async def preview_schedule_import(payload: ImportFileRequest, request: Request, 
             warnings=warnings,
         )
 
-    detection = detect_import_mapping(table.headers, sample_rows, "schedule")
+    learned_aliases = load_learned_aliases(db, session_id=owner_key, import_kind="schedule")
+    detection = detect_import_mapping(table.headers, sample_rows, "schedule", learned_aliases=learned_aliases)
     suggested_mapping = {field: header for field, header in detection.mapping.items() if field in SCHEDULE_MAPPING_ALIASES}
     warnings = detection.warnings + _schedule_mapping_warnings(suggested_mapping)
     return ImportPreviewResponse(
@@ -137,6 +139,13 @@ async def commit_schedule_import(payload: ImportFileRequest, request: Request, d
             table_type=payload.table_type or "schedule",
             confidence=payload.confidence,
             warnings=payload.warnings,
+        )
+        save_learned_aliases(
+            db,
+            session_id=owner_key,
+            import_kind="schedule",
+            headers=table.headers,
+            mapping=payload.mapping,
         )
         record_import_run(
             db,

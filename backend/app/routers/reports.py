@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from ..services.report_service import (
     generate_attendance_summaries,
     list_attendance_summaries,
 )
+from ..services.teacher_identity import teacher_owner_key
 
 
 logger = logging.getLogger(__name__)
@@ -22,9 +23,10 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 @router.post("/attendance-summary/generate", response_model=AttendanceSummaryGenerateResponse)
-async def generate_attendance_summary(db: DbSession) -> AttendanceSummaryGenerateResponse:
+async def generate_attendance_summary(request: Request, db: DbSession) -> AttendanceSummaryGenerateResponse:
     try:
-        result = generate_attendance_summaries(db)
+        owner_key = teacher_owner_key(db, request)
+        result = generate_attendance_summaries(db, owner_key=owner_key)
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error while generating attendance summary")

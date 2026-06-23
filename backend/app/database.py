@@ -56,6 +56,8 @@ def _ensure_lightweight_migrations() -> None:
             connection.execute(text("ALTER TABLE attendance_records ADD COLUMN meeting_session_id INTEGER"))
         if "meetings" in inspector.get_table_names() and "schedule_entry_id" not in meeting_columns:
             connection.execute(text("ALTER TABLE meetings ADD COLUMN schedule_entry_id INTEGER"))
+        if "meetings" in inspector.get_table_names() and "owner_joined_at" not in meeting_columns:
+            connection.execute(text("ALTER TABLE meetings ADD COLUMN owner_joined_at DATETIME"))
         if "google_sheet_sources" in inspector.get_table_names() and "auto_sync_enabled" not in google_sheet_columns:
             connection.execute(text("ALTER TABLE google_sheet_sources ADD COLUMN auto_sync_enabled INTEGER DEFAULT 0 NOT NULL"))
         if "google_sheet_sources" in inspector.get_table_names() and "headers_signature" not in google_sheet_columns:

@@ -34,7 +34,7 @@ def get_service_account_credentials() -> ServiceAccountCredentials | None:
     raw_json = google_service_account_json()
     if raw_json:
         try:
-            data = json.loads(raw_json)
+            data = _service_account_json_payload(raw_json)
         except json.JSONDecodeError:
             data = {}
         email = data.get("client_email")
@@ -48,6 +48,16 @@ def get_service_account_credentials() -> ServiceAccountCredentials | None:
     if email and private_key:
         return ServiceAccountCredentials(email, private_key.replace("\\n", "\n"))
     return None
+
+
+def _service_account_json_payload(raw_json: str) -> dict[str, object]:
+    try:
+        payload = json.loads(raw_json)
+    except json.JSONDecodeError:
+        padded = raw_json + "=" * ((4 - len(raw_json) % 4) % 4)
+        decoded = base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
+        payload = json.loads(decoded)
+    return payload if isinstance(payload, dict) else {}
 
 
 def service_account_email_for_display() -> str | None:
@@ -107,16 +117,43 @@ def list_sheet_tabs(sheet_id: str) -> list[str]:
 
 
 def read_sheet_table(sheet_id: str, tab_name: str, row_limit: int = 2000) -> ParsedTable:
-    range_name = f"'{tab_name.replace(chr(39), chr(39) + chr(39))}'!A1:ZZ{row_limit}"
+    values = read_sheet_values(sheet_id, tab_name, row_limit=row_limit)
+    table = values_to_table(values)
+    validate_table(table)
+    return table
+
+
+def read_sheet_values(sheet_id: str, tab_name: str, row_limit: int = 2000) -> list[list[object]]:
+    range_name = _sheet_range(tab_name, f"A1:ZZ{row_limit}")
     encoded_range = urllib.parse.quote(range_name, safe="")
     url = f"{SHEETS_API_BASE}/{urllib.parse.quote(sheet_id)}/values/{encoded_range}?majorDimension=ROWS"
     payload = _google_get(url)
     values = payload.get("values", [])
     if not isinstance(values, list):
-        values = []
-    table = values_to_table(values)
-    validate_table(table)
-    return table
+        return []
+    return [row if isinstance(row, list) else [] for row in values]
+
+
+def update_sheet_values(
+    sheet_id: str,
+    tab_name: str,
+    start_cell: str,
+    values: list[list[object]],
+) -> dict[str, object]:
+    range_name = _sheet_range(tab_name, start_cell)
+    encoded_range = urllib.parse.quote(range_name, safe="")
+    url = (
+        f"{SHEETS_API_BASE}/{urllib.parse.quote(sheet_id)}/values/{encoded_range}"
+        "?valueInputOption=RAW"
+    )
+    return _google_request(
+        url,
+        method="PUT",
+        data={
+            "majorDimension": "ROWS",
+            "values": values,
+        },
+    )
 
 
 def preview_sheet_rows(sheet_id: str, tab_name: str) -> ParsedTable:
@@ -125,15 +162,26 @@ def preview_sheet_rows(sheet_id: str, tab_name: str) -> ParsedTable:
 
 
 def _google_get(url: str) -> dict[str, object]:
+    return _google_request(url, method="GET")
+
+
+def _google_request(url: str, method: str, data: dict[str, object] | None = None) -> dict[str, object]:
     token = _access_token()
+    body = json.dumps(data).encode("utf-8") if data is not None else None
     request = urllib.request.Request(
         url,
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-        method="GET",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        method=method,
     )
     try:
         with urllib.request.urlopen(request, timeout=20) as response:
-            return json.loads(response.read().decode("utf-8"))
+            raw = response.read().decode("utf-8")
+            return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
         raise ValueError(f"Google Sheets API error: {detail}") from exc
@@ -192,6 +240,11 @@ def _urlsafe_json(value: dict[str, object]) -> str:
 
 def _urlsafe_b64(value: bytes) -> str:
     return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+
+def _sheet_range(tab_name: str, cell_range: str) -> str:
+    escaped_tab = tab_name.replace("'", "''")
+    return f"'{escaped_tab}'!{cell_range}"
 
 
 def utcnow_naive() -> datetime:

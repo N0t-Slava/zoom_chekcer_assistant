@@ -6,6 +6,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from ..models import AttendanceRecord, AttendanceSummary, Meeting, ScheduleEntry, Student
+from .google_sheet_writeback_service import write_attendance_summaries_to_student_sheets
 from .student_service import (
     aliases_by_student_id,
     build_student_name_keys,
@@ -135,7 +136,14 @@ def refresh_attendance_summary_for_schedule(
         .order_by(Student.full_name)
     ).all()
     student_aliases = aliases_by_student_id(db, [student.id for student in students])
-    meetings = _meetings_for_schedule(db, entry)
+    meetings = [meeting for meeting in _meetings_for_schedule(db, entry) if meeting.owner_joined_at is not None]
+    if not meetings:
+        return {
+            "generated_count": 0,
+            "present_count": 0,
+            "absent_count": 0,
+        }
+
     attendance_records = _attendance_records_for_meetings(db, meetings)
     meeting_session_id = meetings[0].id if len(meetings) == 1 else None
 
@@ -172,7 +180,7 @@ def refresh_attendance_summary_for_schedule(
     }
 
 
-def generate_attendance_summaries(db: Session) -> dict[str, int]:
+def generate_attendance_summaries(db: Session, owner_key: str | None = None) -> dict[str, object]:
     generated_at = current_time()
     db.execute(delete(AttendanceSummary))
 
@@ -192,6 +200,13 @@ def generate_attendance_summaries(db: Session) -> dict[str, int]:
             result[key] += entry_result[key]
 
     db.commit()
+    write_back_results = write_attendance_summaries_to_student_sheets(db, owner_key=owner_key)
+    result["sheets_written_count"] = sum(1 for item in write_back_results if item.status == "success")
+    result["sheets_write_errors"] = [
+        f"{item.source_name}: {item.error}"
+        for item in write_back_results
+        if item.status == "failed" and item.error
+    ]
     return result
 
 

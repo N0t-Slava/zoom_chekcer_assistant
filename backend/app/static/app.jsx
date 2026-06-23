@@ -1041,7 +1041,12 @@ function formatImportSummary(result) {
     result.aliases_created_count || result.aliases_updated_count
       ? `, aliases created ${result.aliases_created_count || 0}, aliases updated ${result.aliases_updated_count || 0}`
       : "";
-  return `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}${aliasText}.`;
+  const sheetText = result.sheets_write_errors?.length
+    ? ` Sheet write failed: ${result.sheets_write_errors.join("; ")}`
+    : result.sheets_written_count
+      ? ` Wrote back to ${result.sheets_written_count} Sheet${result.sheets_written_count === 1 ? "" : "s"}.`
+      : "";
+  return `Imported ${result.imported_count}, created ${result.created_count}, updated ${result.updated_count}, skipped ${result.skipped_count}${aliasText}.${sheetText}`;
 }
 
 function formatSyncSummary(result) {
@@ -1649,8 +1654,13 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
   async function submitSummary() {
     setStatus("Generating...");
     const result = await generateSummary();
+    const sheetStatus = result.sheets_write_errors?.length
+      ? ` Sheet write failed: ${result.sheets_write_errors.join("; ")}`
+      : result.sheets_written_count
+        ? ` Wrote back to ${result.sheets_written_count} Sheet${result.sheets_written_count === 1 ? "" : "s"}.`
+        : "";
     setStatus(
-      `Generated ${result.generated_count}: ${result.present_count} present, ${result.absent_count} absent.`
+      `Generated ${result.generated_count}: ${result.present_count} present, ${result.absent_count} absent.${sheetStatus}`
     );
   }
 

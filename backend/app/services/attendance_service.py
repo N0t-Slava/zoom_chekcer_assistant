@@ -214,6 +214,13 @@ def get_or_create_current_meeting(db: Session, zoom_meeting_id: str, now: dateti
         and latest_meeting.ended_at is None
         and latest_meeting.started_at.date() == now.date()
     ):
+        if latest_meeting.schedule_entry_id is None:
+            schedule_entry = find_schedule_for_time(db, now)
+            if schedule_entry:
+                latest_meeting.schedule_entry_id = schedule_entry.id
+                latest_meeting.title = schedule_entry.title
+                latest_meeting.group_name = schedule_entry.group_name
+                db.flush()
         return latest_meeting
 
     schedule_entry = find_schedule_for_time(db, now)
@@ -234,9 +241,12 @@ def process_attendance_update(
     db: Session,
     meeting_id: str,
     participants: list[str],
+    owner_present: bool = False,
 ) -> dict[str, object]:
     now = current_time()
     meeting = get_or_create_current_meeting(db, meeting_id, now)
+    if owner_present and meeting.owner_joined_at is None:
+        meeting.owner_joined_at = now
     expire_stale_active_records(db, meeting_session_id=meeting.id)
     participant_names = normalize_participant_names(participants)
     schedule_entry = db.get(ScheduleEntry, meeting.schedule_entry_id) if meeting.schedule_entry_id else None
@@ -336,6 +346,7 @@ def process_attendance_update(
         "meeting_title": meeting.title,
         "meeting_group_name": meeting.group_name,
         "schedule_entry_id": meeting.schedule_entry_id,
+        "owner_joined": meeting.owner_joined_at is not None,
         "active_count": len(incoming_by_name),
         "joined": joined,
         "left": left,

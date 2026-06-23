@@ -35,6 +35,7 @@ async def update_attendance(payload: AttendanceUpdateRequest, db: DbSession) -> 
             db=db,
             meeting_id=payload.meeting_id,
             participants=payload.participants,
+            owner_present=payload.owner_present,
         )
     except SQLAlchemyError as exc:
         db.rollback()
