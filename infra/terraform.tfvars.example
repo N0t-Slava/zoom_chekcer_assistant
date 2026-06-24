@@ -1,0 +1,7 @@
+repository_url = "https://github.com/N0t-Slava/zoom_chekcer_assistant.git"
+
+# Optional. Use your real public IP with /32 if you want SSH access.
+# allowed_ssh_cidr = "203.0.113.10/32"
+
+# Optional. Set this to an existing AWS EC2 key pair name if using SSH.
+# ssh_key_name = "your-key-pair-name"
