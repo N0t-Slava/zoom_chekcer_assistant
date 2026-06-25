@@ -707,9 +707,6 @@ function DashboardLessonCard({ meetings, historyRecords, goToPage }) {
           />
           <StatusTile label="Last sync" value={formatShortDate(lastSync)} wide />
         </div>
-        <p className="text-sm leading-6 text-muted">
-          Join Zoom from the Current Lesson page to begin live attendance tracking.
-        </p>
         <button className={primaryButton} type="button" onClick={() => goToPage("live-attendance")}>
           Start / Join lesson
         </button>
@@ -905,9 +902,7 @@ function SavedMeetingsTable({
 }) {
   return (
     <Card>
-      <CardHeader
-        title="Saved Meetings"
-        meta={`${meetings.length} saved meeting${meetings.length === 1 ? "" : "s"} visible.`}>
+      <CardHeader title="Saved Meetings">
         <Badge>{meetings.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
@@ -1152,9 +1147,6 @@ function LiveAttendancePage({
         <Card>
           <CardHeader title={primaryLabel} />
           <div className="grid gap-3 p-5">
-            <p className="text-sm leading-6 text-muted">
-              Open the Zoom console to join the meeting and start live attendance sync.
-            </p>
             <a className={primaryButton} href="/teacher-meeting">
               {primaryLabel}
             </a>
@@ -1181,15 +1173,13 @@ function LiveAttendancePage({
           </div>
         </Card>
         <Card>
-          <CardHeader
-            title="Participants / Matched Students"
-            meta="Current active Zoom names from the attendance sync.">
+          <CardHeader title="Participants / Matched Students">
             <Badge>{currentRecords.length}</Badge>
           </CardHeader>
           <ParticipantsTable records={currentRecords} />
         </Card>
         <Card>
-          <CardHeader title="Unmatched Names" meta="Quick alias actions for unresolved Zoom names.">
+          <CardHeader title="Unmatched Names">
             <Badge tone={unmatchedRecords.length ? "warning" : "neutral"}>
               {unmatchedRecords.length}
             </Badge>
@@ -1807,9 +1797,7 @@ function StudentsPage({
       />
 
       <Card>
-        <CardHeader
-          title="Student Roster"
-          meta={`${filtered.length} visible student${filtered.length === 1 ? "" : "s"}.`}>
+        <CardHeader title="Student Roster">
           <Badge>{filtered.length}</Badge>
         </CardHeader>
         <div className={tableWrapClass}>
