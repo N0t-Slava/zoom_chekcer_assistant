@@ -1,0 +1,28 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ubuntu
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -e
+
+            sudo -u zoomapp git -C /opt/zoom-assistant-tracker fetch origin main
+            sudo -u zoomapp git -C /opt/zoom-assistant-tracker reset --hard origin/main
+
+            sudo -u zoomapp /opt/zoom-assistant-tracker/.venv/bin/python -m pip install -r /opt/zoom-assistant-tracker/backend/requirements.txt
+
+            sudo systemctl restart zoom-assistant
+            curl -f http://127.0.0.1:8000/health
