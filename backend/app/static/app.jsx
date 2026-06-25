@@ -4,12 +4,12 @@ const MAX_ATTENDANCE = 30;
 const REFRESH_INTERVAL_MS = 5000;
 
 const pages = [
-  { id: "menu", label: "Dashboard" },
-  { id: "live-attendance", label: "Current Lesson" },
-  { id: "meetings", label: "Meetings" },
-  { id: "students", label: "Students" },
-  { id: "reports", label: "Reports" },
-  { id: "settings", label: "Settings" }
+  { id: "menu", label: "Dashboard", icon: "layout-dashboard" },
+  { id: "live-attendance", label: "Current Lesson", icon: "video" },
+  { id: "meetings", label: "Meetings", icon: "calendar-days" },
+  { id: "students", label: "Students", icon: "users" },
+  { id: "reports", label: "Reports", icon: "bar-chart-3" },
+  { id: "settings", label: "Settings", icon: "settings" }
 ];
 
 const pageTitles = Object.fromEntries(pages.map((page) => [page.id, page.label]));
@@ -22,10 +22,12 @@ const tones = {
 };
 
 const buttonBase =
-  "inline-flex min-h-9 items-center justify-center rounded-lg border px-3 text-sm font-black transition hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-black transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
 const primaryButton = `${buttonBase} border-[#D9C300] bg-accent text-ink`;
 const secondaryButton = `${buttonBase} border-line bg-panel text-ink`;
-const dangerButton = `${buttonBase} border-red-200 bg-danger text-white`;
+const dangerButton = `${buttonBase} border-red-200 bg-red-50 text-danger`;
+const successButton = `${buttonBase} border-green-200 bg-green-50 text-success`;
+const compactButton = "min-h-8 px-2.5 text-xs";
 const inputClass =
   "min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200";
 const labelClass = "grid gap-1 text-xs font-black uppercase text-muted";
@@ -39,6 +41,303 @@ const tdClass = "border-b border-line px-3 py-3 align-middle whitespace-nowrap";
 
 function cx(...values) {
   return values.filter(Boolean).join(" ");
+}
+
+const iconPaths = {
+  "layout-dashboard": [
+    <rect key="a" x="3" y="3" width="7" height="7" rx="1" />,
+    <rect key="b" x="14" y="3" width="7" height="7" rx="1" />,
+    <rect key="c" x="3" y="14" width="7" height="7" rx="1" />,
+    <rect key="d" x="14" y="14" width="7" height="7" rx="1" />
+  ],
+  video: [
+    <path key="a" d="M15 10.5 21 7v10l-6-3.5" />,
+    <rect key="b" x="3" y="6" width="12" height="12" rx="2" />
+  ],
+  "calendar-days": [
+    <path key="a" d="M8 2v4" />,
+    <path key="b" d="M16 2v4" />,
+    <rect key="c" x="3" y="4" width="18" height="18" rx="2" />,
+    <path key="d" d="M3 10h18" />,
+    <path key="e" d="M8 14h.01" />,
+    <path key="f" d="M12 14h.01" />,
+    <path key="g" d="M16 14h.01" />,
+    <path key="h" d="M8 18h.01" />,
+    <path key="i" d="M12 18h.01" />
+  ],
+  calendar: [
+    <path key="a" d="M8 2v4" />,
+    <path key="b" d="M16 2v4" />,
+    <rect key="c" x="3" y="4" width="18" height="18" rx="2" />,
+    <path key="d" d="M3 10h18" />
+  ],
+  users: [
+    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
+    <circle key="b" cx="9" cy="7" r="4" />,
+    <path key="c" d="M22 21v-2a4 4 0 0 0-3-3.87" />,
+    <path key="d" d="M16 3.13a4 4 0 0 1 0 7.75" />
+  ],
+  "bar-chart-3": [
+    <path key="a" d="M3 3v18h18" />,
+    <path key="b" d="M7 16V9" />,
+    <path key="c" d="M12 16V5" />,
+    <path key="d" d="M17 16v-3" />
+  ],
+  settings: [
+    <circle key="a" cx="12" cy="12" r="3" />,
+    <path key="b" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.2a2 2 0 1 1-4 0V21a1.7 1.7 0 0 0-.4-1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.2a2 2 0 1 1 0-4H3a1.7 1.7 0 0 0 1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.2a2 2 0 1 1 4 0V3a1.7 1.7 0 0 0 .4 1 1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.4.2.74.54.94.94.14.3.22.64.2 1v.2a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-.94-.14Z" />
+  ],
+  "refresh-cw": [
+    <path key="a" d="M21 12a9 9 0 0 1-15.5 6.2L3 15" />,
+    <path key="b" d="M3 21v-6h6" />,
+    <path key="c" d="M3 12A9 9 0 0 1 18.5 5.8L21 9" />,
+    <path key="d" d="M21 3v6h-6" />
+  ],
+  "log-in": [
+    <path key="a" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />,
+    <path key="b" d="m10 17 5-5-5-5" />,
+    <path key="c" d="M15 12H3" />
+  ],
+  "play-circle": [
+    <circle key="a" cx="12" cy="12" r="10" />,
+    <path key="b" d="m10 8 6 4-6 4V8Z" />
+  ],
+  "user-check": [
+    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
+    <circle key="b" cx="9" cy="7" r="4" />,
+    <path key="c" d="m16 11 2 2 4-4" />
+  ],
+  "user-x": [
+    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
+    <circle key="b" cx="9" cy="7" r="4" />,
+    <path key="c" d="m17 8 5 5" />,
+    <path key="d" d="m22 8-5 5" />
+  ],
+  "user-search": [
+    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
+    <circle key="b" cx="9" cy="7" r="4" />,
+    <circle key="c" cx="17" cy="11" r="3" />,
+    <path key="d" d="m19.5 13.5 2.5 2.5" />
+  ],
+  "user-plus": [
+    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
+    <circle key="b" cx="9" cy="7" r="4" />,
+    <path key="c" d="M19 8v6" />,
+    <path key="d" d="M22 11h-6" />
+  ],
+  "user-cog": [
+    <circle key="a" cx="9" cy="7" r="4" />,
+    <path key="b" d="M3 21v-2a4 4 0 0 1 4-4h3" />,
+    <circle key="c" cx="17" cy="17" r="2" />,
+    <path key="d" d="M17 13v1" />,
+    <path key="e" d="M17 20v1" />,
+    <path key="f" d="M13 17h1" />,
+    <path key="g" d="M20 17h1" />
+  ],
+  user: [
+    <path key="a" d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />,
+    <circle key="b" cx="12" cy="7" r="4" />
+  ],
+  "link-2": [
+    <path key="a" d="M9 17H7a5 5 0 0 1 0-10h2" />,
+    <path key="b" d="M15 7h2a5 5 0 0 1 0 10h-2" />,
+    <path key="c" d="M8 12h8" />
+  ],
+  save: [
+    <path key="a" d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />,
+    <path key="b" d="M17 21v-8H7v8" />,
+    <path key="c" d="M7 3v5h8" />
+  ],
+  "trash-2": [
+    <path key="a" d="M3 6h18" />,
+    <path key="b" d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />,
+    <path key="c" d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />,
+    <path key="d" d="M10 11v6" />,
+    <path key="e" d="M14 11v6" />
+  ],
+  pencil: [
+    <path key="a" d="M17 3a2.8 2.8 0 0 1 4 4L8 20l-5 1 1-5Z" />,
+    <path key="b" d="m15 5 4 4" />
+  ],
+  "shield-check": [
+    <path key="a" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />,
+    <path key="b" d="m9 12 2 2 4-4" />
+  ],
+  "x-circle": [
+    <circle key="a" cx="12" cy="12" r="10" />,
+    <path key="b" d="m15 9-6 6" />,
+    <path key="c" d="m9 9 6 6" />
+  ],
+  download: [
+    <path key="a" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />,
+    <path key="b" d="M7 10l5 5 5-5" />,
+    <path key="c" d="M12 15V3" />
+  ],
+  upload: [
+    <path key="a" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />,
+    <path key="b" d="M17 8 12 3 7 8" />,
+    <path key="c" d="M12 3v12" />
+  ],
+  "folder-open": [
+    <path key="a" d="M6 14 8 6h13l-2 12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3" />,
+    <path key="b" d="M2 10h20" />
+  ],
+  eye: [
+    <path key="a" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />,
+    <circle key="b" cx="12" cy="12" r="3" />
+  ],
+  "check-circle-2": [
+    <circle key="a" cx="12" cy="12" r="10" />,
+    <path key="b" d="m9 12 2 2 4-4" />
+  ],
+  replace: [
+    <path key="a" d="M3 7h13l-3-3" />,
+    <path key="b" d="M16 4l3 3-3 3" />,
+    <path key="c" d="M21 17H8l3 3" />,
+    <path key="d" d="M8 20l-3-3 3-3" />
+  ],
+  "table-2": [
+    <rect key="a" x="3" y="3" width="18" height="18" rx="2" />,
+    <path key="b" d="M3 9h18" />,
+    <path key="c" d="M3 15h18" />,
+    <path key="d" d="M9 3v18" />,
+    <path key="e" d="M15 3v18" />
+  ],
+  "chevron-down": [<path key="a" d="m6 9 6 6 6-6" />],
+  "toggle-right": [
+    <rect key="a" x="2" y="7" width="20" height="10" rx="5" />,
+    <circle key="b" cx="16" cy="12" r="3" />
+  ],
+  copy: [
+    <rect key="a" x="9" y="9" width="13" height="13" rx="2" />,
+    <path key="b" d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  ],
+  "file-down": [
+    <path key="a" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />,
+    <path key="b" d="M14 2v6h6" />,
+    <path key="c" d="M12 18v-6" />,
+    <path key="d" d="m9 15 3 3 3-3" />
+  ],
+  search: [
+    <circle key="a" cx="11" cy="11" r="8" />,
+    <path key="b" d="m21 21-4.3-4.3" />
+  ],
+  "list-filter": [
+    <path key="a" d="M3 6h18" />,
+    <path key="b" d="M7 12h10" />,
+    <path key="c" d="M10 18h4" />
+  ],
+  hash: [
+    <path key="a" d="M4 9h16" />,
+    <path key="b" d="M4 15h16" />,
+    <path key="c" d="M10 3 8 21" />,
+    <path key="d" d="M16 3l-2 18" />
+  ],
+  "file-spreadsheet": [
+    <path key="a" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />,
+    <path key="b" d="M14 2v6h6" />,
+    <path key="c" d="M8 13h8" />,
+    <path key="d" d="M8 17h8" />,
+    <path key="e" d="M12 11v8" />
+  ],
+  "clipboard-list": [
+    <rect key="a" x="8" y="2" width="8" height="4" rx="1" />,
+    <path key="b" d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />,
+    <path key="c" d="M8 12h.01" />,
+    <path key="d" d="M12 12h4" />,
+    <path key="e" d="M8 16h.01" />,
+    <path key="f" d="M12 16h4" />
+  ],
+  unplug: [
+    <path key="a" d="m19 5 3-3" />,
+    <path key="b" d="m2 22 3-3" />,
+    <path key="c" d="M6 8 3 5" />,
+    <path key="d" d="m14 16 3 3" />,
+    <path key="e" d="M8 3v4" />,
+    <path key="f" d="M16 3v4" />,
+    <path key="g" d="M8 7h8v5a4 4 0 0 1-4 4h0a4 4 0 0 1-4-4Z" />
+  ],
+  "code-2": [
+    <path key="a" d="m18 16 4-4-4-4" />,
+    <path key="b" d="m6 8-4 4 4 4" />,
+    <path key="c" d="m14.5 4-5 16" />
+  ],
+  "key-round": [
+    <circle key="a" cx="8" cy="15" r="4" />,
+    <path key="b" d="m10.8 12.2 8.6-8.6" />,
+    <path key="c" d="m15 5 4 4" />,
+    <path key="d" d="m17 3 4 4" />
+  ],
+  info: [
+    <circle key="a" cx="12" cy="12" r="10" />,
+    <path key="b" d="M12 16v-4" />,
+    <path key="c" d="M12 8h.01" />
+  ],
+  clock: [
+    <circle key="a" cx="12" cy="12" r="10" />,
+    <path key="b" d="M12 6v6l4 2" />
+  ]
+};
+
+function Icon({ name, size = 18, className = "" }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={cx("shrink-0", className)}
+      fill="none"
+      focusable="false"
+      height={size}
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      width={size}>
+      {iconPaths[name] || iconPaths.info}
+    </svg>
+  );
+}
+
+function ActionButton({
+  as = "button",
+  variant = "secondary",
+  icon,
+  children,
+  className = "",
+  compact = false,
+  iconSize,
+  type = "button",
+  ...props
+}) {
+  const Component = as;
+  const classes = {
+    primary: primaryButton,
+    secondary: secondaryButton,
+    danger: dangerButton,
+    success: successButton
+  };
+  const componentProps = Component === "button" ? { type, ...props } : props;
+  return (
+    <Component className={cx(classes[variant] || secondaryButton, compact && compactButton, className)} {...componentProps}>
+      {icon ? <Icon name={icon} size={iconSize || (compact ? 16 : 18)} /> : null}
+      <span>{children}</span>
+    </Component>
+  );
+}
+
+function FieldWithIcon({ icon, children }) {
+  return (
+    <div className="relative">
+      <Icon
+        name={icon}
+        size={16}
+        className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted"
+      />
+      {React.cloneElement(children, {
+        className: cx(children.props.className, "pl-9")
+      })}
+    </div>
+  );
 }
 
 async function fetchJson(url, options = {}) {
@@ -219,17 +518,19 @@ function ZoomStatusPill({ oauthStatus, onManageSettings, showManage = true }) {
       <span className="truncate">{label}</span>
       {connected && showManage ? (
         <button
-          className="shrink-0 border-l border-line pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
+          className="inline-flex shrink-0 items-center gap-1 border-l border-line pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
           type="button"
           onClick={onManageSettings}>
-          Manage
+          <Icon name="settings" size={14} />
+          <span>Manage</span>
         </button>
       ) : null}
       {!connected && !checking ? (
         <a
-          className="shrink-0 border-l border-yellow-300 pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
+          className="inline-flex shrink-0 items-center gap-1 border-l border-yellow-300 pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
           href="/zoom/oauth/start?prompt=login">
-          Connect
+          <Icon name="log-in" size={14} />
+          <span>Connect</span>
         </a>
       ) : null}
     </div>
@@ -256,11 +557,14 @@ function Card({ children, className = "" }) {
   return <article className={cx(cardClass, className)}>{children}</article>;
 }
 
-function CardHeader({ title, meta, children }) {
+function CardHeader({ title, meta, icon, children }) {
   return (
     <div className={cardHeaderClass}>
       <div className="min-w-0">
-        <h2 className="m-0 text-xl font-black">{title}</h2>
+        <h2 className="m-0 flex items-center gap-2 text-xl font-black">
+          {icon ? <Icon name={icon} size={20} className="text-ink" /> : null}
+          <span>{title}</span>
+        </h2>
         {meta ? <p className="mt-1 text-sm leading-6 text-muted">{meta}</p> : null}
       </div>
       {children}
@@ -280,10 +584,13 @@ function EmptyRow({ colSpan, children }) {
   );
 }
 
-function StatusTile({ label, value, tone = "neutral", wide = false }) {
+function StatusTile({ label, value, tone = "neutral", wide = false, icon }) {
   return (
     <div className={cx("rounded-lg border border-line bg-[#FFFDF7] p-3", wide && "sm:col-span-2")}>
-      <div className="text-[11px] font-black uppercase text-muted">{label}</div>
+      <div className="flex items-center gap-2 text-[11px] font-black uppercase text-muted">
+        {icon ? <Icon name={icon} size={16} /> : null}
+        <span>{label}</span>
+      </div>
       <div
         className={cx(
           "mt-2 truncate text-base font-black",
@@ -330,15 +637,16 @@ function Shell({ page, goToPage, oauthStatus, children }) {
           {pages.map((item) => (
             <button
               key={item.id}
-              className={cx(
-                "min-h-11 rounded-lg border px-3 text-left text-sm font-black transition",
+            className={cx(
+                "inline-flex min-h-11 items-center gap-3 rounded-lg border px-3 text-left text-sm font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200",
                 page === item.id
                   ? "border-[#D9C300] bg-yellow-100 text-ink"
                   : "border-transparent text-muted hover:bg-panel hover:text-ink"
               )}
               type="button"
               onClick={() => go(item.id)}>
-              {item.label}
+              <Icon name={item.icon} size={18} />
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>
@@ -354,9 +662,10 @@ function Shell({ page, goToPage, oauthStatus, children }) {
             {zoomLabel}
           </span>
           <a
-            className="font-black underline decoration-accent decoration-4 underline-offset-4"
+            className="inline-flex items-center gap-2 font-black underline decoration-accent decoration-4 underline-offset-4"
             href="/#live-attendance">
-            Open current lesson
+            <Icon name="video" size={16} />
+            <span>Open current lesson</span>
           </a>
         </div>
       </aside>
@@ -398,14 +707,18 @@ function Header({
         />
         {isCurrentLesson ? <Badge tone={lessonStatus.tone}>{lessonStatus.label}</Badge> : null}
         {!isCurrentLesson ? (
-          <button className={secondaryButton} type="button" onClick={refreshData}>
+          <ActionButton icon="refresh-cw" type="button" onClick={refreshData}>
             Refresh
-          </button>
+          </ActionButton>
         ) : null}
         {isDashboard ? (
-          <button className={primaryButton} type="button" onClick={() => goToPage("live-attendance")}>
+          <ActionButton
+            icon="play-circle"
+            variant="primary"
+            type="button"
+            onClick={() => goToPage("live-attendance")}>
             Start / Join lesson
-          </button>
+          </ActionButton>
         ) : null}
       </div>
     </header>
@@ -433,6 +746,12 @@ function sameDay(left, right) {
 }
 
 function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
+  const filters = [
+    { key: "present", label: "Present", icon: "user-check" },
+    { key: "absent", label: "Absent", icon: "user-x" },
+    { key: "unmatched", label: "Needs review", icon: "user-search" },
+    { key: "meetings", label: "Lessons", icon: "calendar-days" }
+  ];
   const points = useMemo(() => {
     const days = trendDates();
     return days.map((day) => {
@@ -460,18 +779,19 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
     <Card>
       <CardHeader title="Attendance Analytics">
         <div className="flex flex-wrap gap-2">
-          {["present", "absent", "unmatched", "meetings"].map((filter) => (
+          {filters.map((filter) => (
             <button
-              key={filter}
+              key={filter.key}
               className={cx(
-                "min-h-8 rounded-full border px-3 text-xs font-black capitalize",
-                trendFilter === filter
+                "inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-xs font-black",
+                trendFilter === filter.key
                   ? "border-ink bg-ink text-white"
                   : "border-line bg-panel text-muted"
               )}
               type="button"
-              onClick={() => setTrendFilter(filter)}>
-              {filter}
+              onClick={() => setTrendFilter(filter.key)}>
+              <Icon name={filter.icon} size={15} />
+              <span>{filter.label}</span>
             </button>
           ))}
         </div>
@@ -597,7 +917,7 @@ function AliasRow({ record, students, suggested, createAlias }) {
   );
 }
 
-function DashboardStep({ index, title, detail, done, actionLabel, href, onAction }) {
+function DashboardStep({ index, title, detail, done, actionLabel, href, onAction, icon }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] p-3">
       <div className="flex min-w-0 items-start gap-3">
@@ -618,13 +938,13 @@ function DashboardStep({ index, title, detail, done, actionLabel, href, onAction
       {done ? (
         <Badge tone="success">Done</Badge>
       ) : href ? (
-        <a className={secondaryButton} href={href}>
+        <ActionButton as="a" href={href} icon={icon}>
           {actionLabel}
-        </a>
+        </ActionButton>
       ) : (
-        <button className={secondaryButton} type="button" onClick={onAction}>
+        <ActionButton icon={icon} type="button" onClick={onAction}>
           {actionLabel}
-        </button>
+        </ActionButton>
       )}
     </div>
   );
@@ -644,6 +964,7 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
         : "Connect Zoom so host join and live sync are available.",
       done: zoomConnected,
       actionLabel: "Connect",
+      icon: "log-in",
       href: "/zoom/oauth/start?prompt=login"
     },
     {
@@ -651,6 +972,7 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
       detail: "Add students manually, import a file, or connect a Google Sheet.",
       done: students.length > 0,
       actionLabel: "Students",
+      icon: "users",
       onAction: () => goToPage("students")
     },
     {
@@ -658,6 +980,7 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
       detail: "Keep recurring Zoom meetings ready for lesson setup.",
       done: savedMeetings.length > 0 || Boolean(active),
       actionLabel: "Meetings",
+      icon: "calendar-days",
       onAction: () => goToPage("meetings")
     },
     {
@@ -665,6 +988,7 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
       detail: "Open Current Lesson to join Zoom and begin attendance sync.",
       done: Boolean(active),
       actionLabel: "Open",
+      icon: "video",
       onAction: () => goToPage("live-attendance")
     },
     {
@@ -672,6 +996,7 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
       detail: "Review synced attendance and generate journals after lessons.",
       done: historyRecords.length > 0,
       actionLabel: "Reports",
+      icon: "bar-chart-3",
       onAction: () => goToPage("reports")
     }
   ];
@@ -694,7 +1019,7 @@ function DashboardLessonCard({ meetings, historyRecords, goToPage }) {
 
   return (
     <Card>
-      <CardHeader title="Current lesson">
+      <CardHeader title="Current lesson" icon="video">
         <Badge tone={active ? "success" : "neutral"}>{active ? "Syncing" : "Not started"}</Badge>
       </CardHeader>
       <div className="grid gap-4 p-5">
@@ -707,9 +1032,13 @@ function DashboardLessonCard({ meetings, historyRecords, goToPage }) {
           />
           <StatusTile label="Last sync" value={formatShortDate(lastSync)} wide />
         </div>
-        <button className={primaryButton} type="button" onClick={() => goToPage("live-attendance")}>
+        <ActionButton
+          icon="play-circle"
+          variant="primary"
+          type="button"
+          onClick={() => goToPage("live-attendance")}>
           Start / Join lesson
-        </button>
+        </ActionButton>
       </div>
     </Card>
   );
@@ -798,26 +1127,30 @@ function MeetingsPage({
     <section className="grid gap-5">
       <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
         <div className="flex gap-3">
-          <input
-            className={cx(inputClass, "w-64")}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search meetings"
-          />
-          <select
-            className={cx(inputClass, "w-52")}
-            value={mode}
-            onChange={(event) => setMode(event.target.value)}>
-            <option value="all">All meetings</option>
-            <option value="host">Host meetings</option>
-            <option value="participant">Participant meetings</option>
-            <option value="recent">Recently used</option>
-          </select>
+          <FieldWithIcon icon="search">
+            <input
+              className={cx(inputClass, "w-64")}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search meetings"
+            />
+          </FieldWithIcon>
+          <FieldWithIcon icon="list-filter">
+            <select
+              className={cx(inputClass, "w-52")}
+              value={mode}
+              onChange={(event) => setMode(event.target.value)}>
+              <option value="all">All meetings</option>
+              <option value="host">Host meetings</option>
+              <option value="participant">Participant meetings</option>
+              <option value="recent">Recently used</option>
+            </select>
+          </FieldWithIcon>
         </div>
       </div>
 
       <Card>
-        <CardHeader title="Save Meeting" />
+        <CardHeader title="Save Meeting" icon="save" />
         <form
           className="grid grid-cols-[1fr_180px_160px_150px_auto] items-end gap-3 p-5"
           onSubmit={submitSavedMeeting}>
@@ -848,19 +1181,21 @@ function MeetingsPage({
           </label>
           <label className={labelClass}>
             Role
-            <select
-              className={inputClass}
-              value={draft.join_as_host ? "host" : "participant"}
-              onChange={(event) =>
-                setDraft({ ...draft, join_as_host: event.target.value === "host" })
-              }>
-              <option value="host">Host</option>
-              <option value="participant">Participant</option>
-            </select>
+            <FieldWithIcon icon="chevron-down">
+              <select
+                className={inputClass}
+                value={draft.join_as_host ? "host" : "participant"}
+                onChange={(event) =>
+                  setDraft({ ...draft, join_as_host: event.target.value === "host" })
+                }>
+                <option value="host">Host</option>
+                <option value="participant">Participant</option>
+              </select>
+            </FieldWithIcon>
           </label>
-          <button className={primaryButton} type="submit">
+          <ActionButton icon="save" variant="primary" type="submit">
             Save
-          </button>
+          </ActionButton>
         </form>
       </Card>
 
@@ -902,7 +1237,7 @@ function SavedMeetingsTable({
 }) {
   return (
     <Card>
-      <CardHeader title="Saved Meetings">
+      <CardHeader title="Saved Meetings" icon="calendar-days">
         <Badge>{meetings.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
@@ -967,27 +1302,31 @@ function SavedMeetingsTable({
                       </Badge>
                     </td>
                     <td className={cx(tdClass, "space-x-2")}>
-                      <a className={secondaryButton} href={meetingJoinUrl(meeting)}>
+                      <ActionButton as="a" compact href={meetingJoinUrl(meeting)} icon="video">
                         Join
-                      </a>
-                      <button
-                        className={secondaryButton}
+                      </ActionButton>
+                      <ActionButton
+                        compact
+                        icon="pencil"
                         type="button"
                         onClick={() => setDraft(meeting)}>
                         Edit
-                      </button>
-                      <button
-                        className={secondaryButton}
+                      </ActionButton>
+                      <ActionButton
+                        compact
+                        icon="shield-check"
                         type="button"
                         onClick={() => checkSavedMeeting(meeting.meeting_number)}>
                         Check
-                      </button>
-                      <button
-                        className={dangerButton}
+                      </ActionButton>
+                      <ActionButton
+                        compact
+                        icon="trash-2"
+                        variant="danger"
                         type="button"
                         onClick={() => deleteSavedMeeting(meeting.id)}>
                         Delete
-                      </button>
+                      </ActionButton>
                     </td>
                   </tr>
                 );
@@ -1017,7 +1356,7 @@ function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
 
   return (
     <Card>
-      <CardHeader title="Tracked Meeting Sessions">
+      <CardHeader title="Tracked Meeting Sessions" icon="calendar-days">
         <Badge>{visibleMeetings.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
@@ -1096,24 +1435,29 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
         </Badge>
       </td>
       <td className={cx(tdClass, "space-x-2")}>
-        <button
-          className={secondaryButton}
+        <ActionButton
+          compact
+          icon="save"
           type="button"
           onClick={() => updateMeeting(meeting.id, title, groupName)}>
-          Save
-        </button>
-        <button
-          className={secondaryButton}
+          Save changes
+        </ActionButton>
+        <ActionButton
+          compact
+          icon="x-circle"
+          variant="danger"
           type="button"
           disabled={Boolean(meeting.ended_at)}
           onClick={() => closeMeeting(meeting.id)}>
-          Close
-        </button>
-        <a
-          className={secondaryButton}
-          href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}>
-          CSV
-        </a>
+          Close session
+        </ActionButton>
+        <ActionButton
+          as="a"
+          compact
+          href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}
+          icon="download">
+          Export CSV
+        </ActionButton>
       </td>
     </tr>
   );
@@ -1145,41 +1489,43 @@ function LiveAttendancePage({
     <section className="grid gap-5">
       <div className="grid grid-cols-[minmax(220px,0.75fr)_minmax(320px,1.35fr)_minmax(260px,0.9fr)] items-start gap-5">
         <Card>
-          <CardHeader title={primaryLabel} />
+          <CardHeader title={primaryLabel} icon={currentMeeting ? "video" : "play-circle"} />
           <div className="grid gap-3 p-5">
-            <a className={primaryButton} href="/teacher-meeting">
+            <ActionButton as="a" href="/teacher-meeting" icon="video" variant="primary">
               {primaryLabel}
-            </a>
-            <button
-              className={secondaryButton}
+            </ActionButton>
+            <ActionButton
+              icon="calendar-days"
               type="button"
               onClick={() => goToPage("meetings")}>
               Saved meetings
-            </button>
+            </ActionButton>
             <div className="grid gap-2">
               <StatusTile
+                icon="video"
                 label="Zoom"
                 value={oauthStatus?.authorized ? "Connected" : "Not connected"}
                 tone={oauthStatus?.authorized ? "success" : "warning"}
               />
-              <StatusTile label="Lesson" value={lessonState.label} tone={lessonState.tone} />
+              <StatusTile icon="users" label="Lesson" value={lessonState.label} tone={lessonState.tone} />
               <StatusTile
+                icon="refresh-cw"
                 label="Sync"
                 value={currentMeeting ? "Active" : "Idle"}
                 tone={currentMeeting ? "success" : "neutral"}
               />
-              <StatusTile label="Last sync" value={formatShortDate(lastSync)} />
+              <StatusTile icon="clock" label="Last sync" value={formatShortDate(lastSync)} />
             </div>
           </div>
         </Card>
         <Card>
-          <CardHeader title="Participants / Matched Students">
+          <CardHeader title="Participants / Matched Students" icon="users">
             <Badge>{currentRecords.length}</Badge>
           </CardHeader>
           <ParticipantsTable records={currentRecords} />
         </Card>
         <Card>
-          <CardHeader title="Unmatched Names">
+          <CardHeader title="Unmatched Names" icon="user-search">
             <Badge tone={unmatchedRecords.length ? "warning" : "neutral"}>
               {unmatchedRecords.length}
             </Badge>
