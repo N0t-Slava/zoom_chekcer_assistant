@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Meeting</title>
+    <title>Current Lesson</title>
     <link rel="stylesheet" href="/static/styles.css" />
 </head>
 
@@ -20,29 +20,28 @@
             </div>
 
             <nav class="sidebar-nav" aria-label="Primary navigation">
-                <a href="/#menu">Menu</a>
+                <a href="/#menu">Dashboard</a>
+                <a class="active" href="/#live-attendance">Current Lesson</a>
                 <a href="/#meetings">Meetings</a>
-                <a class="active" href="/teacher-meeting">Teacher Meeting</a>
                 <a href="/#students">Students</a>
                 <a href="/#reports">Reports</a>
                 <a href="/#settings">Settings</a>
             </nav>
             <div class="sidebar-footer">
                 <span id="sidebar-live-status" class="status-dot">Waiting to join</span>
-                <a class="mini-link" href="/">Return to menu</a>
+                <a class="mini-link" href="/#live-attendance">Return to Current Lesson</a>
             </div>
         </aside>
 
         <main class="workspace meeting-page">
             <header class="topbar">
                 <div>
-                    <h1>Teacher Meeting</h1>
+                    <h1>Current Lesson</h1>
                 </div>
                 <div class="topbar-actions">
+                    <span id="zoom-account-status" class="pill warning">Zoom checking</span>
+                    <button id="zoom-login-button" class="compact-link-button" type="button">Connect Zoom</button>
                     <span id="sdk-status" class="pill warning">Checking</span>
-                    <button id="zoom-login-button" class="secondary-button" type="button">Authorize Zoom</button>
-                    <button id="zoom-disconnect-button" class="danger-button" type="button" hidden>Disconnect
-                        Zoom</button>
                 </div>
             </header>
 
@@ -51,7 +50,7 @@
                     <article class="card">
                         <div class="card-header">
                             <div>
-                                <h2>Meeting Control</h2>
+                                <h2>Start lesson</h2>
 
                             </div>
                         </div>
@@ -83,7 +82,7 @@
                                 <span>Join as host</span>
                             </label>
                             <div class="button-row">
-                                <button id="join-button" type="button">Join</button>
+                                <button id="join-button" type="button">Join Zoom</button>
                                 <button id="save-meeting-button" class="secondary-button" type="button">Save</button>
                                 <button id="delete-meeting-button" class="secondary-button" type="button"
                                     disabled>Delete</button>
@@ -177,7 +176,7 @@
         </main>
     </div>
 
-    <script src="/static/teacher-meeting.js?v=2026-06-25-zoom-account-name"></script>
+    <script src="/static/teacher-meeting.js?v=2026-06-25-current-lesson-cleanup"></script>
 </body>
 
 </html>

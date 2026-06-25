@@ -5,8 +5,8 @@ const REFRESH_INTERVAL_MS = 5000;
 
 const pages = [
   { id: "menu", label: "Dashboard" },
+  { id: "live-attendance", label: "Current Lesson" },
   { id: "meetings", label: "Meetings" },
-  { id: "live-attendance", label: "Teacher Meeting" },
   { id: "students", label: "Students" },
   { id: "reports", label: "Reports" },
   { id: "settings", label: "Settings" }
@@ -184,6 +184,74 @@ function Badge({ children, tone = "neutral" }) {
   );
 }
 
+function zoomAccountLabel(oauthStatus) {
+  return (
+    oauthStatus?.email ||
+    oauthStatus?.display_name ||
+    oauthStatus?.user_id ||
+    ""
+  );
+}
+
+function ZoomStatusPill({ oauthStatus, onManageSettings, showManage = true }) {
+  const checking = !oauthStatus;
+  const connected = Boolean(oauthStatus?.authorized);
+  const account = zoomAccountLabel(oauthStatus);
+  const label = checking
+    ? "Zoom checking"
+    : connected
+      ? account
+        ? `Zoom connected \u00b7 ${account}`
+        : "Zoom connected"
+      : "Zoom not connected";
+
+  return (
+    <div
+      className={cx(
+        "inline-flex min-h-9 max-w-[380px] items-center gap-2 rounded-lg border px-3 text-sm font-black shadow-soft",
+        connected
+          ? "border-green-200 bg-panel text-ink"
+          : "border-yellow-300 bg-yellow-50 text-warning"
+      )}>
+      <span
+        className={cx("h-2.5 w-2.5 shrink-0 rounded-full", connected ? "bg-success" : "bg-warning")}
+      />
+      <span className="truncate">{label}</span>
+      {connected && showManage ? (
+        <button
+          className="shrink-0 border-l border-line pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
+          type="button"
+          onClick={onManageSettings}>
+          Manage
+        </button>
+      ) : null}
+      {!connected && !checking ? (
+        <a
+          className="shrink-0 border-l border-yellow-300 pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
+          href="/zoom/oauth/start?prompt=login">
+          Connect
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function currentLessonStatus({ oauthStatus, sdkConfig, meetings, currentRecords, unmatchedRecords }) {
+  if (!oauthStatus) {
+    return { label: "Ready", tone: "neutral" };
+  }
+  if (sdkConfig?.configured === false || !oauthStatus.authorized) {
+    return { label: "Error", tone: "danger" };
+  }
+  if (activeMeeting(meetings) || currentRecords?.length || unmatchedRecords?.length) {
+    return { label: "Syncing", tone: "success" };
+  }
+  if (sdkConfig?.configured) {
+    return { label: "Ready", tone: "success" };
+  }
+  return { label: "Connected", tone: "neutral" };
+}
+
 function Card({ children, className = "" }) {
   return <article className={cx(cardClass, className)}>{children}</article>;
 }
@@ -230,14 +298,17 @@ function StatusTile({ label, value, tone = "neutral", wide = false }) {
   );
 }
 
-function Shell({ page, setPage, zoomConnected, children }) {
+function Shell({ page, goToPage, oauthStatus, children }) {
+  const checkingZoom = !oauthStatus;
+  const zoomConnected = Boolean(oauthStatus?.authorized);
+  const zoomLabel = checkingZoom
+    ? "Zoom checking"
+    : zoomConnected
+      ? "Zoom connected"
+      : "Zoom not connected";
+
   function go(nextPage) {
-    if (nextPage === "live-attendance") {
-      window.location.href = "/teacher-meeting";
-      return;
-    }
-    setPage(nextPage);
-    window.location.hash = nextPage;
+    goToPage(nextPage);
   }
 
   return (
@@ -280,12 +351,12 @@ function Shell({ page, setPage, zoomConnected, children }) {
                 zoomConnected ? "bg-success" : "bg-warning"
               )}
             />
-            {zoomConnected ? "Zoom connected" : "Zoom checking"}
+            {zoomLabel}
           </span>
           <a
             className="font-black underline decoration-accent decoration-4 underline-offset-4"
-            href="/teacher-meeting">
-            Open teacher meeting
+            href="/#live-attendance">
+            Open current lesson
           </a>
         </div>
       </aside>
@@ -294,16 +365,48 @@ function Shell({ page, setPage, zoomConnected, children }) {
   );
 }
 
-function Header({ page, refreshData }) {
+function Header({
+  page,
+  refreshData,
+  oauthStatus,
+  sdkConfig,
+  meetings,
+  currentRecords,
+  unmatchedRecords,
+  goToPage
+}) {
+  const isDashboard = page === "menu";
+  const isCurrentLesson = page === "live-attendance";
+  const lessonStatus = currentLessonStatus({
+    oauthStatus,
+    sdkConfig,
+    meetings,
+    currentRecords,
+    unmatchedRecords
+  });
+
   return (
-    <header className="flex items-end justify-between gap-5">
+    <header className="flex items-center justify-between gap-5">
       <div>
         <h1 className="text-5xl font-black leading-none">{pageTitles[page] || "Dashboard"}</h1>
       </div>
-      <div className="flex items-end gap-3">
-        <button className={primaryButton} type="button" onClick={refreshData}>
-          Refresh
-        </button>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <ZoomStatusPill
+          oauthStatus={oauthStatus}
+          showManage={page !== "settings"}
+          onManageSettings={() => goToPage("settings")}
+        />
+        {isCurrentLesson ? <Badge tone={lessonStatus.tone}>{lessonStatus.label}</Badge> : null}
+        {!isCurrentLesson ? (
+          <button className={secondaryButton} type="button" onClick={refreshData}>
+            Refresh
+          </button>
+        ) : null}
+        {isDashboard ? (
+          <button className={primaryButton} type="button" onClick={() => goToPage("live-attendance")}>
+            Start / Join lesson
+          </button>
+        ) : null}
       </div>
     </header>
   );
@@ -494,18 +597,163 @@ function AliasRow({ record, students, suggested, createAlias }) {
   );
 }
 
+function DashboardStep({ index, title, detail, done, actionLabel, href, onAction }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] p-3">
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={cx(
+            "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-black",
+            done
+              ? "border-green-200 bg-green-50 text-success"
+              : "border-line bg-panel text-muted"
+          )}>
+          {done ? "OK" : index}
+        </span>
+        <span className="min-w-0">
+          <strong className="block truncate text-sm font-black">{title}</strong>
+          <span className="mt-1 block text-sm leading-5 text-muted">{detail}</span>
+        </span>
+      </div>
+      {done ? (
+        <Badge tone="success">Done</Badge>
+      ) : href ? (
+        <a className={secondaryButton} href={href}>
+          {actionLabel}
+        </a>
+      ) : (
+        <button className={secondaryButton} type="button" onClick={onAction}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, historyRecords, goToPage }) {
+  const zoomConnected = Boolean(oauthStatus?.authorized);
+  const active = activeMeeting(meetings);
+  const account = zoomAccountLabel(oauthStatus);
+  const steps = [
+    {
+      title: "Connect Zoom",
+      detail: zoomConnected
+        ? account
+          ? `Connected as ${account}.`
+          : "Your Zoom account is connected."
+        : "Connect Zoom so host join and live sync are available.",
+      done: zoomConnected,
+      actionLabel: "Connect",
+      href: "/zoom/oauth/start?prompt=login"
+    },
+    {
+      title: "Import students",
+      detail: "Add students manually, import a file, or connect a Google Sheet.",
+      done: students.length > 0,
+      actionLabel: "Students",
+      onAction: () => goToPage("students")
+    },
+    {
+      title: "Save or select a meeting",
+      detail: "Keep recurring Zoom meetings ready for lesson setup.",
+      done: savedMeetings.length > 0 || Boolean(active),
+      actionLabel: "Meetings",
+      onAction: () => goToPage("meetings")
+    },
+    {
+      title: "Start current lesson",
+      detail: "Open Current Lesson to join Zoom and begin attendance sync.",
+      done: Boolean(active),
+      actionLabel: "Open",
+      onAction: () => goToPage("live-attendance")
+    },
+    {
+      title: "Generate report",
+      detail: "Review synced attendance and generate journals after lessons.",
+      done: historyRecords.length > 0,
+      actionLabel: "Reports",
+      onAction: () => goToPage("reports")
+    }
+  ];
+
+  return (
+    <Card>
+      <CardHeader title="Setup checklist" />
+      <div className="grid gap-3 p-5">
+        {steps.map((step, index) => (
+          <DashboardStep key={step.title} index={index + 1} {...step} />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function DashboardLessonCard({ meetings, historyRecords, goToPage }) {
+  const active = activeMeeting(meetings);
+  const lastSync = lastActivityTime([], [], historyRecords);
+
+  return (
+    <Card>
+      <CardHeader title="Current lesson">
+        <Badge tone={active ? "success" : "neutral"}>{active ? "Syncing" : "Not started"}</Badge>
+      </CardHeader>
+      <div className="grid gap-4 p-5">
+        <div className="grid gap-3">
+          <StatusTile
+            label="Lesson"
+            value={meetingDisplayName(active)}
+            tone={active ? "success" : "neutral"}
+            wide
+          />
+          <StatusTile label="Last sync" value={formatShortDate(lastSync)} wide />
+        </div>
+        <p className="text-sm leading-6 text-muted">
+          Join Zoom from the Current Lesson page to begin live attendance tracking.
+        </p>
+        <button className={primaryButton} type="button" onClick={() => goToPage("live-attendance")}>
+          Start / Join lesson
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 function MenuPage(props) {
-  const { meetings, students, historyRecords, trendFilter, setTrendFilter } = props;
+  const {
+    meetings,
+    savedMeetings,
+    students,
+    historyRecords,
+    oauthStatus,
+    trendFilter,
+    setTrendFilter,
+    goToPage
+  } = props;
 
   return (
     <section className="grid gap-5">
+      <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(300px,0.75fr)] items-start gap-5">
+        <DashboardChecklist
+          oauthStatus={oauthStatus}
+          students={students}
+          savedMeetings={savedMeetings}
+          meetings={meetings}
+          historyRecords={historyRecords}
+          goToPage={goToPage}
+        />
+        <DashboardLessonCard
+          meetings={meetings}
+          historyRecords={historyRecords}
+          goToPage={goToPage}
+        />
+      </div>
+      <MiniStats meetings={meetings} students={students} records={historyRecords} />
       <AttendanceTrend
         records={historyRecords}
         meetings={meetings}
         trendFilter={trendFilter}
         setTrendFilter={setTrendFilter}
       />
-      <MiniStats meetings={meetings} students={students} records={historyRecords} />
     </section>
   );
 }
@@ -569,9 +817,6 @@ function MeetingsPage({
             <option value="recent">Recently used</option>
           </select>
         </div>
-        <button className={secondaryButton} type="button" onClick={refreshData}>
-          Refresh
-        </button>
       </div>
 
       <Card>
@@ -885,33 +1130,47 @@ function LiveAttendancePage({
   historyRecords,
   students,
   meetings,
+  oauthStatus,
+  sdkConfig,
+  goToPage,
   createAlias
 }) {
   const currentMeeting = activeMeeting(meetings);
   const lastSync = lastActivityTime(currentRecords, unmatchedRecords, historyRecords);
+  const lessonState = currentLessonStatus({
+    oauthStatus,
+    sdkConfig,
+    meetings,
+    currentRecords,
+    unmatchedRecords
+  });
+  const primaryLabel = currentMeeting ? "Join Zoom" : "Start lesson";
 
   return (
     <section className="grid gap-5">
       <div className="grid grid-cols-[minmax(220px,0.75fr)_minmax(320px,1.35fr)_minmax(260px,0.9fr)] items-start gap-5">
         <Card>
-          <CardHeader
-            title="Meeting Control"
-            meta="Host console and saved meeting controls for the current lesson."
-          />
+          <CardHeader title={primaryLabel} />
           <div className="grid gap-3 p-5">
+            <p className="text-sm leading-6 text-muted">
+              Open the Zoom console to join the meeting and start live attendance sync.
+            </p>
             <a className={primaryButton} href="/teacher-meeting">
-              Open join console
+              {primaryLabel}
             </a>
             <button
               className={secondaryButton}
               type="button"
-              onClick={() => {
-                window.location.hash = "meetings";
-                window.dispatchEvent(new HashChangeEvent("hashchange"));
-              }}>
-              Manage saved meetings
+              onClick={() => goToPage("meetings")}>
+              Saved meetings
             </button>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2">
+              <StatusTile
+                label="Zoom"
+                value={oauthStatus?.authorized ? "Connected" : "Not connected"}
+                tone={oauthStatus?.authorized ? "success" : "warning"}
+              />
+              <StatusTile label="Lesson" value={lessonState.label} tone={lessonState.tone} />
               <StatusTile
                 label="Sync"
                 value={currentMeeting ? "Active" : "Idle"}
@@ -2032,6 +2291,12 @@ function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  const goToPage = useCallback((nextPage) => {
+    const validPage = pages.some((item) => item.id === nextPage) ? nextPage : "menu";
+    setPage(validPage);
+    window.location.hash = validPage;
+  }, []);
+
   const buildAttendanceQuery = useCallback(() => {
     const params = new URLSearchParams();
     params.set("limit", String(MAX_ATTENDANCE));
@@ -2285,12 +2550,22 @@ function App() {
     trendFilter,
     setTrendFilter,
     refreshData,
+    goToPage,
     createAlias
   };
 
   return (
-    <Shell page={page} setPage={setPage} zoomConnected={Boolean(data.oauthStatus?.authorized)}>
-      <Header page={page} refreshData={refreshData} />
+    <Shell page={page} goToPage={goToPage} oauthStatus={data.oauthStatus}>
+      <Header
+        page={page}
+        refreshData={refreshData}
+        oauthStatus={data.oauthStatus}
+        sdkConfig={data.sdkConfig}
+        meetings={data.meetings}
+        currentRecords={data.currentRecords}
+        unmatchedRecords={data.unmatchedRecords}
+        goToPage={goToPage}
+      />
       {page === "menu" ? <MenuPage {...commonPageProps} /> : null}
       {page === "meetings" ? (
         <MeetingsPage

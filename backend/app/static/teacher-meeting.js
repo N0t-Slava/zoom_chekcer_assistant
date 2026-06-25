@@ -11,6 +11,7 @@ const saveMeetingButton = document.querySelector("#save-meeting-button");
 const deleteMeetingButton = document.querySelector("#delete-meeting-button");
 const zoomLoginButton = document.querySelector("#zoom-login-button");
 const zoomDisconnectButton = document.querySelector("#zoom-disconnect-button");
+const zoomAccountStatus = document.querySelector("#zoom-account-status");
 const sdkStatus = document.querySelector("#sdk-status");
 const sdkMessage = document.querySelector("#sdk-message");
 const oauthMessage = document.querySelector("#oauth-message");
@@ -94,6 +95,20 @@ function setPillTone(target, tone) {
   }
   target.classList.remove("success", "warning", "danger", "neutral");
   target.classList.add(tone);
+}
+
+function setZoomAccountStatus(status = null) {
+  if (!zoomAccountStatus) {
+    return;
+  }
+  const connected = Boolean(status?.authorized);
+  const account = zoomAccountName(status);
+  zoomAccountStatus.textContent = connected
+    ? account
+      ? `Zoom connected \u00b7 ${account}`
+      : "Zoom connected"
+    : "Zoom not connected";
+  setPillTone(zoomAccountStatus, connected ? "success" : "warning");
 }
 
 function setStatus(label, message) {
@@ -952,9 +967,10 @@ async function loadOAuthStatus() {
 
   const status = await response.json();
   oauthAuthorized = Boolean(status.authorized);
+  setZoomAccountStatus(status);
   oauthMessage.textContent = oauthAuthorized
-    ? "Zoom is authorized. Host join can request a ZAK token."
-    : "Authorize Zoom before joining as host.";
+    ? "Zoom connected. Host join can request a ZAK token."
+    : "Connect Zoom before joining as host.";
   if (!oauthAuthorized) {
     zoomUserMessage.textContent = "";
     zoomAccountDisplayName = "";
@@ -971,8 +987,10 @@ async function loadOAuthStatus() {
     });
   }
   joinAsHostInput.disabled = !oauthAuthorized;
-  zoomLoginButton.textContent = oauthAuthorized ? "Authorize different account" : "Authorize Zoom";
-  zoomDisconnectButton.hidden = !oauthAuthorized;
+  zoomLoginButton.textContent = oauthAuthorized ? "Manage" : "Connect Zoom";
+  if (zoomDisconnectButton) {
+    zoomDisconnectButton.hidden = true;
+  }
   if (oauthAuthorized) {
     joinAsHostInput.checked = true;
   } else {
@@ -1086,7 +1104,9 @@ async function joinSavedMeeting(meeting) {
 }
 
 async function disconnectZoom() {
-  zoomDisconnectButton.disabled = true;
+  if (zoomDisconnectButton) {
+    zoomDisconnectButton.disabled = true;
+  }
   zoomLoginButton.disabled = true;
   try {
     const response = await fetch("/zoom/oauth/disconnect", { method: "POST" });
@@ -1099,15 +1119,20 @@ async function disconnectZoom() {
     oauthMessage.textContent = "Zoom authorization was cleared.";
     zoomUserMessage.textContent = "";
     zoomAccountDisplayName = "";
+    setZoomAccountStatus({ authorized: false });
     joinAsHostInput.checked = false;
     joinAsHostInput.disabled = true;
-    zoomDisconnectButton.hidden = true;
-    zoomLoginButton.textContent = "Authorize Zoom";
+    if (zoomDisconnectButton) {
+      zoomDisconnectButton.hidden = true;
+    }
+    zoomLoginButton.textContent = "Connect Zoom";
   } catch (error) {
     console.error("Zoom disconnect failed", { error: zoomErrorDetails(error) });
     oauthMessage.textContent = error.message;
   } finally {
-    zoomDisconnectButton.disabled = false;
+    if (zoomDisconnectButton) {
+      zoomDisconnectButton.disabled = false;
+    }
     zoomLoginButton.disabled = false;
   }
 }
@@ -1296,9 +1321,11 @@ joinButton.addEventListener("click", () => {
   prepareJoin();
 });
 zoomLoginButton.addEventListener("click", () => {
-  window.location.href = "/zoom/oauth/start?prompt=login";
+  window.location.href = oauthAuthorized ? "/#settings" : "/zoom/oauth/start?prompt=login";
 });
-zoomDisconnectButton.addEventListener("click", disconnectZoom);
+if (zoomDisconnectButton) {
+  zoomDisconnectButton.addEventListener("click", disconnectZoom);
+}
 applyInitialMeetingParams();
 loadConfig().catch((error) => {
   console.error(error);

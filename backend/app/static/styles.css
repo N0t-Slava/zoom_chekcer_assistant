@@ -731,6 +731,26 @@ td a {
   background: var(--panel-bg);
 }
 
+.compact-link-button {
+  min-height: auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  color: var(--text-main);
+  background: transparent;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+}
+
+.compact-link-button:hover {
+  transform: none;
+  color: var(--warning);
+  background: transparent;
+}
+
 .danger-button,
 .ghost-danger {
   border-color: rgba(198, 40, 40, 0.35);
