@@ -64,6 +64,14 @@ resource "aws_security_group" "app" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   dynamic "ingress" {
     for_each = var.allowed_ssh_cidr == null ? [] : [var.allowed_ssh_cidr]
 
@@ -89,17 +97,68 @@ resource "aws_security_group" "app" {
   })
 }
 
+resource "aws_iam_role" "app" {
+  name = "${var.project_name}-app-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-app-role"
+  })
+}
+
+resource "aws_iam_role_policy" "app_ssm_read" {
+  name = "${var.project_name}-ssm-read"
+  role = aws_iam_role.app.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter${var.ssm_parameter_path}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "app" {
+  name = "${var.project_name}-app-profile"
+  role = aws_iam_role.app.name
+}
+
 resource "aws_instance" "app" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.app.id]
   associate_public_ip_address = true
+  iam_instance_profile        = aws_iam_instance_profile.app.name
   key_name                    = var.ssh_key_name
+  user_data_replace_on_change = true
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    app_environment = var.app_environment
-    repository_url  = var.repository_url
+    app_environment    = var.app_environment
+    app_hostname       = var.app_hostname
+    aws_region         = var.aws_region
+    repository_url     = var.repository_url
+    ssm_parameter_path = var.ssm_parameter_path
   })
 
   tags = merge(local.common_tags, {

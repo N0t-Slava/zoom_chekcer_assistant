@@ -36,6 +36,7 @@ from ..services.zoom_token_store import (
     get_token_payload,
     get_token_row,
     save_token_payload,
+    zoom_profile_display_name,
 )
 from ..services.time_service import app_now
 
@@ -402,7 +403,7 @@ async def zoom_oauth_status(request: Request, db: DbSession) -> ZoomOAuthStatusR
         user_id=str(user.get("id") or token_row.zoom_user_id) if user.get("id") or token_row.zoom_user_id else None,
         account_id=str(user.get("account_id") or token_row.zoom_account_id) if user.get("account_id") or token_row.zoom_account_id else None,
         email=email,
-        display_name=str(user.get("display_name") or token_row.zoom_display_name) if user.get("display_name") or token_row.zoom_display_name else None,
+        display_name=zoom_profile_display_name(user) or token_row.zoom_display_name,
         profile_error=profile_error,
     )
 

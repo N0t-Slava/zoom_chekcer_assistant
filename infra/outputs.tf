@@ -4,11 +4,11 @@ output "elastic_ip" {
 }
 
 output "app_url" {
-  description = "HTTP URL for the deployed app."
-  value       = "http://${aws_eip.app.public_ip}"
+  description = "HTTPS URL for the deployed app."
+  value       = "https://${var.app_hostname}"
 }
 
 output "health_url" {
   description = "Health check URL for the deployed app."
-  value       = "http://${aws_eip.app.public_ip}/health"
+  value       = "https://${var.app_hostname}/health"
 }

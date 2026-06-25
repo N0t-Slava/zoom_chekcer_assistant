@@ -68,6 +68,22 @@ def get_token_payload(db: Session, session_id: str | None) -> dict[str, Any] | N
     }
 
 
+def zoom_profile_display_name(user: dict[str, object] | None) -> str | None:
+    if not user:
+        return None
+
+    display_name = str(user.get("display_name") or "").strip()
+    if display_name:
+        return display_name
+
+    name_parts = [
+        str(user.get("first_name") or "").strip(),
+        str(user.get("last_name") or "").strip(),
+    ]
+    full_name = " ".join(part for part in name_parts if part)
+    return full_name or None
+
+
 def save_token_payload(
     db: Session,
     session_id: str,
@@ -97,7 +113,7 @@ def save_token_payload(
         token.zoom_user_id = str(user.get("id")) if user.get("id") else None
         token.zoom_account_id = str(user.get("account_id")) if user.get("account_id") else None
         token.zoom_email = str(user.get("email")) if user.get("email") else None
-        token.zoom_display_name = str(user.get("display_name")) if user.get("display_name") else None
+        token.zoom_display_name = zoom_profile_display_name(user)
     token.updated_at = now
     db.commit()
     db.refresh(token)

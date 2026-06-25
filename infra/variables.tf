@@ -16,6 +16,12 @@ variable "project_name" {
   default     = "zoom-assistant-tracker"
 }
 
+variable "app_hostname" {
+  description = "Public hostname used by Caddy for HTTPS."
+  type        = string
+  default     = "18.185.153.117.sslip.io"
+}
+
 variable "instance_type" {
   description = "EC2 instance size."
   type        = string
@@ -46,7 +52,13 @@ variable "repository_url" {
 }
 
 variable "app_environment" {
-  description = "Application environment used by the first HTTP-only deployment."
+  description = "Application environment for the deployed app."
   type        = string
   default     = "development"
+}
+
+variable "ssm_parameter_path" {
+  description = "SSM Parameter Store path containing app environment variables."
+  type        = string
+  default     = "/zoom-assistant-tracker/prod"
 }

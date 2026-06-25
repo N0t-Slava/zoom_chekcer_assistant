@@ -46,6 +46,28 @@ let participantCache = new Map();
 let savedMeetings = [];
 let lastAttendanceSyncLog = null;
 let teacherClientJoined = false;
+let zoomAccountDisplayName = "";
+
+function zoomAccountName(status) {
+  return (status?.display_name || status?.email || status?.user_id || "").trim();
+}
+
+function currentTeacherName() {
+  return (zoomAccountDisplayName || teacherNameInput.value.trim() || "Teacher").trim();
+}
+
+function syncTeacherNameWithZoom(status) {
+  const accountName = zoomAccountName(status);
+  zoomAccountDisplayName = accountName;
+  if (!accountName || !teacherNameInput) {
+    return;
+  }
+
+  const currentName = teacherNameInput.value.trim();
+  if (!currentName || currentName === "Teacher" || currentName === zoomAccountDisplayName) {
+    teacherNameInput.value = accountName;
+  }
+}
 
 function setLiveText(target, value) {
   if (target) {
@@ -935,8 +957,10 @@ async function loadOAuthStatus() {
     : "Authorize Zoom before joining as host.";
   if (!oauthAuthorized) {
     zoomUserMessage.textContent = "";
+    zoomAccountDisplayName = "";
   } else if (status.email || status.display_name || status.user_id) {
-    const label = status.display_name || status.email || status.user_id;
+    syncTeacherNameWithZoom(status);
+    const label = currentTeacherName();
     zoomUserMessage.textContent = `Authorized as ${label}${status.email && status.email !== label ? ` <${status.email}>` : ""}.`;
   } else {
     zoomUserMessage.textContent =
@@ -1074,6 +1098,7 @@ async function disconnectZoom() {
     teacherClientJoined = false;
     oauthMessage.textContent = "Zoom authorization was cleared.";
     zoomUserMessage.textContent = "";
+    zoomAccountDisplayName = "";
     joinAsHostInput.checked = false;
     joinAsHostInput.disabled = true;
     zoomDisconnectButton.hidden = true;
@@ -1171,7 +1196,7 @@ function prepareClientJoin(signaturePayload, zak, role, joinData = {}) {
         sdkKey: signaturePayload.client_id,
         meetingNumber: signaturePayload.meeting_number,
         passWord: joinData.passcode ?? meetingPasswordInput.value,
-        userName: teacherNameInput.value.trim() || "Teacher",
+        userName: currentTeacherName(),
         success: () => {
           teacherClientJoined = true;
           setStatus("Joined", "Teacher client joined the meeting through the SDK.");

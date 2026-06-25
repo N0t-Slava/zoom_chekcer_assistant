@@ -4,3 +4,8 @@ __pycache__/
 .venv/
 backend/attendance.db
 .env
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.auto.tfvars
