@@ -1,4 +1,4 @@
-console.log("Teacher meeting JS loaded v2026-06-22-control-center");
+console.log("Teacher meeting JS loaded v2026-06-25-buttons-icons");
 
 const savedMeetingSelect = document.querySelector("#saved-meeting-select");
 const meetingTitleInput = document.querySelector("#meeting-title");
@@ -37,6 +37,126 @@ const healthIntervalStatus = document.querySelector("#health-interval-status");
 const liveLastSync = document.querySelector("#live-last-sync");
 
 const ATTENDANCE_SYNC_INTERVAL_MS = 5000;
+const SVG_NS = "http://www.w3.org/2000/svg";
+const iconMarkup = {
+  "layout-dashboard": '<rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect>',
+  video: '<path d="m16 13 5 3V8l-5 3Z"></path><rect x="3" y="6" width="13" height="12" rx="2"></rect>',
+  "calendar-days": '<path d="M8 2v4M16 2v4M3 10h18"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"></path>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>',
+  "bar-chart-3": '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"></path>',
+  settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1v.2a2 2 0 0 1-4 0V21a1.65 1.65 0 0 0-.4-1 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.4h-.2a2 2 0 0 1 0-4H3a1.65 1.65 0 0 0 1-.4 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1v-.2a2 2 0 0 1 4 0V3a1.65 1.65 0 0 0 .4 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .4h.2a2 2 0 0 1 0 4H21a1.65 1.65 0 0 0-1 .4 1.65 1.65 0 0 0-.6 1Z"></path>',
+  "refresh-cw": '<path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M16 8h5V3"></path>',
+  "log-in": '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="m10 17 5-5-5-5M15 12H3"></path>',
+  save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path><path d="M17 21v-8H7v8M7 3v5h8"></path>',
+  "trash-2": '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"></path>',
+  pencil: '<path d="M17 3a2.85 2.85 0 0 1 4 4L7 21l-4 1 1-4Z"></path><path d="m15 5 4 4"></path>',
+  "user-check": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="m16 11 2 2 4-4"></path>',
+  "user-search": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><circle cx="18" cy="11" r="3"></circle><path d="m20.5 13.5 1.5 1.5"></path>',
+  "link-2": '<path d="M9 17H7A5 5 0 0 1 7 7h2"></path><path d="M15 7h2a5 5 0 1 1 0 10h-2"></path><path d="M8 12h8"></path>',
+  clock: '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>'
+};
+
+function iconNode(name, size = 18, className = "button-icon") {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("class", className);
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("height", String(size));
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", String(size));
+  svg.innerHTML = iconMarkup[name] || iconMarkup.video;
+  return svg;
+}
+
+function setButtonContent(button, label, iconName, size = 18) {
+  if (!button) {
+    return;
+  }
+  const text = document.createElement("span");
+  text.textContent = label;
+  button.replaceChildren(iconNode(iconName, size), text);
+}
+
+function decorateHeading(text, iconName) {
+  for (const heading of document.querySelectorAll(".card-header h2")) {
+    if (heading.dataset.iconified || heading.textContent.trim() !== text) {
+      continue;
+    }
+    heading.prepend(iconNode(iconName, 20, "metric-icon"));
+    heading.dataset.iconified = "true";
+  }
+}
+
+function decorateMetric(target, iconName) {
+  const label = target?.closest(".status-metric")?.querySelector("span");
+  if (!label || label.dataset.iconified) {
+    return;
+  }
+  label.classList.add("metric-label");
+  label.prepend(iconNode(iconName, 16, "metric-icon"));
+  label.dataset.iconified = "true";
+}
+
+function decorateField(control, iconName) {
+  if (!control || control.closest(".field-shell")) {
+    return;
+  }
+  const wrapper = document.createElement("span");
+  wrapper.className = "field-shell";
+  control.parentNode.insertBefore(wrapper, control);
+  wrapper.appendChild(iconNode(iconName, 16, "field-icon"));
+  wrapper.appendChild(control);
+}
+
+function decorateNavigation() {
+  const navIcons = [
+    ["Dashboard", "layout-dashboard"],
+    ["Current Lesson", "video"],
+    ["Meetings", "calendar-days"],
+    ["Students", "users"],
+    ["Reports", "bar-chart-3"],
+    ["Settings", "settings"]
+  ];
+  for (const [label, iconName] of navIcons) {
+    const link = [...document.querySelectorAll(".sidebar-nav a")].find(
+      (item) => item.textContent.trim() === label
+    );
+    if (!link || link.dataset.iconified) {
+      continue;
+    }
+    link.prepend(iconNode(iconName, 18, "nav-icon"));
+    link.dataset.iconified = "true";
+  }
+  const miniLink = document.querySelector(".mini-link");
+  if (miniLink && !miniLink.dataset.iconified) {
+    miniLink.prepend(iconNode("video", 16, "mini-link-icon"));
+    miniLink.dataset.iconified = "true";
+  }
+}
+
+function decorateStaticControls() {
+  decorateNavigation();
+  decorateHeading("Start lesson", "video");
+  decorateHeading("Live Sync Health", "refresh-cw");
+  decorateHeading("Participants", "users");
+  decorateHeading("Matched Students", "user-check");
+  decorateHeading("Unmatched Names", "user-search");
+  decorateField(savedMeetingSelect, "calendar-days");
+  setButtonContent(joinButton, "Join Zoom", "video");
+  setButtonContent(saveMeetingButton, "Save lesson", "save");
+  setButtonContent(deleteMeetingButton, "Delete", "trash-2");
+  setButtonContent(zoomLoginButton, "Connect Zoom", "log-in", 16);
+  decorateMetric(healthSdkStatus, "video");
+  decorateMetric(healthJoinedStatus, "users");
+  decorateMetric(healthParticipantsStatus, "users");
+  decorateMetric(healthBackendStatus, "refresh-cw");
+  decorateMetric(healthIntervalStatus, "clock");
+  decorateMetric(liveLastSync, "clock");
+}
 
 let sdkConfig = null;
 let sdkScriptPromise = null;
@@ -347,12 +467,12 @@ function renderSavedMeetingsTable() {
 
     const joinSavedButton = document.createElement("button");
     joinSavedButton.type = "button";
-    joinSavedButton.textContent = "Join";
+    setButtonContent(joinSavedButton, "Join", "video", 16);
     joinSavedButton.addEventListener("click", () => joinSavedMeeting(meeting));
 
     const editButton = document.createElement("button");
     editButton.type = "button";
-    editButton.textContent = "Edit";
+    setButtonContent(editButton, "Edit", "pencil", 16);
     editButton.addEventListener("click", () => {
       savedMeetingSelect.value = String(meeting.id);
       fillMeetingForm(meeting);
@@ -360,7 +480,8 @@ function renderSavedMeetingsTable() {
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.textContent = "Delete";
+    deleteButton.className = "ghost-danger";
+    setButtonContent(deleteButton, "Delete", "trash-2", 16);
     deleteButton.addEventListener("click", () => deleteMeeting(meeting));
 
     actions.append(joinSavedButton, editButton, deleteButton);
@@ -789,7 +910,7 @@ async function refreshLiveAttendancePanels() {
         select.disabled = !groupStudents.length;
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent = "Alias";
+        setButtonContent(button, "Alias", "link-2", 16);
         button.disabled = !groupStudents.length;
         button.addEventListener("click", () => {
           createLiveAlias(Number(select.value), record.participant_name).catch((error) => {
@@ -987,7 +1108,7 @@ async function loadOAuthStatus() {
     });
   }
   joinAsHostInput.disabled = !oauthAuthorized;
-  zoomLoginButton.textContent = oauthAuthorized ? "Manage" : "Connect Zoom";
+  setButtonContent(zoomLoginButton, oauthAuthorized ? "Manage" : "Connect Zoom", oauthAuthorized ? "settings" : "log-in", 16);
   if (zoomDisconnectButton) {
     zoomDisconnectButton.hidden = true;
   }
@@ -1027,8 +1148,8 @@ async function saveCurrentMeeting() {
   }
 
   saveMeetingButton.disabled = true;
-  const originalButtonText = saveMeetingButton.textContent;
-  saveMeetingButton.textContent = "Saving...";
+  const originalButtonText = "Save lesson";
+  setButtonContent(saveMeetingButton, "Saving...", "save");
   try {
     const response = await fetch("/zoom/saved-meetings", {
       method: "POST",
@@ -1059,7 +1180,7 @@ async function saveCurrentMeeting() {
     setStatus("Error", error.message);
   } finally {
     saveMeetingButton.disabled = false;
-    saveMeetingButton.textContent = originalButtonText;
+    setButtonContent(saveMeetingButton, originalButtonText, "save");
   }
 }
 
@@ -1125,7 +1246,7 @@ async function disconnectZoom() {
     if (zoomDisconnectButton) {
       zoomDisconnectButton.hidden = true;
     }
-    zoomLoginButton.textContent = "Connect Zoom";
+    setButtonContent(zoomLoginButton, "Connect Zoom", "log-in", 16);
   } catch (error) {
     console.error("Zoom disconnect failed", { error: zoomErrorDetails(error) });
     oauthMessage.textContent = error.message;
@@ -1302,6 +1423,7 @@ async function prepareJoin(joinData = {}) {
   }
 }
 
+decorateStaticControls();
 joinButton.disabled = true;
 joinAsHostInput.disabled = true;
 if (savedMeetingSelect) {

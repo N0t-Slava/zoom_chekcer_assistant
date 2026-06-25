@@ -43,249 +43,199 @@ function cx(...values) {
   return values.filter(Boolean).join(" ");
 }
 
-const iconPaths = {
+const iconShapes = {
   "layout-dashboard": [
-    <rect key="a" x="3" y="3" width="7" height="7" rx="1" />,
-    <rect key="b" x="14" y="3" width="7" height="7" rx="1" />,
-    <rect key="c" x="3" y="14" width="7" height="7" rx="1" />,
-    <rect key="d" x="14" y="14" width="7" height="7" rx="1" />
+    { tag: "rect", x: "3", y: "3", width: "7", height: "7", rx: "1" },
+    { tag: "rect", x: "14", y: "3", width: "7", height: "7", rx: "1" },
+    { tag: "rect", x: "14", y: "14", width: "7", height: "7", rx: "1" },
+    { tag: "rect", x: "3", y: "14", width: "7", height: "7", rx: "1" }
   ],
   video: [
-    <path key="a" d="M15 10.5 21 7v10l-6-3.5" />,
-    <rect key="b" x="3" y="6" width="12" height="12" rx="2" />
+    { tag: "path", d: "m16 13 5 3V8l-5 3Z" },
+    { tag: "rect", x: "3", y: "6", width: "13", height: "12", rx: "2" }
   ],
   "calendar-days": [
-    <path key="a" d="M8 2v4" />,
-    <path key="b" d="M16 2v4" />,
-    <rect key="c" x="3" y="4" width="18" height="18" rx="2" />,
-    <path key="d" d="M3 10h18" />,
-    <path key="e" d="M8 14h.01" />,
-    <path key="f" d="M12 14h.01" />,
-    <path key="g" d="M16 14h.01" />,
-    <path key="h" d="M8 18h.01" />,
-    <path key="i" d="M12 18h.01" />
+    { tag: "path", d: "M8 2v4M16 2v4M3 10h18" },
+    { tag: "rect", x: "3", y: "4", width: "18", height: "18", rx: "2" },
+    { tag: "path", d: "M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" }
   ],
   calendar: [
-    <path key="a" d="M8 2v4" />,
-    <path key="b" d="M16 2v4" />,
-    <rect key="c" x="3" y="4" width="18" height="18" rx="2" />,
-    <path key="d" d="M3 10h18" />
+    { tag: "path", d: "M8 2v4M16 2v4M3 10h18" },
+    { tag: "rect", x: "3", y: "4", width: "18", height: "18", rx: "2" }
   ],
   users: [
-    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
-    <circle key="b" cx="9" cy="7" r="4" />,
-    <path key="c" d="M22 21v-2a4 4 0 0 0-3-3.87" />,
-    <path key="d" d="M16 3.13a4 4 0 0 1 0 7.75" />
+    { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "9", cy: "7", r: "4" },
+    { tag: "path", d: "M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" }
   ],
   "bar-chart-3": [
-    <path key="a" d="M3 3v18h18" />,
-    <path key="b" d="M7 16V9" />,
-    <path key="c" d="M12 16V5" />,
-    <path key="d" d="M17 16v-3" />
+    { tag: "path", d: "M3 3v18h18M18 17V9M13 17V5M8 17v-3" }
   ],
   settings: [
-    <circle key="a" cx="12" cy="12" r="3" />,
-    <path key="b" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.2a2 2 0 1 1-4 0V21a1.7 1.7 0 0 0-.4-1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.2a2 2 0 1 1 0-4H3a1.7 1.7 0 0 0 1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.2a2 2 0 1 1 4 0V3a1.7 1.7 0 0 0 .4 1 1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.4.2.74.54.94.94.14.3.22.64.2 1v.2a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-.94-.14Z" />
+    { tag: "circle", cx: "12", cy: "12", r: "3" },
+    { tag: "path", d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1v.2a2 2 0 0 1-4 0V21a1.65 1.65 0 0 0-.4-1 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.4h-.2a2 2 0 0 1 0-4H3a1.65 1.65 0 0 0 1-.4 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1v-.2a2 2 0 0 1 4 0V3a1.65 1.65 0 0 0 .4 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .4h.2a2 2 0 0 1 0 4H21a1.65 1.65 0 0 0-1 .4 1.65 1.65 0 0 0-.6 1Z" }
   ],
   "refresh-cw": [
-    <path key="a" d="M21 12a9 9 0 0 1-15.5 6.2L3 15" />,
-    <path key="b" d="M3 21v-6h6" />,
-    <path key="c" d="M3 12A9 9 0 0 1 18.5 5.8L21 9" />,
-    <path key="d" d="M21 3v6h-6" />
+    { tag: "path", d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" },
+    { tag: "path", d: "M3 21v-5h5M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" },
+    { tag: "path", d: "M16 8h5V3" }
   ],
   "log-in": [
-    <path key="a" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />,
-    <path key="b" d="m10 17 5-5-5-5" />,
-    <path key="c" d="M15 12H3" />
+    { tag: "path", d: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" },
+    { tag: "path", d: "m10 17 5-5-5-5M15 12H3" }
   ],
   "play-circle": [
-    <circle key="a" cx="12" cy="12" r="10" />,
-    <path key="b" d="m10 8 6 4-6 4V8Z" />
+    { tag: "circle", cx: "12", cy: "12", r: "10" },
+    { tag: "path", d: "m10 8 6 4-6 4Z" }
   ],
   "user-check": [
-    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
-    <circle key="b" cx="9" cy="7" r="4" />,
-    <path key="c" d="m16 11 2 2 4-4" />
+    { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "9", cy: "7", r: "4" },
+    { tag: "path", d: "m16 11 2 2 4-4" }
   ],
   "user-x": [
-    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
-    <circle key="b" cx="9" cy="7" r="4" />,
-    <path key="c" d="m17 8 5 5" />,
-    <path key="d" d="m22 8-5 5" />
+    { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "9", cy: "7", r: "4" },
+    { tag: "path", d: "m17 8 5 5M22 8l-5 5" }
   ],
   "user-search": [
-    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
-    <circle key="b" cx="9" cy="7" r="4" />,
-    <circle key="c" cx="17" cy="11" r="3" />,
-    <path key="d" d="m19.5 13.5 2.5 2.5" />
+    { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "9", cy: "7", r: "4" },
+    { tag: "circle", cx: "18", cy: "11", r: "3" },
+    { tag: "path", d: "m20.5 13.5 1.5 1.5" }
   ],
   "user-plus": [
-    <path key="a" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />,
-    <circle key="b" cx="9" cy="7" r="4" />,
-    <path key="c" d="M19 8v6" />,
-    <path key="d" d="M22 11h-6" />
+    { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "9", cy: "7", r: "4" },
+    { tag: "path", d: "M19 8v6M22 11h-6" }
   ],
   "user-cog": [
-    <circle key="a" cx="9" cy="7" r="4" />,
-    <path key="b" d="M3 21v-2a4 4 0 0 1 4-4h3" />,
-    <circle key="c" cx="17" cy="17" r="2" />,
-    <path key="d" d="M17 13v1" />,
-    <path key="e" d="M17 20v1" />,
-    <path key="f" d="M13 17h1" />,
-    <path key="g" d="M20 17h1" />
+    { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "9", cy: "7", r: "4" },
+    { tag: "circle", cx: "19", cy: "11", r: "2" },
+    { tag: "path", d: "M19 7v1M19 14v1M15.5 9l.9.5M21.6 12.5l.9.5M15.5 13l.9-.5M21.6 9.5l.9-.5" }
   ],
   user: [
-    <path key="a" d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />,
-    <circle key="b" cx="12" cy="7" r="4" />
+    { tag: "path", d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" },
+    { tag: "circle", cx: "12", cy: "7", r: "4" }
   ],
   "link-2": [
-    <path key="a" d="M9 17H7a5 5 0 0 1 0-10h2" />,
-    <path key="b" d="M15 7h2a5 5 0 0 1 0 10h-2" />,
-    <path key="c" d="M8 12h8" />
+    { tag: "path", d: "M9 17H7A5 5 0 0 1 7 7h2" },
+    { tag: "path", d: "M15 7h2a5 5 0 1 1 0 10h-2" },
+    { tag: "path", d: "M8 12h8" }
   ],
   save: [
-    <path key="a" d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />,
-    <path key="b" d="M17 21v-8H7v8" />,
-    <path key="c" d="M7 3v5h8" />
+    { tag: "path", d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" },
+    { tag: "path", d: "M17 21v-8H7v8M7 3v5h8" }
   ],
   "trash-2": [
-    <path key="a" d="M3 6h18" />,
-    <path key="b" d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />,
-    <path key="c" d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />,
-    <path key="d" d="M10 11v6" />,
-    <path key="e" d="M14 11v6" />
+    { tag: "path", d: "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" }
   ],
   pencil: [
-    <path key="a" d="M17 3a2.8 2.8 0 0 1 4 4L8 20l-5 1 1-5Z" />,
-    <path key="b" d="m15 5 4 4" />
+    { tag: "path", d: "M17 3a2.85 2.85 0 0 1 4 4L7 21l-4 1 1-4Z" },
+    { tag: "path", d: "m15 5 4 4" }
   ],
   "shield-check": [
-    <path key="a" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />,
-    <path key="b" d="m9 12 2 2 4-4" />
+    { tag: "path", d: "M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3Z" },
+    { tag: "path", d: "m9 12 2 2 4-4" }
   ],
   "x-circle": [
-    <circle key="a" cx="12" cy="12" r="10" />,
-    <path key="b" d="m15 9-6 6" />,
-    <path key="c" d="m9 9 6 6" />
+    { tag: "circle", cx: "12", cy: "12", r: "10" },
+    { tag: "path", d: "m15 9-6 6M9 9l6 6" }
   ],
   download: [
-    <path key="a" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />,
-    <path key="b" d="M7 10l5 5 5-5" />,
-    <path key="c" d="M12 15V3" />
+    { tag: "path", d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" },
+    { tag: "path", d: "M7 10l5 5 5-5M12 15V3" }
   ],
   upload: [
-    <path key="a" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />,
-    <path key="b" d="M17 8 12 3 7 8" />,
-    <path key="c" d="M12 3v12" />
+    { tag: "path", d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" },
+    { tag: "path", d: "M17 8 12 3 7 8M12 3v12" }
   ],
   "folder-open": [
-    <path key="a" d="M6 14 8 6h13l-2 12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3" />,
-    <path key="b" d="M2 10h20" />
+    { tag: "path", d: "M6 14 4 20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-1.5L22 10H8l-2 4Z" },
+    { tag: "path", d: "M2 10V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v2" }
   ],
   eye: [
-    <path key="a" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />,
-    <circle key="b" cx="12" cy="12" r="3" />
+    { tag: "path", d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" },
+    { tag: "circle", cx: "12", cy: "12", r: "3" }
   ],
   "check-circle-2": [
-    <circle key="a" cx="12" cy="12" r="10" />,
-    <path key="b" d="m9 12 2 2 4-4" />
+    { tag: "circle", cx: "12", cy: "12", r: "10" },
+    { tag: "path", d: "m9 12 2 2 4-4" }
   ],
   replace: [
-    <path key="a" d="M3 7h13l-3-3" />,
-    <path key="b" d="M16 4l3 3-3 3" />,
-    <path key="c" d="M21 17H8l3 3" />,
-    <path key="d" d="M8 20l-3-3 3-3" />
+    { tag: "path", d: "M14 4h6v6M20 4l-8 8" },
+    { tag: "path", d: "M10 20H4v-6M4 20l8-8" }
   ],
   "table-2": [
-    <rect key="a" x="3" y="3" width="18" height="18" rx="2" />,
-    <path key="b" d="M3 9h18" />,
-    <path key="c" d="M3 15h18" />,
-    <path key="d" d="M9 3v18" />,
-    <path key="e" d="M15 3v18" />
+    { tag: "rect", x: "3", y: "4", width: "18", height: "16", rx: "2" },
+    { tag: "path", d: "M3 10h18M10 4v16" }
   ],
-  "chevron-down": [<path key="a" d="m6 9 6 6 6-6" />],
+  "chevron-down": [
+    { tag: "path", d: "m6 9 6 6 6-6" }
+  ],
   "toggle-right": [
-    <rect key="a" x="2" y="7" width="20" height="10" rx="5" />,
-    <circle key="b" cx="16" cy="12" r="3" />
+    { tag: "rect", x: "2", y: "6", width: "20", height: "12", rx: "6" },
+    { tag: "circle", cx: "16", cy: "12", r: "2" }
   ],
   copy: [
-    <rect key="a" x="9" y="9" width="13" height="13" rx="2" />,
-    <path key="b" d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    { tag: "rect", x: "9", y: "9", width: "13", height: "13", rx: "2" },
+    { tag: "path", d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" }
   ],
   "file-down": [
-    <path key="a" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />,
-    <path key="b" d="M14 2v6h6" />,
-    <path key="c" d="M12 18v-6" />,
-    <path key="d" d="m9 15 3 3 3-3" />
+    { tag: "path", d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" },
+    { tag: "path", d: "M14 2v6h6M12 18v-6M9 15l3 3 3-3" }
   ],
   search: [
-    <circle key="a" cx="11" cy="11" r="8" />,
-    <path key="b" d="m21 21-4.3-4.3" />
+    { tag: "circle", cx: "11", cy: "11", r: "8" },
+    { tag: "path", d: "m21 21-4.3-4.3" }
   ],
   "list-filter": [
-    <path key="a" d="M3 6h18" />,
-    <path key="b" d="M7 12h10" />,
-    <path key="c" d="M10 18h4" />
+    { tag: "path", d: "M3 6h18M7 12h10M10 18h4" }
+  ],
+  "filter-x": [
+    { tag: "path", d: "M3 4h18l-7 8v6l-4 2v-8Z" },
+    { tag: "path", d: "m17 17 4 4M21 17l-4 4" }
   ],
   hash: [
-    <path key="a" d="M4 9h16" />,
-    <path key="b" d="M4 15h16" />,
-    <path key="c" d="M10 3 8 21" />,
-    <path key="d" d="M16 3l-2 18" />
+    { tag: "path", d: "M4 9h16M4 15h16M10 3 8 21M16 3l-2 18" }
   ],
   "file-spreadsheet": [
-    <path key="a" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />,
-    <path key="b" d="M14 2v6h6" />,
-    <path key="c" d="M8 13h8" />,
-    <path key="d" d="M8 17h8" />,
-    <path key="e" d="M12 11v8" />
+    { tag: "path", d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" },
+    { tag: "path", d: "M14 2v6h6M8 13h8M8 17h8M11 9v12" }
   ],
   "clipboard-list": [
-    <rect key="a" x="8" y="2" width="8" height="4" rx="1" />,
-    <path key="b" d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />,
-    <path key="c" d="M8 12h.01" />,
-    <path key="d" d="M12 12h4" />,
-    <path key="e" d="M8 16h.01" />,
-    <path key="f" d="M12 16h4" />
+    { tag: "rect", x: "8", y: "2", width: "8", height: "4", rx: "1" },
+    { tag: "path", d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M8 12h8M8 16h8" }
   ],
   unplug: [
-    <path key="a" d="m19 5 3-3" />,
-    <path key="b" d="m2 22 3-3" />,
-    <path key="c" d="M6 8 3 5" />,
-    <path key="d" d="m14 16 3 3" />,
-    <path key="e" d="M8 3v4" />,
-    <path key="f" d="M16 3v4" />,
-    <path key="g" d="M8 7h8v5a4 4 0 0 1-4 4h0a4 4 0 0 1-4-4Z" />
+    { tag: "path", d: "m19 5-3 3M22 2l-3 3M2 22l7-7M9 15l4 4a4 4 0 0 0 6-6l-4-4" },
+    { tag: "path", d: "M10 10 6 6M14 6l-4 4" }
   ],
   "code-2": [
-    <path key="a" d="m18 16 4-4-4-4" />,
-    <path key="b" d="m6 8-4 4 4 4" />,
-    <path key="c" d="m14.5 4-5 16" />
+    { tag: "path", d: "m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16" }
   ],
   "key-round": [
-    <circle key="a" cx="8" cy="15" r="4" />,
-    <path key="b" d="m10.8 12.2 8.6-8.6" />,
-    <path key="c" d="m15 5 4 4" />,
-    <path key="d" d="m17 3 4 4" />
+    { tag: "circle", cx: "8", cy: "15", r: "4" },
+    { tag: "path", d: "M10.8 12.2 21 2M18 5l2 2M15 8l2 2" }
   ],
   info: [
-    <circle key="a" cx="12" cy="12" r="10" />,
-    <path key="b" d="M12 16v-4" />,
-    <path key="c" d="M12 8h.01" />
+    { tag: "circle", cx: "12", cy: "12", r: "10" },
+    { tag: "path", d: "M12 16v-4M12 8h.01" }
   ],
   clock: [
-    <circle key="a" cx="12" cy="12" r="10" />,
-    <path key="b" d="M12 6v6l4 2" />
+    { tag: "circle", cx: "12", cy: "12", r: "10" },
+    { tag: "path", d: "M12 6v6l4 2" }
   ]
 };
 
 function Icon({ name, size = 18, className = "" }) {
+  const shapes = iconShapes[name] || iconShapes.info;
   return (
     <svg
       aria-hidden="true"
       className={cx("shrink-0", className)}
       fill="none"
-      focusable="false"
       height={size}
       stroke="currentColor"
       strokeLinecap="round"
@@ -293,8 +243,22 @@ function Icon({ name, size = 18, className = "" }) {
       strokeWidth="2"
       viewBox="0 0 24 24"
       width={size}>
-      {iconPaths[name] || iconPaths.info}
+      {shapes.map((shape, index) => {
+        const { tag = "path", ...attrs } = shape;
+        return React.createElement(tag, { key: index, ...attrs });
+      })}
     </svg>
+  );
+}
+
+function actionClass(variant, compact, className) {
+  return cx(
+    variant === "primary" && primaryButton,
+    variant === "danger" && dangerButton,
+    variant === "success" && successButton,
+    (!variant || variant === "secondary") && secondaryButton,
+    compact && compactButton,
+    className
   );
 }
 
@@ -302,41 +266,60 @@ function ActionButton({
   as = "button",
   variant = "secondary",
   icon,
-  children,
-  className = "",
-  compact = false,
   iconSize,
+  compact = false,
+  className = "",
+  children,
   type = "button",
   ...props
 }) {
-  const Component = as;
-  const classes = {
-    primary: primaryButton,
-    secondary: secondaryButton,
-    danger: dangerButton,
-    success: successButton
-  };
-  const componentProps = Component === "button" ? { type, ...props } : props;
-  return (
-    <Component className={cx(classes[variant] || secondaryButton, compact && compactButton, className)} {...componentProps}>
+  const content = (
+    <React.Fragment>
       {icon ? <Icon name={icon} size={iconSize || (compact ? 16 : 18)} /> : null}
-      <span>{children}</span>
-    </Component>
+      <span className="truncate">{children}</span>
+    </React.Fragment>
+  );
+  if (as === "a") {
+    return (
+      <a className={actionClass(variant, compact, className)} {...props}>
+        {content}
+      </a>
+    );
+  }
+  return (
+    <button className={actionClass(variant, compact, className)} type={type} {...props}>
+      {content}
+    </button>
   );
 }
 
 function FieldWithIcon({ icon, children }) {
   return (
-    <div className="relative">
+    <span className="relative block">
       <Icon
         name={icon}
         size={16}
-        className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted"
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
       />
       {React.cloneElement(children, {
         className: cx(children.props.className, "pl-9")
       })}
-    </div>
+    </span>
+  );
+}
+
+function FileControl({ file, onChange, accept, label = "Choose file" }) {
+  return (
+    <span className={cx(secondaryButton, "relative w-full justify-start border-dashed bg-[#FFFDF7]")}>
+      <Icon name="upload" size={18} />
+      <span className="truncate">{file?.name || label}</span>
+      <input
+        className="absolute inset-0 cursor-pointer opacity-0"
+        type="file"
+        accept={accept}
+        onChange={onChange}
+      />
+    </span>
   );
 }
 
@@ -522,7 +505,7 @@ function ZoomStatusPill({ oauthStatus, onManageSettings, showManage = true }) {
           type="button"
           onClick={onManageSettings}>
           <Icon name="settings" size={14} />
-          <span>Manage</span>
+          Manage
         </button>
       ) : null}
       {!connected && !checking ? (
@@ -530,7 +513,7 @@ function ZoomStatusPill({ oauthStatus, onManageSettings, showManage = true }) {
           className="inline-flex shrink-0 items-center gap-1 border-l border-yellow-300 pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
           href="/zoom/oauth/start?prompt=login">
           <Icon name="log-in" size={14} />
-          <span>Connect</span>
+          Connect
         </a>
       ) : null}
     </div>
@@ -561,8 +544,8 @@ function CardHeader({ title, meta, icon, children }) {
   return (
     <div className={cardHeaderClass}>
       <div className="min-w-0">
-        <h2 className="m-0 flex items-center gap-2 text-xl font-black">
-          {icon ? <Icon name={icon} size={20} className="text-ink" /> : null}
+        <h2 className="m-0 inline-flex items-center gap-2 text-xl font-black">
+          {icon ? <Icon name={icon} size={20} /> : null}
           <span>{title}</span>
         </h2>
         {meta ? <p className="mt-1 text-sm leading-6 text-muted">{meta}</p> : null}
@@ -587,7 +570,7 @@ function EmptyRow({ colSpan, children }) {
 function StatusTile({ label, value, tone = "neutral", wide = false, icon }) {
   return (
     <div className={cx("rounded-lg border border-line bg-[#FFFDF7] p-3", wide && "sm:col-span-2")}>
-      <div className="flex items-center gap-2 text-[11px] font-black uppercase text-muted">
+      <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase text-muted">
         {icon ? <Icon name={icon} size={16} /> : null}
         <span>{label}</span>
       </div>
@@ -637,8 +620,8 @@ function Shell({ page, goToPage, oauthStatus, children }) {
           {pages.map((item) => (
             <button
               key={item.id}
-            className={cx(
-                "inline-flex min-h-11 items-center gap-3 rounded-lg border px-3 text-left text-sm font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200",
+              className={cx(
+                "inline-flex min-h-11 items-center gap-3 rounded-lg border px-3 text-left text-sm font-black transition",
                 page === item.id
                   ? "border-[#D9C300] bg-yellow-100 text-ink"
                   : "border-transparent text-muted hover:bg-panel hover:text-ink"
@@ -665,7 +648,7 @@ function Shell({ page, goToPage, oauthStatus, children }) {
             className="inline-flex items-center gap-2 font-black underline decoration-accent decoration-4 underline-offset-4"
             href="/#live-attendance">
             <Icon name="video" size={16} />
-            <span>Open current lesson</span>
+            Open current lesson
           </a>
         </div>
       </aside>
@@ -707,16 +690,12 @@ function Header({
         />
         {isCurrentLesson ? <Badge tone={lessonStatus.tone}>{lessonStatus.label}</Badge> : null}
         {!isCurrentLesson ? (
-          <ActionButton icon="refresh-cw" type="button" onClick={refreshData}>
+          <ActionButton icon="refresh-cw" onClick={refreshData}>
             Refresh
           </ActionButton>
         ) : null}
         {isDashboard ? (
-          <ActionButton
-            icon="play-circle"
-            variant="primary"
-            type="button"
-            onClick={() => goToPage("live-attendance")}>
+          <ActionButton icon="play-circle" variant="primary" onClick={() => goToPage("live-attendance")}>
             Start / Join lesson
           </ActionButton>
         ) : null}
@@ -777,7 +756,7 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
 
   return (
     <Card>
-      <CardHeader title="Attendance Analytics">
+      <CardHeader title="Attendance Analytics" icon="bar-chart-3">
         <div className="flex flex-wrap gap-2">
           {filters.map((filter) => (
             <button
@@ -790,8 +769,8 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
               )}
               type="button"
               onClick={() => setTrendFilter(filter.key)}>
-              <Icon name={filter.icon} size={15} />
-              <span>{filter.label}</span>
+              <Icon name={filter.icon} size={16} />
+              {filter.label}
             </button>
           ))}
         </div>
@@ -892,26 +871,28 @@ function AliasRow({ record, students, suggested, createAlias }) {
     <tr>
       <td className={tdClass}>{record.participant_name}</td>
       <td className={tdClass}>
-        <select
-          className={cx(inputClass, "min-w-40")}
-          value={studentId}
-          disabled={!students.length}
-          onChange={(event) => setStudentId(event.target.value)}>
-          {students.map((student) => (
-            <option key={student.id} value={student.id}>
-              {student.full_name} ({student.group_name})
-            </option>
-          ))}
-        </select>
+        <FieldWithIcon icon="user-check">
+          <select
+            className={cx(inputClass, "min-w-40")}
+            value={studentId}
+            disabled={!students.length}
+            onChange={(event) => setStudentId(event.target.value)}>
+            {students.map((student) => (
+              <option key={student.id} value={student.id}>
+                {student.full_name} ({student.group_name})
+              </option>
+            ))}
+          </select>
+        </FieldWithIcon>
       </td>
       <td className={tdClass}>
-        <button
-          className={secondaryButton}
-          type="button"
+        <ActionButton
+          compact
+          icon="link-2"
           disabled={!studentId}
           onClick={() => createAlias(Number(studentId), record.participant_name)}>
           Create alias / Link
-        </button>
+        </ActionButton>
       </td>
     </tr>
   );
@@ -938,11 +919,11 @@ function DashboardStep({ index, title, detail, done, actionLabel, href, onAction
       {done ? (
         <Badge tone="success">Done</Badge>
       ) : href ? (
-        <ActionButton as="a" href={href} icon={icon}>
+        <ActionButton as="a" compact icon={icon} href={href}>
           {actionLabel}
         </ActionButton>
       ) : (
-        <ActionButton icon={icon} type="button" onClick={onAction}>
+        <ActionButton compact icon={icon} onClick={onAction}>
           {actionLabel}
         </ActionButton>
       )}
@@ -964,46 +945,46 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
         : "Connect Zoom so host join and live sync are available.",
       done: zoomConnected,
       actionLabel: "Connect",
-      icon: "log-in",
-      href: "/zoom/oauth/start?prompt=login"
+      href: "/zoom/oauth/start?prompt=login",
+      icon: "log-in"
     },
     {
       title: "Import students",
       detail: "Add students manually, import a file, or connect a Google Sheet.",
       done: students.length > 0,
       actionLabel: "Students",
-      icon: "users",
-      onAction: () => goToPage("students")
+      onAction: () => goToPage("students"),
+      icon: "users"
     },
     {
       title: "Save or select a meeting",
       detail: "Keep recurring Zoom meetings ready for lesson setup.",
       done: savedMeetings.length > 0 || Boolean(active),
       actionLabel: "Meetings",
-      icon: "calendar-days",
-      onAction: () => goToPage("meetings")
+      onAction: () => goToPage("meetings"),
+      icon: "calendar-days"
     },
     {
       title: "Start current lesson",
       detail: "Open Current Lesson to join Zoom and begin attendance sync.",
       done: Boolean(active),
       actionLabel: "Open",
-      icon: "video",
-      onAction: () => goToPage("live-attendance")
+      onAction: () => goToPage("live-attendance"),
+      icon: "video"
     },
     {
       title: "Generate report",
       detail: "Review synced attendance and generate journals after lessons.",
       done: historyRecords.length > 0,
       actionLabel: "Reports",
-      icon: "bar-chart-3",
-      onAction: () => goToPage("reports")
+      onAction: () => goToPage("reports"),
+      icon: "bar-chart-3"
     }
   ];
 
   return (
     <Card>
-      <CardHeader title="Setup checklist" />
+      <CardHeader title="Setup checklist" icon="check-circle-2" />
       <div className="grid gap-3 p-5">
         {steps.map((step, index) => (
           <DashboardStep key={step.title} index={index + 1} {...step} />
@@ -1028,15 +1009,12 @@ function DashboardLessonCard({ meetings, historyRecords, goToPage }) {
             label="Lesson"
             value={meetingDisplayName(active)}
             tone={active ? "success" : "neutral"}
+            icon="video"
             wide
           />
-          <StatusTile label="Last sync" value={formatShortDate(lastSync)} wide />
+          <StatusTile label="Last sync" value={formatShortDate(lastSync)} icon="clock" wide />
         </div>
-        <ActionButton
-          icon="play-circle"
-          variant="primary"
-          type="button"
-          onClick={() => goToPage("live-attendance")}>
+        <ActionButton icon="play-circle" variant="primary" onClick={() => goToPage("live-attendance")}>
           Start / Join lesson
         </ActionButton>
       </div>
@@ -1194,7 +1172,7 @@ function MeetingsPage({
             </FieldWithIcon>
           </label>
           <ActionButton icon="save" variant="primary" type="submit">
-            Save
+            Save meeting
           </ActionButton>
         </form>
       </Card>
@@ -1302,20 +1280,18 @@ function SavedMeetingsTable({
                       </Badge>
                     </td>
                     <td className={cx(tdClass, "space-x-2")}>
-                      <ActionButton as="a" compact href={meetingJoinUrl(meeting)} icon="video">
+                      <ActionButton as="a" compact icon="video" href={meetingJoinUrl(meeting)}>
                         Join
                       </ActionButton>
                       <ActionButton
                         compact
                         icon="pencil"
-                        type="button"
                         onClick={() => setDraft(meeting)}>
                         Edit
                       </ActionButton>
                       <ActionButton
                         compact
                         icon="shield-check"
-                        type="button"
                         onClick={() => checkSavedMeeting(meeting.meeting_number)}>
                         Check
                       </ActionButton>
@@ -1323,7 +1299,6 @@ function SavedMeetingsTable({
                         compact
                         icon="trash-2"
                         variant="danger"
-                        type="button"
                         onClick={() => deleteSavedMeeting(meeting.id)}>
                         Delete
                       </ActionButton>
@@ -1438,7 +1413,6 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
         <ActionButton
           compact
           icon="save"
-          type="button"
           onClick={() => updateMeeting(meeting.id, title, groupName)}>
           Save changes
         </ActionButton>
@@ -1446,7 +1420,6 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
           compact
           icon="x-circle"
           variant="danger"
-          type="button"
           disabled={Boolean(meeting.ended_at)}
           onClick={() => closeMeeting(meeting.id)}>
           Close session
@@ -1454,8 +1427,8 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
         <ActionButton
           as="a"
           compact
-          href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}
-          icon="download">
+          icon="download"
+          href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}>
           Export CSV
         </ActionButton>
       </td>
@@ -1491,30 +1464,34 @@ function LiveAttendancePage({
         <Card>
           <CardHeader title={primaryLabel} icon={currentMeeting ? "video" : "play-circle"} />
           <div className="grid gap-3 p-5">
-            <ActionButton as="a" href="/teacher-meeting" icon="video" variant="primary">
+            <ActionButton as="a" icon="video" variant="primary" href="/teacher-meeting">
               {primaryLabel}
             </ActionButton>
             <ActionButton
               icon="calendar-days"
-              type="button"
               onClick={() => goToPage("meetings")}>
               Saved meetings
             </ActionButton>
             <div className="grid gap-2">
               <StatusTile
-                icon="video"
                 label="Zoom"
                 value={oauthStatus?.authorized ? "Connected" : "Not connected"}
                 tone={oauthStatus?.authorized ? "success" : "warning"}
+                icon="video"
               />
-              <StatusTile icon="users" label="Lesson" value={lessonState.label} tone={lessonState.tone} />
               <StatusTile
-                icon="refresh-cw"
+                label="Lesson"
+                value={lessonState.label}
+                tone={lessonState.tone}
+                icon="users"
+              />
+              <StatusTile
                 label="Sync"
                 value={currentMeeting ? "Active" : "Idle"}
                 tone={currentMeeting ? "success" : "neutral"}
+                icon="refresh-cw"
               />
-              <StatusTile icon="clock" label="Last sync" value={formatShortDate(lastSync)} />
+              <StatusTile label="Last sync" value={formatShortDate(lastSync)} icon="clock" />
             </div>
           </div>
         </Card>
@@ -1582,7 +1559,7 @@ function HistoryTable({ title = "Attendance History", records }) {
   const rows = historyLimit(records);
   return (
     <Card>
-      <CardHeader title={title}>
+      <CardHeader title={title} icon="clock">
         <Badge>{rows.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
@@ -1680,17 +1657,19 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
         {fields.map((field) => (
           <label className={labelClass} key={field.key}>
             {field.label}
-            <select
-              className={inputClass}
-              value={mapping[field.key] || ""}
-              onChange={(event) => setMapping({ ...mapping, [field.key]: event.target.value })}>
-              <option value="">Not mapped</option>
-              {preview.headers.map((header) => (
-                <option key={header} value={header}>
-                  {header}
-                </option>
-              ))}
-            </select>
+            <FieldWithIcon icon="list-filter">
+              <select
+                className={inputClass}
+                value={mapping[field.key] || ""}
+                onChange={(event) => setMapping({ ...mapping, [field.key]: event.target.value })}>
+                <option value="">Not mapped</option>
+                {preview.headers.map((header) => (
+                  <option key={header} value={header}>
+                    {header}
+                  </option>
+                ))}
+              </select>
+            </FieldWithIcon>
           </label>
         ))}
       </div>
@@ -1735,9 +1714,12 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
         <span className="text-sm font-bold text-muted">
           {preview.total_rows} rows detected. Confirm mapping before saving.
         </span>
-        <button className={primaryButton} type="button" onClick={onConfirm}>
+        <ActionButton
+          icon={confirmLabel === "Save connection" ? "link-2" : "check-circle-2"}
+          variant="success"
+          onClick={onConfirm}>
           {confirmLabel}
-        </button>
+        </ActionButton>
       </div>
     </div>
   );
@@ -1805,9 +1787,17 @@ function GoogleSheetImportPanel({
     setStatus(formatSyncSummary(result));
   }
 
+  async function copyBotEmail() {
+    if (!botEmail) {
+      return;
+    }
+    await navigator.clipboard?.writeText(botEmail);
+    setStatus("Bot email copied.");
+  }
+
   return (
     <Card>
-      <CardHeader title={title} meta={status}>
+      <CardHeader title={title} meta={status} icon="table-2">
         <Badge tone={googleConfig?.configured ? "success" : "warning"}>
           {googleConfig?.configured ? "Bot ready" : "Bot missing"}
         </Badge>
@@ -1815,11 +1805,16 @@ function GoogleSheetImportPanel({
       <div className="grid gap-4 p-5">
         <label className={labelClass}>
           Bot email
-          <input
-            className={inputClass}
-            value={botEmail || "Bot email is not configured"}
-            readOnly
-          />
+          <span className="grid grid-cols-[1fr_auto] gap-2">
+            <input
+              className={inputClass}
+              value={botEmail || "Bot email is not configured"}
+              readOnly
+            />
+            <ActionButton icon="copy" disabled={!botEmail} onClick={copyBotEmail}>
+              Copy
+            </ActionButton>
+          </span>
         </label>
         <form className="grid grid-cols-[1fr_auto] items-end gap-3" onSubmit={loadTabs}>
           <label className={labelClass}>
@@ -1837,33 +1832,40 @@ function GoogleSheetImportPanel({
               placeholder="https://docs.google.com/spreadsheets/d/..."
             />
           </label>
-          <button className={primaryButton} type="submit" disabled={!googleConfig?.configured}>
+          <ActionButton
+            icon="table-2"
+            variant="primary"
+            type="submit"
+            disabled={!googleConfig?.configured}>
             Load tabs
-          </button>
+          </ActionButton>
         </form>
         {tabs.length ? (
           <div className="grid grid-cols-[1fr_auto_auto] items-end gap-3">
             <label className={labelClass}>
               Sheet tab
-              <select
-                className={inputClass}
-                value={selectedTab}
-                onChange={(event) => {
-                  setSelectedTab(event.target.value);
-                  setPreview(null);
-                  setMapping({});
-                }}>
-                {tabs.map((tab) => (
-                  <option key={tab} value={tab}>
-                    {tab}
-                  </option>
-                ))}
-              </select>
+              <FieldWithIcon icon="chevron-down">
+                <select
+                  className={inputClass}
+                  value={selectedTab}
+                  onChange={(event) => {
+                    setSelectedTab(event.target.value);
+                    setPreview(null);
+                    setMapping({});
+                  }}>
+                  {tabs.map((tab) => (
+                    <option key={tab} value={tab}>
+                      {tab}
+                    </option>
+                  ))}
+                </select>
+              </FieldWithIcon>
             </label>
-            <button className={secondaryButton} type="button" onClick={previewSheet}>
+            <ActionButton icon="eye" onClick={previewSheet}>
               Preview
-            </button>
+            </ActionButton>
             <label className="inline-flex items-center gap-2 pb-2 text-sm font-bold text-muted">
+              <Icon name="toggle-right" size={16} />
               <input
                 type="checkbox"
                 checked={autoSyncEnabled}
@@ -1886,6 +1888,7 @@ function GoogleSheetImportPanel({
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm font-black text-ink">Saved Google Sheets</span>
           <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+            <Icon name="replace" size={16} />
             <input
               type="checkbox"
               checked={replaceExisting}
@@ -1916,9 +1919,9 @@ function GoogleSheetImportPanel({
                       {source.last_synced_at ? formatShortDate(source.last_synced_at) : "Never"}
                     </td>
                     <td className={tdClass}>
-                      <button className={secondaryButton} type="button" onClick={() => syncSource(source.id)}>
+                      <ActionButton compact icon="refresh-cw" onClick={() => syncSource(source.id)}>
                         Sync now
-                      </button>
+                      </ActionButton>
                     </td>
                   </tr>
                 ))}
@@ -2027,29 +2030,33 @@ function StudentsPage({
     <section className="grid gap-5">
       <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
         <div className="flex gap-3">
-          <input
-            className={cx(inputClass, "w-72")}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search students or aliases"
-          />
-          <select
-            className={cx(inputClass, "w-52")}
-            value={group}
-            onChange={(event) => setGroup(event.target.value)}>
-            <option value="">All groups</option>
-            {groups.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <FieldWithIcon icon="search">
+            <input
+              className={cx(inputClass, "w-72")}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search students or aliases"
+            />
+          </FieldWithIcon>
+          <FieldWithIcon icon="list-filter">
+            <select
+              className={cx(inputClass, "w-52")}
+              value={group}
+              onChange={(event) => setGroup(event.target.value)}>
+              <option value="">All groups</option>
+              {groups.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </FieldWithIcon>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-5">
         <Card>
-          <CardHeader title="Add Student" />
+          <CardHeader title="Add Student" icon="user-plus" />
           <form
             className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 p-5"
             onSubmit={submitStudent}>
@@ -2075,21 +2082,20 @@ function StudentsPage({
                 required
               />
             </label>
-            <button className={primaryButton} type="submit">
-              Create
-            </button>
+            <ActionButton icon="user-plus" variant="primary" type="submit">
+              Add student
+            </ActionButton>
           </form>
         </Card>
         <Card>
-          <CardHeader title="Import Students" meta={status} />
+          <CardHeader title="Import Students" meta={status} icon="upload" />
           <form
             className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
             onSubmit={submitImportPreview}>
             <label className={labelClass}>
               CSV or Excel file
-              <input
-                className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm"
-                type="file"
+              <FileControl
+                file={file}
                 accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 onChange={(event) => {
                   setFile(event.target.files?.[0] || null);
@@ -2099,6 +2105,7 @@ function StudentsPage({
               />
             </label>
             <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+              <Icon name="replace" size={16} />
               <input
                 type="checkbox"
                 checked={replaceExisting}
@@ -2106,9 +2113,9 @@ function StudentsPage({
               />{" "}
               Replace
             </label>
-            <button className={primaryButton} type="submit">
+            <ActionButton icon="eye" variant="primary" type="submit">
               Preview
-            </button>
+            </ActionButton>
           </form>
           <ImportPreviewPanel
             preview={preview}
@@ -2143,7 +2150,7 @@ function StudentsPage({
       />
 
       <Card>
-        <CardHeader title="Student Roster">
+        <CardHeader title="Student Roster" icon="users">
           <Badge>{filtered.length}</Badge>
         </CardHeader>
         <div className={tableWrapClass}>
@@ -2212,9 +2219,9 @@ function StudentRow({ student, present, createAlias }) {
             onChange={(event) => setAlias(event.target.value)}
             placeholder="Zoom display name"
           />
-          <button className={secondaryButton} type="submit">
+          <ActionButton compact icon="user-plus" type="submit">
             Add alias
-          </button>
+          </ActionButton>
         </form>
       </td>
     </tr>
@@ -2260,75 +2267,86 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
   return (
     <section className="grid gap-5">
       <div className="grid grid-cols-4 gap-3">
-        <StatusTile label="Total sessions" value={filteredSummaries.length} />
+        <StatusTile label="Total sessions" value={filteredSummaries.length} icon="calendar-days" />
         <StatusTile
           label="Average attendance"
           value={`${average}%`}
           tone={average >= 70 ? "success" : "warning"}
+          icon="user-check"
         />
         <StatusTile
           label="Absences"
           value={filteredSummaries.filter((summary) => summary.status !== "п").length}
           tone="warning"
+          icon="user-x"
         />
         <StatusTile
           label="Attendance rows"
           value={Math.min(historyRecords.length, MAX_ATTENDANCE)}
+          icon="clock"
         />
       </div>
-      <div className="flex items-end justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
-        <div className="flex gap-3">
+      <div className="grid gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
+        <div className="grid grid-cols-[150px_150px_minmax(160px,1fr)_minmax(140px,0.8fr)] gap-3">
           <label className={labelClass}>
             Start date
-            <input
-              className={inputClass}
-              type="date"
-              value={filters.from}
-              onChange={(event) => setFilters({ ...filters, from: event.target.value })}
-            />
+            <FieldWithIcon icon="calendar">
+              <input
+                className={inputClass}
+                type="date"
+                value={filters.from}
+                onChange={(event) => setFilters({ ...filters, from: event.target.value })}
+              />
+            </FieldWithIcon>
           </label>
           <label className={labelClass}>
             End date
-            <input
-              className={inputClass}
-              type="date"
-              value={filters.to}
-              onChange={(event) => setFilters({ ...filters, to: event.target.value })}
-            />
+            <FieldWithIcon icon="calendar">
+              <input
+                className={inputClass}
+                type="date"
+                value={filters.to}
+                onChange={(event) => setFilters({ ...filters, to: event.target.value })}
+              />
+            </FieldWithIcon>
           </label>
           <label className={labelClass}>
             Group
-            <select
-              className={cx(inputClass, "w-52")}
-              value={filters.group}
-              onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
-              <option value="">All groups</option>
-              {groups.map((group) => (
-                <option key={group} value={group}>
-                  {group}
-                </option>
-              ))}
-            </select>
+            <FieldWithIcon icon="list-filter">
+              <select
+                className={cx(inputClass, "w-52")}
+                value={filters.group}
+                onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
+                <option value="">All groups</option>
+                {groups.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
+            </FieldWithIcon>
           </label>
           <label className={labelClass}>
             Meeting ID
-            <input
-              className={inputClass}
-              value={filters.meetingId}
-              onChange={(event) => setFilters({ ...filters, meetingId: event.target.value })}
-            />
+            <FieldWithIcon icon="hash">
+              <input
+                className={inputClass}
+                value={filters.meetingId}
+                onChange={(event) => setFilters({ ...filters, meetingId: event.target.value })}
+              />
+            </FieldWithIcon>
           </label>
         </div>
-        <div className="flex gap-2">
-          <a className={secondaryButton} href={`/attendance/export.csv${exportQuery}`}>
-            Attendance CSV
-          </a>
-          <a className={secondaryButton} href="/reports/attendance-matrix.csv">
-            Matrix CSV
-          </a>
-          <button className={primaryButton} type="button" onClick={submitSummary}>
-            Generate Journal
-          </button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <ActionButton as="a" icon="download" href={`/attendance/export.csv${exportQuery}`}>
+            Export attendance CSV
+          </ActionButton>
+          <ActionButton as="a" icon="file-spreadsheet" href="/reports/attendance-matrix.csv">
+            Export matrix CSV
+          </ActionButton>
+          <ActionButton icon="clipboard-list" variant="primary" onClick={submitSummary}>
+            Generate attendance journal
+          </ActionButton>
         </div>
       </div>
       {status ? <p className="text-sm font-bold text-muted">{status}</p> : null}
@@ -2341,7 +2359,7 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
 function SummaryTable({ summaries }) {
   return (
     <Card>
-      <CardHeader title="Attendance Journal">
+      <CardHeader title="Attendance Journal" icon="clipboard-list">
         <Badge>{summaries.length}</Badge>
       </CardHeader>
       <div className={tableWrapClass}>
@@ -2437,7 +2455,7 @@ function SettingsPage({
     <section className="grid gap-5">
       <div className="grid gap-5">
           <Card>
-            <CardHeader title="Zoom Integration">
+            <CardHeader title="Zoom Integration" icon="settings">
               <Badge tone={oauthStatus?.authorized ? "success" : "warning"}>
                 {oauthStatus?.authorized ? "Connected" : "Needs OAuth"}
               </Badge>
@@ -2447,40 +2465,44 @@ function SettingsPage({
                 label="OAuth"
                 value={oauthStatus?.authorized ? "Connected" : "Not connected"}
                 tone={oauthStatus?.authorized ? "success" : "warning"}
+                icon="video"
               />
               <StatusTile
                 label="Account"
                 value={oauthStatus?.display_name || oauthStatus?.email || "Unknown"}
+                icon="user"
               />
               <StatusTile
                 label="SDK"
                 value={sdkConfig?.configured ? "Configured" : "Missing credentials"}
                 tone={sdkConfig?.configured ? "success" : "danger"}
+                icon="code-2"
               />
               <StatusTile
                 label="ZAK"
                 value={oauthStatus?.authorized ? "Available" : "Requires OAuth"}
+                icon="key-round"
               />
             </div>
             <div className="flex gap-2 px-5 pb-5">
-              <button
-                className={primaryButton}
-                type="button"
+              <ActionButton
+                icon={oauthStatus?.authorized ? "user-cog" : "log-in"}
+                variant="primary"
                 onClick={() => {
                   window.location.href = "/zoom/oauth/start?prompt=login";
                 }}>
                 {oauthStatus?.authorized ? "Authorize different account" : "Authorize Zoom"}
-              </button>
+              </ActionButton>
               {oauthStatus?.authorized ? (
-                <button className={dangerButton} type="button" onClick={disconnectZoom}>
+                <ActionButton icon="unplug" variant="danger" onClick={disconnectZoom}>
                   Disconnect Zoom
-                </button>
+                </ActionButton>
               ) : null}
             </div>
           </Card>
 
           <Card>
-            <CardHeader title="Groups" />
+            <CardHeader title="Groups" icon="users" />
             <div className="flex flex-wrap gap-2 p-5">
               {groups.length ? (
                 groups.map((group) => <Badge key={group}>{group}</Badge>)
@@ -2491,15 +2513,14 @@ function SettingsPage({
           </Card>
 
           <Card>
-            <CardHeader title="Schedule Import" meta={status} />
+            <CardHeader title="Schedule Import" meta={status} icon="upload" />
             <form
               className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
               onSubmit={submitSchedulePreview}>
               <label className={labelClass}>
                 Schedule CSV or Excel
-                <input
-                  className="block w-full rounded-lg border border-dashed border-line bg-[#FFFDF7] p-2 text-sm"
-                  type="file"
+                <FileControl
+                  file={file}
                   accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   onChange={(event) => {
                     setFile(event.target.files?.[0] || null);
@@ -2509,6 +2530,7 @@ function SettingsPage({
                 />
               </label>
               <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+                <Icon name="replace" size={16} />
                 <input
                   type="checkbox"
                   checked={replaceExisting}
@@ -2516,9 +2538,9 @@ function SettingsPage({
                 />{" "}
                 Replace
               </label>
-              <button className={primaryButton} type="submit">
+              <ActionButton icon="eye" variant="primary" type="submit">
                 Preview
-              </button>
+              </ActionButton>
             </form>
             <ImportPreviewPanel
               preview={preview}

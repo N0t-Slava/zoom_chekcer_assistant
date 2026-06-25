@@ -180,6 +180,7 @@ h3 {
   display: flex;
   min-height: 42px;
   align-items: center;
+  gap: 10px;
   border: 1px solid transparent;
   border-radius: var(--radius);
   padding: 0 12px;
@@ -466,6 +467,15 @@ h3 {
     #FFFFFF;
 }
 
+.meeting-actions .button-row {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.meeting-actions .button-row button {
+  width: 100%;
+}
+
 .trend-column {
   display: grid;
   align-content: end;
@@ -706,6 +716,7 @@ td a {
   min-height: 38px;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border: 1px solid #D9C300;
   border-radius: var(--radius);
   padding: 0 13px;
@@ -732,6 +743,9 @@ td a {
 }
 
 .compact-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   min-height: auto;
   border: 0;
   border-radius: 0;
@@ -769,6 +783,51 @@ td a {
   padding: 0;
   border-color: var(--border);
   background: var(--surface-panel);
+}
+
+.button-icon,
+.metric-icon,
+.nav-icon,
+.field-icon,
+.mini-link-icon {
+  flex: 0 0 auto;
+}
+
+.card-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-shell {
+  position: relative;
+  display: block;
+}
+
+.field-shell .field-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.field-shell select,
+.field-shell input {
+  padding-left: 36px;
+}
+
+.mini-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .file-picker {
