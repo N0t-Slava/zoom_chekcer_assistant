@@ -1,18 +1,18 @@
 :root {
   color-scheme: light;
-  --app-bg: #F7F5EE;
-  --panel-bg: #FFFFFF;
-  --surface-soft: #FFFDF7;
-  --surface-panel: #F2EFE3;
-  --text-main: #241C15;
-  --text-muted: #6B6B6B;
-  --accent: #FFE01B;
-  --accent-hover: #F6D600;
-  --success: #007C5C;
-  --warning: #A46A1F;
-  --danger: #C62828;
-  --border: #DDD8C8;
-  --border-strong: #CFC7B6;
+  --app-bg: #f7f5ee;
+  --panel-bg: #ffffff;
+  --surface-soft: #fffdf7;
+  --surface-panel: #f2efe3;
+  --text-main: #241c15;
+  --text-muted: #6b6b6b;
+  --accent: #ffe01b;
+  --accent-hover: #f6d600;
+  --success: #007c5c;
+  --warning: #a46a1f;
+  --danger: #c62828;
+  --border: #ddd8c8;
+  --border-strong: #cfc7b6;
   --shadow: 0 1px 2px rgba(36, 28, 21, 0.06), 0 10px 24px rgba(36, 28, 21, 0.05);
   --radius: 8px;
   --space: 16px;
@@ -37,7 +37,12 @@ body {
   overflow-x: auto;
   color: var(--text-main);
   background: var(--app-bg);
-  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -118,7 +123,7 @@ h3 {
 .brand-mark {
   width: 44px;
   height: 44px;
-  border: 1px solid #E8D500;
+  border: 1px solid #e8d500;
 }
 
 .brand strong,
@@ -155,14 +160,16 @@ h3 {
   border-radius: var(--radius);
   padding: 12px;
   background: var(--panel-bg);
-  transition: background-color 0.16s ease, border-color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .profile-card:hover,
 .profile-card.active,
 .profile-card.is-active {
-  border-color: #D9C300;
-  background: #FFF3A5;
+  border-color: #d9c300;
+  background: #fff3a5;
 }
 
 .profile-avatar {
@@ -187,7 +194,10 @@ h3 {
   color: var(--text-muted);
   font-size: 0.94rem;
   font-weight: 900;
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .sidebar-nav a:hover {
@@ -198,9 +208,9 @@ h3 {
 .sidebar-nav a.active,
 .sidebar-nav a.is-active,
 .sidebar-nav-item.is-active {
-  border-color: #D9C300;
+  border-color: #d9c300;
   color: var(--text-main);
-  background: #FFF3A5;
+  background: #fff3a5;
 }
 
 .sidebar-footer {
@@ -464,7 +474,7 @@ h3 {
   padding: 18px 16px 12px;
   background:
     linear-gradient(to bottom, rgba(221, 216, 200, 0.35) 1px, transparent 1px) 0 0 / 100% 25%,
-    #FFFFFF;
+    #ffffff;
 }
 
 .meeting-actions .button-row {
@@ -602,7 +612,7 @@ h3 {
   min-height: 148px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #FFF3A5;
+  background: #fff3a5;
 }
 
 .health-score strong {
@@ -652,7 +662,7 @@ h3 {
 }
 
 .primary-tile {
-  border-color: #D9C300;
+  border-color: #d9c300;
   background: var(--accent);
 }
 
@@ -688,7 +698,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #D9C300;
+  border-color: #d9c300;
   box-shadow: 0 0 0 4px rgba(255, 224, 27, 0.28);
 }
 
@@ -717,13 +727,16 @@ td a {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid #D9C300;
+  border: 1px solid #d9c300;
   border-radius: var(--radius);
   padding: 0 13px;
   color: var(--text-main);
   background: var(--accent);
   font-weight: 950;
-  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 button:hover,
@@ -768,7 +781,7 @@ td a {
 .danger-button,
 .ghost-danger {
   border-color: rgba(198, 40, 40, 0.35);
-  color: #FFFFFF;
+  color: #ffffff;
   background: var(--danger);
 }
 
@@ -868,7 +881,7 @@ td a {
 .filter-chip.active {
   border-color: var(--text-main);
   background: var(--text-main);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .pill,
@@ -1093,9 +1106,9 @@ td select {
 }
 
 .tab-button.active {
-  border-color: #D9C300;
+  border-color: #d9c300;
   color: var(--text-main);
-  background: #FFF3A5;
+  background: #fff3a5;
 }
 
 .settings-panel {
@@ -1195,7 +1208,7 @@ td select {
 .zoom-root {
   min-height: 360px;
   border-top: 1px solid var(--border);
-  background: #17130F;
+  background: #17130f;
 }
 
 .live-grid {

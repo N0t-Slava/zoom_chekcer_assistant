@@ -10,6 +10,11 @@ const errorMessage = document.querySelector("#error-message");
 const forceSendButton = document.querySelector("#force-send");
 const openDashboardButton = document.querySelector("#open-dashboard");
 
+const statusBaseClass =
+  "inline-flex min-h-[30px] items-center rounded-full border px-2.5 text-[0.82rem] font-black";
+const onlineStatusClass = `${statusBaseClass} border-green-200 bg-green-50 text-success`;
+const offlineStatusClass = `${statusBaseClass} border-red-200 bg-red-50 text-danger`;
+
 function formatTime(value) {
   if (!value) {
     return "-";
@@ -24,7 +29,7 @@ function formatTime(value) {
 
 function setBackendStatus(online) {
   backendStatus.textContent = online ? "Online" : "Offline";
-  backendStatus.className = `status ${online ? "online" : "offline"}`;
+  backendStatus.className = online ? onlineStatusClass : offlineStatusClass;
 }
 
 function renderSnapshot(snapshot) {

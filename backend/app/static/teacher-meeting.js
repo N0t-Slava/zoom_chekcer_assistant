@@ -38,6 +38,44 @@ const liveLastSync = document.querySelector("#live-last-sync");
 
 const ATTENDANCE_SYNC_INTERVAL_MS = 5000;
 const SVG_NS = "http://www.w3.org/2000/svg";
+
+function cx(...values) {
+  return values.filter(Boolean).join(" ");
+}
+
+const buttonClass =
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#D9C300] bg-accent px-3 text-sm font-black text-ink transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
+const dangerButtonClass =
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-black text-danger transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
+const inputClass =
+  "min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm font-normal text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200";
+const pillBaseClass =
+  "inline-flex min-h-8 items-center rounded-full border px-3 text-xs font-black";
+const pillToneClasses = {
+  success: "border-green-200 bg-green-50 text-success",
+  warning: "border-yellow-300 bg-yellow-50 text-warning",
+  danger: "border-red-200 bg-red-50 text-danger",
+  neutral: "border-line bg-[#FFFDF7] text-muted"
+};
+const statusDotBaseClass =
+  "inline-flex items-center gap-2 text-sm font-black before:h-2.5 before:w-2.5 before:rounded-full";
+const statusDotToneClasses = {
+  success: "text-success before:bg-success",
+  warning: "text-muted before:bg-warning",
+  danger: "text-danger before:bg-danger",
+  neutral: "text-muted before:bg-warning"
+};
+const tableCellClass = "border-b border-line px-3 py-3 align-middle text-sm whitespace-nowrap";
+const emptyTableCellClass =
+  "border-b border-line px-3 py-3 text-sm italic leading-6 text-muted whitespace-normal";
+const emptyStateClass =
+  "rounded-lg border border-line bg-[#FFFDF7] px-3 py-3 text-sm font-bold text-muted";
+const liveListItemClass =
+  "flex min-h-[46px] items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] px-3 py-2";
+const liveListLabelClass = "min-w-0";
+const liveListStrongClass = "block truncate text-sm font-black";
+const liveListSmallClass = "mt-0.5 block truncate text-xs font-extrabold text-muted";
+const inlineActionsClass = "flex flex-wrap items-center justify-end gap-2";
 const iconMarkup = {
   "layout-dashboard": '<rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect>',
   video: '<path d="m16 13 5 3V8l-5 3Z"></path><rect x="3" y="6" width="13" height="12" rx="2"></rect>',
@@ -56,7 +94,7 @@ const iconMarkup = {
   clock: '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>'
 };
 
-function iconNode(name, size = 18, className = "button-icon") {
+function iconNode(name, size = 18, className = "shrink-0") {
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("class", className);
@@ -76,6 +114,9 @@ function setButtonContent(button, label, iconName, size = 18) {
   if (!button) {
     return;
   }
+  if (!button.className.trim() || button.className === "ghost-danger") {
+    button.className = button.className === "ghost-danger" ? dangerButtonClass : buttonClass;
+  }
   const text = document.createElement("span");
   text.textContent = label;
   button.replaceChildren(iconNode(iconName, size), text);
@@ -86,7 +127,7 @@ function decorateHeading(text, iconName) {
     if (heading.dataset.iconified || heading.textContent.trim() !== text) {
       continue;
     }
-    heading.prepend(iconNode(iconName, 20, "metric-icon"));
+    heading.prepend(iconNode(iconName, 20, "shrink-0 text-muted"));
     heading.dataset.iconified = "true";
   }
 }
@@ -96,8 +137,8 @@ function decorateMetric(target, iconName) {
   if (!label || label.dataset.iconified) {
     return;
   }
-  label.classList.add("metric-label");
-  label.prepend(iconNode(iconName, 16, "metric-icon"));
+  label.classList.add("inline-flex", "items-center", "gap-2");
+  label.prepend(iconNode(iconName, 16, "shrink-0 text-muted"));
   label.dataset.iconified = "true";
 }
 
@@ -106,9 +147,12 @@ function decorateField(control, iconName) {
     return;
   }
   const wrapper = document.createElement("span");
-  wrapper.className = "field-shell";
+  wrapper.className = "field-shell relative block";
   control.parentNode.insertBefore(wrapper, control);
-  wrapper.appendChild(iconNode(iconName, 16, "field-icon"));
+  control.classList.add("pl-9");
+  wrapper.appendChild(
+    iconNode(iconName, 16, "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted")
+  );
   wrapper.appendChild(control);
 }
 
@@ -128,12 +172,12 @@ function decorateNavigation() {
     if (!link || link.dataset.iconified) {
       continue;
     }
-    link.prepend(iconNode(iconName, 18, "nav-icon"));
+    link.prepend(iconNode(iconName, 18, "shrink-0"));
     link.dataset.iconified = "true";
   }
   const miniLink = document.querySelector(".mini-link");
   if (miniLink && !miniLink.dataset.iconified) {
-    miniLink.prepend(iconNode("video", 16, "mini-link-icon"));
+    miniLink.prepend(iconNode("video", 16, "shrink-0"));
     miniLink.dataset.iconified = "true";
   }
 }
@@ -213,8 +257,7 @@ function setPillTone(target, tone) {
   if (!target) {
     return;
   }
-  target.classList.remove("success", "warning", "danger", "neutral");
-  target.classList.add(tone);
+  target.className = cx(pillBaseClass, pillToneClasses[tone] || pillToneClasses.neutral);
 }
 
 function setZoomAccountStatus(status = null) {
@@ -242,8 +285,11 @@ function setStatus(label, message) {
   setLiveText(healthJoinedStatus, label === "Joined" ? "Joined" : "Not joined");
   if (sidebarLiveStatus) {
     sidebarLiveStatus.textContent = label;
-    sidebarLiveStatus.classList.toggle("connected", label === "Joined");
-    sidebarLiveStatus.classList.toggle("danger", toneForStatus(label) === "danger");
+    const tone = toneForStatus(label);
+    sidebarLiveStatus.className = cx(
+      statusDotBaseClass,
+      label === "Joined" ? statusDotToneClasses.success : statusDotToneClasses[tone]
+    );
   }
 }
 
@@ -426,9 +472,7 @@ function formatSavedMeetingDate(value) {
 function meetingCell(text, className = "") {
   const cell = document.createElement("td");
   cell.textContent = text;
-  if (className) {
-    cell.className = className;
-  }
+  cell.className = className === "empty" ? emptyTableCellClass : cx(tableCellClass, className);
   return cell;
 }
 
@@ -463,7 +507,7 @@ function renderSavedMeetingsTable() {
     row.appendChild(meetingCell(formatSavedMeetingDate(meeting.updated_at)));
 
     const actions = document.createElement("td");
-    actions.className = "actions";
+    actions.className = inlineActionsClass;
 
     const joinSavedButton = document.createElement("button");
     joinSavedButton.type = "button";
@@ -480,7 +524,7 @@ function renderSavedMeetingsTable() {
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.className = "ghost-danger";
+    deleteButton.className = dangerButtonClass;
     setButtonContent(deleteButton, "Delete", "trash-2", 16);
     deleteButton.addEventListener("click", () => deleteMeeting(meeting));
 
@@ -761,7 +805,7 @@ function renderPanelList(target, countTarget, items, emptyMessage, renderItem) {
   target.innerHTML = "";
   if (!items.length) {
     const empty = document.createElement("div");
-    empty.className = "empty-state";
+    empty.className = emptyStateClass;
     empty.textContent = emptyMessage;
     target.appendChild(empty);
     return;
@@ -773,14 +817,17 @@ function renderPanelList(target, countTarget, items, emptyMessage, renderItem) {
 
 function livePanelItem(text, action = null) {
   const item = document.createElement("div");
-  item.className = "live-list-item";
+  item.className = liveListItemClass;
   const label = document.createElement("span");
+  label.className = liveListLabelClass;
   const [title, detail] = String(text).split(" · ");
   const strong = document.createElement("strong");
+  strong.className = liveListStrongClass;
   strong.textContent = title || "";
   label.appendChild(strong);
   if (detail) {
     const small = document.createElement("small");
+    small.className = liveListSmallClass;
     small.textContent = detail;
     label.appendChild(small);
   }
@@ -901,6 +948,7 @@ async function refreshLiveAttendancePanels() {
           ? students.filter((student) => student.group_name === record.group_name)
           : students;
         const select = document.createElement("select");
+        select.className = cx(inputClass, "max-w-[220px]");
         for (const student of groupStudents) {
           const option = document.createElement("option");
           option.value = String(student.id);
@@ -919,7 +967,7 @@ async function refreshLiveAttendancePanels() {
           });
         });
         const actions = document.createElement("span");
-        actions.className = "actions";
+        actions.className = inlineActionsClass;
         actions.append(select, button);
         return livePanelItem(
           `${record.participant_name} · ${record.group_name || "Any group"}`,

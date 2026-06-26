@@ -41,8 +41,8 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Content-Security-Policy": (
         "default-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zoom.us https://source.zoom.us https://*.zoom.us https://cdn.tailwindcss.com https://unpkg.com; "
-        "style-src 'self' 'unsafe-inline' https://source.zoom.us https://cdn.tailwindcss.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zoom.us https://source.zoom.us https://*.zoom.us https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline' https://source.zoom.us; "
         "img-src 'self' data: blob: https:; "
         "font-src 'self' data: https:; "
         "connect-src 'self' https://zoom.us https://*.zoom.us https://*.zoom.com wss://*.zoom.us wss://*.zoom.com; "

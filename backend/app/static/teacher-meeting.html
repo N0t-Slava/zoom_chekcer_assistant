@@ -5,170 +5,168 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Current Lesson</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/tailwind.css?v=2026-06-26" />
 </head>
 
-<body>
-    <div class="app-shell">
-        <aside class="sidebar">
-            <div class="profile-card">
-                <span class="profile-avatar">T</span>
-                <span>
-                    <strong>Teacher console</strong>
-                    <small>Current lesson</small>
+<body class="min-h-screen overflow-x-auto bg-canvas font-sans text-ink antialiased">
+    <div class="grid min-h-screen min-w-[1040px] grid-cols-[268px_minmax(760px,1fr)]">
+        <aside class="sticky top-0 flex h-screen flex-col gap-5 overflow-y-auto border-r border-line bg-[#FFFDF7] px-4 py-5">
+            <div class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-line bg-panel p-3">
+                <span class="grid h-10 w-10 place-items-center rounded-full bg-accent font-black">T</span>
+                <span class="min-w-0">
+                    <strong class="block truncate font-black">Teacher console</strong>
+                    <small class="block truncate text-xs font-bold text-muted">Current lesson</small>
                 </span>
             </div>
 
-            <nav class="sidebar-nav" aria-label="Primary navigation">
-                <a href="/#menu">Dashboard</a>
-                <a class="active" href="/#live-attendance">Current Lesson</a>
-                <a href="/#meetings">Meetings</a>
-                <a href="/#students">Students</a>
-                <a href="/#reports">Reports</a>
-                <a href="/#settings">Settings</a>
+            <nav class="sidebar-nav grid gap-2" aria-label="Primary navigation">
+                <a class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent px-3 text-sm font-black text-muted transition hover:bg-panel hover:text-ink" href="/#menu">Dashboard</a>
+                <a class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-[#D9C300] bg-yellow-100 px-3 text-sm font-black text-ink transition" href="/#live-attendance">Current Lesson</a>
+                <a class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent px-3 text-sm font-black text-muted transition hover:bg-panel hover:text-ink" href="/#meetings">Meetings</a>
+                <a class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent px-3 text-sm font-black text-muted transition hover:bg-panel hover:text-ink" href="/#students">Students</a>
+                <a class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent px-3 text-sm font-black text-muted transition hover:bg-panel hover:text-ink" href="/#reports">Reports</a>
+                <a class="inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent px-3 text-sm font-black text-muted transition hover:bg-panel hover:text-ink" href="/#settings">Settings</a>
             </nav>
-            <div class="sidebar-footer">
-                <span id="sidebar-live-status" class="status-dot">Waiting to join</span>
-                <a class="mini-link" href="/#live-attendance">Return to Current Lesson</a>
+            <div class="mt-auto grid gap-2 border-t border-line pt-4 text-sm font-black">
+                <span id="sidebar-live-status" class="inline-flex items-center gap-2 text-muted before:h-2.5 before:w-2.5 before:rounded-full before:bg-warning">Waiting to join</span>
+                <a class="mini-link inline-flex items-center gap-2 font-black underline decoration-accent decoration-4 underline-offset-4" href="/#live-attendance">Return to Current Lesson</a>
             </div>
         </aside>
 
-        <main class="workspace meeting-page">
-            <header class="topbar">
+        <main class="grid content-start gap-5 bg-canvas px-8 py-7 pb-12">
+            <header class="flex items-center justify-between gap-5">
                 <div>
-                    <h1>Current Lesson</h1>
+                    <h1 class="text-5xl font-black leading-none">Current Lesson</h1>
                 </div>
-                <div class="topbar-actions">
-                    <span id="zoom-account-status" class="pill warning">Zoom checking</span>
-                    <button id="zoom-login-button" class="compact-link-button" type="button">Connect Zoom</button>
-                    <span id="sdk-status" class="pill warning">Checking</span>
+                <div class="flex flex-wrap items-center justify-end gap-3">
+                    <span id="zoom-account-status" class="inline-flex min-h-8 items-center rounded-full border border-yellow-300 bg-yellow-50 px-3 text-xs font-black text-warning">Zoom checking</span>
+                    <button id="zoom-login-button" class="inline-flex items-center gap-1.5 bg-transparent p-0 text-xs font-black text-ink underline decoration-accent decoration-4 underline-offset-4 transition hover:text-warning" type="button">Connect Zoom</button>
+                    <span id="sdk-status" class="inline-flex min-h-8 items-center rounded-full border border-yellow-300 bg-yellow-50 px-3 text-xs font-black text-warning">Checking</span>
                 </div>
             </header>
 
-            <section class="live-control-center">
-                <div class="live-left">
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Start lesson</h2>
-
+            <section class="grid grid-cols-3 items-start gap-5 max-[1280px]:grid-cols-1">
+                <div class="grid min-w-0 gap-5">
+                    <article class="overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+                        <div class="card-header flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+                            <div class="min-w-0">
+                                <h2 class="m-0 inline-flex items-center gap-2 text-xl font-black">Start lesson</h2>
                             </div>
                         </div>
-                        <div class="meeting-actions">
-                            <label class="field">
+                        <div class="grid gap-3 p-5">
+                            <label class="field grid gap-1.5 text-xs font-black uppercase text-muted">
                                 <span>Saved meeting</span>
-                                <select id="saved-meeting-select">
+                                <select id="saved-meeting-select" class="min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm font-normal normal-case text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200">
                                     <option value="">New meeting</option>
                                 </select>
                             </label>
-                            <label class="field">
+                            <label class="field grid gap-1.5 text-xs font-black uppercase text-muted">
                                 <span>Meeting title</span>
-                                <input id="meeting-title" type="text" placeholder="Group 252 lesson" />
+                                <input id="meeting-title" class="min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm font-normal normal-case text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200" type="text" placeholder="Group 252 lesson" />
                             </label>
-                            <label class="field">
+                            <label class="field grid gap-1.5 text-xs font-black uppercase text-muted">
                                 <span>Meeting number</span>
-                                <input id="meeting-number" type="text" inputmode="numeric" placeholder="1234567890" />
+                                <input id="meeting-number" class="min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm font-normal normal-case text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200" type="text" inputmode="numeric" placeholder="1234567890" />
                             </label>
-                            <label class="field">
+                            <label class="field grid gap-1.5 text-xs font-black uppercase text-muted">
                                 <span>Password</span>
-                                <input id="meeting-password" type="text" autocomplete="off" />
+                                <input id="meeting-password" class="min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm font-normal normal-case text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200" type="text" autocomplete="off" />
                             </label>
-                            <label class="field">
+                            <label class="field grid gap-1.5 text-xs font-black uppercase text-muted">
                                 <span>Teacher name</span>
-                                <input id="teacher-name" type="text" value="Teacher" />
+                                <input id="teacher-name" class="min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm font-normal normal-case text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200" type="text" value="Teacher" />
                             </label>
-                            <label class="checkbox-field host-field">
-                                <input id="join-as-host" type="checkbox" />
+                            <label class="inline-flex items-center gap-2 text-sm font-black text-muted">
+                                <input id="join-as-host" class="h-4 w-4 accent-accent" type="checkbox" />
                                 <span>Join as host</span>
                             </label>
-                            <div class="button-row">
-                                <button id="join-button" type="button">Join Zoom</button>
-                                <button id="save-meeting-button" class="secondary-button" type="button">Save lesson</button>
-                                <button id="delete-meeting-button" class="ghost-danger" type="button"
-                                    disabled>Delete</button>
+                            <div class="grid gap-2">
+                                <button id="join-button" class="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#D9C300] bg-accent px-3 text-sm font-black text-ink transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200 disabled:translate-y-0 disabled:opacity-60" type="button">Join Zoom</button>
+                                <button id="save-meeting-button" class="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-panel px-3 text-sm font-black text-ink transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200 disabled:translate-y-0 disabled:opacity-60" type="button">Save lesson</button>
+                                <button id="delete-meeting-button" class="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-black text-danger transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100 disabled:translate-y-0 disabled:opacity-60" type="button" disabled>Delete</button>
                             </div>
                         </div>
                     </article>
                 </div>
 
-                <div class="live-center">
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Live Sync Health</h2>
+                <div class="grid min-w-0 gap-5">
+                    <article class="overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+                        <div class="card-header flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+                            <div class="min-w-0">
+                                <h2 class="m-0 inline-flex items-center gap-2 text-xl font-black">Live Sync Health</h2>
                             </div>
                         </div>
-                        <div class="meeting-status">
-                            <div class="sync-health-list">
-                                <div class="status-metric">
-                                    <span>SDK initialized</span>
-                                    <strong id="health-sdk-status">Checking</strong>
+                        <div class="grid gap-3 p-5">
+                            <div class="grid grid-cols-2 gap-2 max-[980px]:grid-cols-1">
+                                <div class="status-metric grid gap-1.5 rounded-lg border border-line bg-[#FFFDF7] p-3">
+                                    <span class="text-[11px] font-black uppercase text-muted">SDK initialized</span>
+                                    <strong id="health-sdk-status" class="truncate text-base font-black">Checking</strong>
                                 </div>
-                                <div class="status-metric">
-                                    <span>Zoom joined</span>
-                                    <strong id="health-joined-status">Not joined</strong>
+                                <div class="status-metric grid gap-1.5 rounded-lg border border-line bg-[#FFFDF7] p-3">
+                                    <span class="text-[11px] font-black uppercase text-muted">Zoom joined</span>
+                                    <strong id="health-joined-status" class="truncate text-base font-black">Not joined</strong>
                                 </div>
-                                <div class="status-metric">
-                                    <span>Participants readable</span>
-                                    <strong id="health-participants-status">Waiting</strong>
+                                <div class="status-metric grid gap-1.5 rounded-lg border border-line bg-[#FFFDF7] p-3">
+                                    <span class="text-[11px] font-black uppercase text-muted">Participants readable</span>
+                                    <strong id="health-participants-status" class="truncate text-base font-black">Waiting</strong>
                                 </div>
-                                <div class="status-metric">
-                                    <span>Backend update</span>
-                                    <strong id="health-backend-status">Idle</strong>
+                                <div class="status-metric grid gap-1.5 rounded-lg border border-line bg-[#FFFDF7] p-3">
+                                    <span class="text-[11px] font-black uppercase text-muted">Backend update</span>
+                                    <strong id="health-backend-status" class="truncate text-base font-black">Idle</strong>
                                 </div>
-                                <div class="status-metric">
-                                    <span>Sync interval</span>
-                                    <strong id="health-interval-status">5 seconds</strong>
+                                <div class="status-metric grid gap-1.5 rounded-lg border border-line bg-[#FFFDF7] p-3">
+                                    <span class="text-[11px] font-black uppercase text-muted">Sync interval</span>
+                                    <strong id="health-interval-status" class="truncate text-base font-black">5 seconds</strong>
                                 </div>
-                                <div class="status-metric">
-                                    <span>Last sync</span>
-                                    <strong id="live-last-sync">Never</strong>
+                                <div class="status-metric grid gap-1.5 rounded-lg border border-line bg-[#FFFDF7] p-3">
+                                    <span class="text-[11px] font-black uppercase text-muted">Last sync</span>
+                                    <strong id="live-last-sync" class="truncate text-base font-black">Never</strong>
                                 </div>
                             </div>
-                            <p id="sdk-message" class="subtle">Loading SDK configuration...</p>
-                            <p id="oauth-message" class="subtle">Checking Zoom authorization...</p>
-                            <p id="zoom-user-message" class="subtle"></p>
-                            <p id="meeting-check-message" class="subtle"></p>
-                            <p id="attendance-message" class="subtle">Attendance sync has not started.</p>
+                            <p id="sdk-message" class="m-0 max-w-[70ch] text-sm leading-6 text-muted">Loading SDK configuration...</p>
+                            <p id="oauth-message" class="m-0 max-w-[70ch] text-sm leading-6 text-muted">Checking Zoom authorization...</p>
+                            <p id="zoom-user-message" class="m-0 max-w-[70ch] text-sm leading-6 text-muted"></p>
+                            <p id="meeting-check-message" class="m-0 max-w-[70ch] text-sm leading-6 text-muted"></p>
+                            <p id="attendance-message" class="m-0 max-w-[70ch] text-sm leading-6 text-muted">Attendance sync has not started.</p>
                         </div>
-                        <div id="zoom-root" class="zoom-root"></div>
+                        <div id="zoom-root" class="min-h-[360px] border-t border-line bg-[#17130F]"></div>
                     </article>
                 </div>
 
-                <div class="live-right">
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Participants</h2>
+                <div class="grid min-w-0 gap-5">
+                    <article class="overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+                        <div class="card-header flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+                            <div class="min-w-0">
+                                <h2 class="m-0 inline-flex items-center gap-2 text-xl font-black">Participants</h2>
                             </div>
-                            <span id="live-participant-count" class="pill">0</span>
+                            <span id="live-participant-count" class="inline-flex min-h-8 items-center rounded-full border border-line bg-[#FFFDF7] px-3 text-xs font-black text-muted">0</span>
                         </div>
-                        <div id="live-participant-list" class="panel-list">
-                            <div class="empty-state">No participants read yet.</div>
+                        <div id="live-participant-list" class="grid max-h-[430px] content-start gap-3 overflow-auto p-5">
+                            <div class="rounded-lg border border-line bg-[#FFFDF7] px-3 py-3 text-sm font-bold text-muted">No participants read yet.</div>
                         </div>
                     </article>
 
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Matched Students</h2>
+                    <article class="overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+                        <div class="card-header flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+                            <div class="min-w-0">
+                                <h2 class="m-0 inline-flex items-center gap-2 text-xl font-black">Matched Students</h2>
                             </div>
-                            <span id="live-matched-count" class="pill success">0</span>
+                            <span id="live-matched-count" class="inline-flex min-h-8 items-center rounded-full border border-green-200 bg-green-50 px-3 text-xs font-black text-success">0</span>
                         </div>
-                        <div id="live-matched-list" class="panel-list">
-                            <div class="empty-state">No matched students yet.</div>
+                        <div id="live-matched-list" class="grid max-h-[430px] content-start gap-3 overflow-auto p-5">
+                            <div class="rounded-lg border border-line bg-[#FFFDF7] px-3 py-3 text-sm font-bold text-muted">No matched students yet.</div>
                         </div>
                     </article>
 
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Unmatched Names</h2>
+                    <article class="overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+                        <div class="card-header flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+                            <div class="min-w-0">
+                                <h2 class="m-0 inline-flex items-center gap-2 text-xl font-black">Unmatched Names</h2>
                             </div>
-                            <span id="live-unmatched-count" class="pill warning">0</span>
+                            <span id="live-unmatched-count" class="inline-flex min-h-8 items-center rounded-full border border-yellow-300 bg-yellow-50 px-3 text-xs font-black text-warning">0</span>
                         </div>
-                        <div id="live-unmatched-list" class="panel-list">
-                            <div class="empty-state">No unmatched names yet.</div>
+                        <div id="live-unmatched-list" class="grid max-h-[430px] content-start gap-3 overflow-auto p-5">
+                            <div class="rounded-lg border border-line bg-[#FFFDF7] px-3 py-3 text-sm font-bold text-muted">No unmatched names yet.</div>
                         </div>
                     </article>
                 </div>
@@ -176,7 +174,7 @@
         </main>
     </div>
 
-    <script src="/static/teacher-meeting.js?v=2026-06-25-buttons-icons"></script>
+    <script src="/static/teacher-meeting.js?v=2026-06-26-tailwind"></script>
 </body>
 
 </html>

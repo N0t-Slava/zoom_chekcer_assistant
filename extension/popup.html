@@ -5,53 +5,53 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zoom Attendance Tracker</title>
-  <link rel="stylesheet" href="popup.css" />
+  <link rel="stylesheet" href="tailwind.css" />
 </head>
 
-<body>
-  <main class="popup">
-    <header class="header">
-      <div>
-        <p class="eyebrow">Zoom attendance</p>
-        <h1>Tracker</h1>
+<body class="m-0 w-[340px] bg-canvas font-sans text-ink antialiased">
+  <main class="grid gap-3 p-4">
+    <header class="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3.5 shadow-soft">
+      <div class="min-w-0">
+        <p class="m-0 mb-1 text-[11px] font-black uppercase tracking-wide text-warning">Zoom attendance</p>
+        <h1 class="m-0 text-[1.35rem] font-black leading-tight">Tracker</h1>
       </div>
-      <span id="backend-status" class="status offline">Offline</span>
+      <span id="backend-status" class="inline-flex min-h-[30px] items-center rounded-full border border-red-200 bg-red-50 px-2.5 text-[0.82rem] font-black text-danger">Offline</span>
     </header>
 
-    <section class="panel">
-      <div class="row">
-        <span>Meeting ID</span>
-        <strong id="meeting-id">-</strong>
+    <section class="grid overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+      <div class="flex items-center justify-between gap-3 border-b border-line px-3.5 py-3">
+        <span class="text-sm font-bold text-muted">Meeting ID</span>
+        <strong id="meeting-id" class="max-w-[180px] truncate text-right text-sm font-black">-</strong>
       </div>
-      <div class="row">
-        <span>Participants</span>
-        <strong id="participant-count">0</strong>
+      <div class="flex items-center justify-between gap-3 border-b border-line px-3.5 py-3">
+        <span class="text-sm font-bold text-muted">Participants</span>
+        <strong id="participant-count" class="max-w-[180px] truncate text-right text-sm font-black">0</strong>
       </div>
-      <div class="row">
-        <span>Last sent</span>
-        <strong id="last-sent">-</strong>
+      <div class="flex items-center justify-between gap-3 px-3.5 py-3">
+        <span class="text-sm font-bold text-muted">Last sent</span>
+        <strong id="last-sent" class="max-w-[180px] truncate text-right text-sm font-black">-</strong>
       </div>
     </section>
 
-    <section class="lesson">
-      <span>Current lesson</span>
-      <strong id="lesson-title">Not linked</strong>
-      <small id="lesson-group">No group</small>
+    <section class="grid gap-1 rounded-lg border border-line bg-panel p-3.5 shadow-soft">
+      <span class="text-sm font-bold text-muted">Current lesson</span>
+      <strong id="lesson-title" class="truncate text-base font-black">Not linked</strong>
+      <small id="lesson-group" class="text-xs font-bold text-muted">No group</small>
     </section>
 
-    <section class="unmatched">
-      <div class="row compact">
-        <span>Unmatched names</span>
-        <strong id="unmatched-count">0</strong>
+    <section class="overflow-hidden rounded-lg border border-line bg-panel shadow-soft">
+      <div class="flex items-center justify-between gap-3 border-b border-line px-3.5 py-2.5">
+        <span class="text-sm font-bold text-muted">Unmatched names</span>
+        <strong id="unmatched-count" class="text-sm font-black">0</strong>
       </div>
-      <p id="unmatched-names" class="name-list">All matched</p>
+      <p id="unmatched-names" class="m-0 max-h-[72px] overflow-auto px-3.5 py-3 text-sm leading-5 text-muted">All matched</p>
     </section>
 
-    <p id="error-message" class="error"></p>
+    <p id="error-message" class="m-0 min-h-[18px] text-sm font-bold text-danger"></p>
 
-    <div class="actions">
-      <button id="force-send" type="button">Force Send Now</button>
-      <button id="open-dashboard" class="secondary" type="button">Open Dashboard</button>
+    <div class="grid grid-cols-1 gap-2.5">
+      <button id="force-send" class="min-h-[42px] rounded-lg border border-[#D9C300] bg-accent px-3 text-sm font-black text-ink shadow-[0_10px_20px_rgba(36,28,21,0.12)] transition hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60" type="button">Force Send Now</button>
+      <button id="open-dashboard" class="min-h-[42px] rounded-lg border border-green-200 bg-green-50 px-3 text-sm font-black text-success transition hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60" type="button">Open Dashboard</button>
     </div>
   </main>
 

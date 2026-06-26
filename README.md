@@ -28,6 +28,18 @@ http://127.0.0.1:8000/
 
 So if the page opens, the backend is running.
 
+## Frontend Styles
+
+The dashboard and extension popup use Tailwind CSS. After changing Tailwind classes in
+`backend/app/static/` or `extension/`, rebuild the generated CSS:
+
+```bash
+npm install
+npm run build:css
+```
+
+This writes `backend/app/static/tailwind.css` and `extension/tailwind.css`.
+
 ## Alternative Run Command
 
 Instead of `python main.py`, you can run:
