@@ -153,7 +153,14 @@ For production, also set:
 export APP_ENV="production"
 export ALLOWED_ZOOM_EMAILS="teacher1@example.com,teacher2@example.com"
 export FORCE_SECURE_COOKIES="true"
-export CORS_ALLOWED_ORIGINS="https://your-domain.example"
+export CORS_ALLOWED_ORIGINS="https://63.181.188.132.sslip.io"
+```
+
+For GitHub Actions deploy, set repository secrets:
+
+```text
+PROD_HOST=63.181.188.132.sslip.io
+PROD_SSH_KEY=<private SSH key for ubuntu on the server>
 ```
 
 When `APP_ENV=production`, the app requires `ALLOWED_ZOOM_EMAILS`. Only approved Zoom

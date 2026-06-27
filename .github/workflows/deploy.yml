@@ -8,19 +8,41 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+      PROD_HOST: ${{ secrets.PROD_HOST }}
+      PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
 
     steps:
+      - name: Skip deploy when production secrets are missing
+        if: ${{ env.PROD_HOST == '' || env.PROD_SSH_KEY == '' }}
+        run: |
+          echo "::notice title=Deploy skipped::Configure PROD_HOST and PROD_SSH_KEY repository secrets to enable production deploy."
+
       - name: Deploy over SSH
+        if: ${{ env.PROD_HOST != '' && env.PROD_SSH_KEY != '' }}
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.PROD_HOST }}
+          host: ${{ env.PROD_HOST }}
           username: ubuntu
-          key: ${{ secrets.PROD_SSH_KEY }}
+          key: ${{ env.PROD_SSH_KEY }}
+          envs: CORS_ALLOWED_ORIGINS
           script: |
             set -e
 
             sudo -u zoomapp git -C /opt/zoom-assistant-tracker fetch origin main
             sudo -u zoomapp git -C /opt/zoom-assistant-tracker reset --hard origin/main
+
+            env_file="/opt/zoom-assistant-tracker/.env"
+            if [ ! -f "$env_file" ]; then
+              sudo install -o zoomapp -g zoomapp -m 600 /dev/null "$env_file"
+            fi
+            if [ -n "${CORS_ALLOWED_ORIGINS:-}" ]; then
+              sudo sed -i '/^CORS_ALLOWED_ORIGINS=/d' "$env_file"
+              printf 'CORS_ALLOWED_ORIGINS=%s\n' "$CORS_ALLOWED_ORIGINS" | sudo tee -a "$env_file" >/dev/null
+              sudo chown zoomapp:zoomapp "$env_file"
+              sudo chmod 600 "$env_file"
+            fi
 
             sudo -u zoomapp /opt/zoom-assistant-tracker/.venv/bin/python -m pip install -r /opt/zoom-assistant-tracker/backend/requirements.txt
 

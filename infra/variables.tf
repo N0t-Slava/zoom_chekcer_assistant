@@ -19,7 +19,7 @@ variable "project_name" {
 variable "app_hostname" {
   description = "Public hostname used by Caddy for HTTPS."
   type        = string
-  default     = "18.185.153.117.sslip.io"
+  default     = "63.181.188.132.sslip.io"
 }
 
 variable "instance_type" {
