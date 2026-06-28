@@ -226,6 +226,32 @@ const iconShapes = {
   clock: [
     { tag: "circle", cx: "12", cy: "12", r: "10" },
     { tag: "path", d: "M12 6v6l4 2" }
+  ],
+  plus: [
+    { tag: "path", d: "M5 12h14M12 5v14" }
+  ],
+  sparkles: [
+    { tag: "path", d: "m12 3-1.9 5.8L4 11l6.1 2.2L12 19l1.9-5.8L20 11l-6.1-2.2Z" },
+    { tag: "path", d: "M5 3v4M3 5h4M19 17v4M17 19h4" }
+  ],
+  "book-open": [
+    { tag: "path", d: "M12 7v14" },
+    { tag: "path", d: "M3 18a1 1 0 0 1 1-1h5a3 3 0 0 1 3 3 3 3 0 0 1 3-3h5a1 1 0 0 1 1 1V5a1 1 0 0 0-1-1h-5a3 3 0 0 0-3 3 3 3 0 0 0-3-3H4a1 1 0 0 0-1 1Z" }
+  ],
+  "pie-chart": [
+    { tag: "path", d: "M21.21 15.89A10 10 0 1 1 8 2.83" },
+    { tag: "path", d: "M22 12A10 10 0 0 0 12 2v10Z" }
+  ],
+  "id-card": [
+    { tag: "rect", x: "3", y: "4", width: "18", height: "16", rx: "2" },
+    { tag: "circle", cx: "9", cy: "10", r: "2" },
+    { tag: "path", d: "M15 8h2M15 12h2M7 16h4" }
+  ],
+  "cloud-upload": [
+    { tag: "path", d: "M12 13v8" },
+    { tag: "path", d: "m16 17-4-4-4 4" },
+    { tag: "path", d: "M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" },
+    { tag: "path", d: "M16 16h1a3 3 0 0 0 0-6h-1" }
   ]
 };
 
@@ -475,7 +501,7 @@ function zoomAccountLabel(oauthStatus) {
   );
 }
 
-function ZoomStatusPill({ oauthStatus, onManageSettings, showManage = true }) {
+function ZoomStatusPill({ oauthStatus }) {
   const checking = !oauthStatus;
   const connected = Boolean(oauthStatus?.authorized);
   const account = zoomAccountLabel(oauthStatus);
@@ -490,32 +516,15 @@ function ZoomStatusPill({ oauthStatus, onManageSettings, showManage = true }) {
   return (
     <div
       className={cx(
-        "inline-flex min-h-9 max-w-[380px] items-center gap-2 rounded-lg border px-3 text-sm font-black shadow-soft",
+        "inline-flex min-h-11 max-w-[420px] items-center gap-2 rounded-lg border bg-panel px-4 text-sm font-black shadow-soft",
         connected
-          ? "border-green-200 bg-panel text-ink"
-          : "border-yellow-300 bg-yellow-50 text-warning"
+          ? "border-line text-ink"
+          : "border-yellow-300 text-warning"
       )}>
       <span
         className={cx("h-2.5 w-2.5 shrink-0 rounded-full", connected ? "bg-success" : "bg-warning")}
       />
       <span className="truncate">{label}</span>
-      {connected && showManage ? (
-        <button
-          className="inline-flex shrink-0 items-center gap-1 border-l border-line pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
-          type="button"
-          onClick={onManageSettings}>
-          <Icon name="settings" size={14} />
-          Manage
-        </button>
-      ) : null}
-      {!connected && !checking ? (
-        <a
-          className="inline-flex shrink-0 items-center gap-1 border-l border-yellow-300 pl-2 text-xs font-black underline decoration-accent decoration-2 underline-offset-2"
-          href="/zoom/oauth/start?prompt=login">
-          <Icon name="log-in" size={14} />
-          Connect
-        </a>
-      ) : null}
     </div>
   );
 }
@@ -536,8 +545,8 @@ function currentLessonStatus({ oauthStatus, sdkConfig, meetings, currentRecords,
   return { label: "Connected", tone: "neutral" };
 }
 
-function Card({ children, className = "" }) {
-  return <article className={cx(cardClass, className)}>{children}</article>;
+function Card({ children, className = "", ...props }) {
+  return <article className={cx(cardClass, className)} {...props}>{children}</article>;
 }
 
 function CardHeader({ title, meta, icon, children }) {
@@ -555,6 +564,136 @@ function CardHeader({ title, meta, icon, children }) {
   );
 }
 
+function PageMetricCard({ icon, title, value, tone = "neutral" }) {
+  const toneClass =
+    tone === "success"
+      ? "bg-green-50 text-success"
+      : tone === "warning"
+        ? "bg-orange-50 text-orange-600"
+        : tone === "danger"
+          ? "bg-red-50 text-danger"
+          : tone === "blue"
+            ? "bg-blue-50 text-blue-600"
+            : tone === "purple"
+              ? "bg-purple-50 text-purple-600"
+              : "bg-[#FFF7E8] text-warning";
+  const valueClass =
+    tone === "success"
+      ? "text-success"
+      : tone === "warning"
+        ? "text-orange-600"
+        : tone === "danger"
+          ? "text-danger"
+          : tone === "blue"
+            ? "text-blue-600"
+            : tone === "purple"
+              ? "text-purple-600"
+              : "text-ink";
+  return (
+    <Card className="min-h-[124px]">
+      <div className="flex h-full items-center gap-5 p-6">
+        <span className={cx("grid h-16 w-16 shrink-0 place-items-center rounded-full", toneClass)}>
+          <Icon name={icon} size={31} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-black text-muted">{title}</span>
+          <strong className={cx("mt-2 block text-[1.75rem] font-black leading-tight", valueClass)}>
+            {value}
+          </strong>
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+function SoftIcon({ icon, tone = "neutral", size = "lg" }) {
+  const palette =
+    tone === "success"
+      ? "bg-green-50 text-success"
+      : tone === "warning"
+        ? "bg-orange-50 text-orange-600"
+        : tone === "danger"
+          ? "bg-red-50 text-danger"
+          : tone === "blue"
+            ? "bg-blue-50 text-blue-600"
+            : tone === "purple"
+              ? "bg-purple-50 text-purple-600"
+              : "bg-[#F6EEDB] text-[#C7A96B]";
+  return (
+    <span
+      className={cx(
+        "grid shrink-0 place-items-center rounded-full",
+        palette,
+        size === "sm" ? "h-10 w-10" : "h-14 w-14"
+      )}>
+      <Icon name={icon} size={size === "sm" ? 20 : 28} />
+    </span>
+  );
+}
+
+function EmptyState({ icon = "clipboard-list", title, detail, children, compact = false }) {
+  return (
+    <div
+      className={cx(
+        "grid place-items-center text-center",
+        compact ? "min-h-[126px] gap-2 p-5" : "min-h-[260px] gap-3 p-8"
+      )}>
+      <SoftIcon icon={icon} size={compact ? "sm" : "lg"} />
+      <div>
+        <strong className="block text-lg font-black">{title}</strong>
+        {detail ? <p className="mt-2 max-w-[36ch] text-sm leading-6 text-muted">{detail}</p> : null}
+      </div>
+      {children ? <div className="mt-2 flex flex-wrap justify-center gap-3">{children}</div> : null}
+    </div>
+  );
+}
+
+function DownloadTemplateButton({ kind, children }) {
+  const templates = {
+    students: {
+      name: "students-template.csv",
+      content: "student_name,group,aliases\nIvan Petrov,252,\"Ivan P.;I. Petrov\"\n"
+    },
+    schedule: {
+      name: "schedule-template.csv",
+      content: "date,start_time,end_time,group,title\n2026-06-29,09:00,10:00,252,Math lesson\n"
+    }
+  };
+  function download() {
+    const template = templates[kind];
+    if (!template) {
+      return;
+    }
+    const blob = new Blob([template.content], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = template.name;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+  return (
+    <ActionButton icon="file-down" onClick={download}>
+      {children}
+    </ActionButton>
+  );
+}
+
+function DropZone({ file, onChange, accept, title, browseLabel = "Browse files", icon = "cloud-upload" }) {
+  return (
+    <label className="relative flex min-h-[86px] cursor-pointer items-center justify-center gap-4 rounded-lg border border-dashed border-line bg-[#FFFDF7] px-5 py-4 text-sm font-bold text-muted">
+      <SoftIcon icon={icon} size="sm" />
+      <span className="min-w-0">
+        <strong className="block truncate text-ink">{file?.name || title}</strong>
+        <span className="mt-1 inline-flex rounded-md border border-line bg-panel px-2 py-1 text-xs font-black text-muted">
+          {browseLabel}
+        </span>
+      </span>
+      <input className="absolute inset-0 cursor-pointer opacity-0" type="file" accept={accept} onChange={onChange} />
+    </label>
+  );
+}
+
 function EmptyRow({ colSpan, children }) {
   return (
     <tr>
@@ -569,20 +708,24 @@ function EmptyRow({ colSpan, children }) {
 
 function StatusTile({ label, value, tone = "neutral", wide = false, icon }) {
   return (
-    <div className={cx("rounded-lg border border-line bg-[#FFFDF7] p-3", wide && "sm:col-span-2")}>
-      <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase text-muted">
-        {icon ? <Icon name={icon} size={16} /> : null}
-        <span>{label}</span>
-      </div>
-      <div
-        className={cx(
-          "mt-2 truncate text-base font-black",
-          tone === "success" && "text-success",
-          tone === "warning" && "text-warning",
-          tone === "danger" && "text-danger",
-          tone === "neutral" && "text-ink"
-        )}>
-        {value}
+    <div
+      className={cx(
+        "flex items-center gap-4 rounded-lg border border-line bg-[#FFFDF7] p-4",
+        wide && "sm:col-span-2"
+      )}>
+      {icon ? <SoftIcon icon={icon} tone={tone} size="sm" /> : null}
+      <div className="min-w-0">
+        <div className="text-[11px] font-black uppercase text-muted">{label}</div>
+        <div
+          className={cx(
+            "mt-1 truncate text-base font-black",
+            tone === "success" && "text-success",
+            tone === "warning" && "text-warning",
+            tone === "danger" && "text-danger",
+            tone === "neutral" && "text-ink"
+          )}>
+          {value}
+        </div>
       </div>
     </div>
   );
@@ -669,6 +812,10 @@ function Header({
 }) {
   const isDashboard = page === "menu";
   const isCurrentLesson = page === "live-attendance";
+  const isMeetings = page === "meetings";
+  const isStudents = page === "students";
+  const isReports = page === "reports";
+  const isSettings = page === "settings";
   const lessonStatus = currentLessonStatus({
     oauthStatus,
     sdkConfig,
@@ -683,20 +830,42 @@ function Header({
         <h1 className="text-5xl font-black leading-none">{pageTitles[page] || "Dashboard"}</h1>
       </div>
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <ZoomStatusPill
-          oauthStatus={oauthStatus}
-          showManage={page !== "settings"}
-          onManageSettings={() => goToPage("settings")}
-        />
+        <ZoomStatusPill oauthStatus={oauthStatus} />
         {isCurrentLesson ? <Badge tone={lessonStatus.tone}>{lessonStatus.label}</Badge> : null}
-        {!isCurrentLesson ? (
+        {(isDashboard || isMeetings || isSettings) ? (
           <ActionButton icon="refresh-cw" onClick={refreshData}>
             Refresh
           </ActionButton>
         ) : null}
         {isDashboard ? (
-          <ActionButton icon="play-circle" variant="primary" onClick={() => goToPage("live-attendance")}>
+          <ActionButton icon="video" variant="primary" onClick={() => goToPage("live-attendance")}>
             Start / Join lesson
+          </ActionButton>
+        ) : null}
+        {isMeetings ? (
+          <ActionButton
+            icon="video"
+            variant="primary"
+            onClick={() => document.getElementById("saved-meeting-title")?.focus()}>
+            New meeting
+          </ActionButton>
+        ) : null}
+        {isStudents ? (
+          <ActionButton
+            icon="cloud-upload"
+            variant="primary"
+            onClick={() =>
+              document.getElementById("student-import-card")?.scrollIntoView({ block: "start", behavior: "smooth" })
+            }>
+            Import students
+          </ActionButton>
+        ) : null}
+        {isReports ? (
+          <ActionButton
+            icon="clipboard-list"
+            variant="primary"
+            onClick={() => document.getElementById("generate-attendance-journal")?.click()}>
+            Generate journal
           </ActionButton>
         ) : null}
       </div>
@@ -900,33 +1069,23 @@ function AliasRow({ record, students, suggested, createAlias }) {
 
 function DashboardStep({ index, title, detail, done, actionLabel, href, onAction, icon }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] p-3">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-line bg-[#FFFDF7] p-4">
       <div className="flex min-w-0 items-start gap-3">
         <span
           className={cx(
-            "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-black",
+            "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm font-black",
             done
               ? "border-green-200 bg-green-50 text-success"
               : "border-line bg-panel text-muted"
           )}>
-          {done ? "OK" : index}
+          {done ? <Icon name="check-circle-2" size={18} /> : index}
         </span>
         <span className="min-w-0">
           <strong className="block truncate text-sm font-black">{title}</strong>
           <span className="mt-1 block text-sm leading-5 text-muted">{detail}</span>
         </span>
       </div>
-      {done ? (
-        <Badge tone="success">Done</Badge>
-      ) : href ? (
-        <ActionButton as="a" compact icon={icon} href={href}>
-          {actionLabel}
-        </ActionButton>
-      ) : (
-        <ActionButton compact icon={icon} onClick={onAction}>
-          {actionLabel}
-        </ActionButton>
-      )}
+      <Badge tone={done ? "success" : "warning"}>{done ? "Done" : "Pending"}</Badge>
     </div>
   );
 }
@@ -984,39 +1143,15 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
 
   return (
     <Card>
-      <CardHeader title="Setup checklist" icon="check-circle-2" />
+      <CardHeader title="Setup checklist" />
       <div className="grid gap-3 p-5">
         {steps.map((step, index) => (
           <DashboardStep key={step.title} index={index + 1} {...step} />
         ))}
-      </div>
-    </Card>
-  );
-}
-
-function DashboardLessonCard({ meetings, historyRecords, goToPage }) {
-  const active = activeMeeting(meetings);
-  const lastSync = lastActivityTime([], [], historyRecords);
-
-  return (
-    <Card>
-      <CardHeader title="Current lesson" icon="video">
-        <Badge tone={active ? "success" : "neutral"}>{active ? "Syncing" : "Not started"}</Badge>
-      </CardHeader>
-      <div className="grid gap-4 p-5">
-        <div className="grid gap-3">
-          <StatusTile
-            label="Lesson"
-            value={meetingDisplayName(active)}
-            tone={active ? "success" : "neutral"}
-            icon="video"
-            wide
-          />
-          <StatusTile label="Last sync" value={formatShortDate(lastSync)} icon="clock" wide />
-        </div>
-        <ActionButton icon="play-circle" variant="primary" onClick={() => goToPage("live-attendance")}>
-          Start / Join lesson
-        </ActionButton>
+        <p className="mt-2 inline-flex items-center gap-2 text-sm text-muted">
+          <Icon name="sparkles" size={16} />
+          Complete the steps to get the most out of Teacher Console.
+        </p>
       </div>
     </Card>
   );
@@ -1033,10 +1168,36 @@ function MenuPage(props) {
     setTrendFilter,
     goToPage
   } = props;
+  const active = activeMeeting(meetings);
+  const attendanceRows = Math.min(historyRecords.length, MAX_ATTENDANCE);
+  const recentRows = [...meetings]
+    .sort((left, right) => {
+      const leftTime = new Date(left.started_at || left.updated_at || 0).getTime();
+      const rightTime = new Date(right.started_at || right.updated_at || 0).getTime();
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    })
+    .slice(0, 3);
 
   return (
     <section className="grid gap-5">
-      <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(300px,0.75fr)] items-start gap-5">
+      <div className="grid grid-cols-4 gap-4 max-[1280px]:grid-cols-2">
+        <PageMetricCard
+          icon="video"
+          title="Zoom status"
+          value={oauthStatus?.authorized ? "Connected" : "Not connected"}
+          tone={oauthStatus?.authorized ? "success" : "warning"}
+        />
+        <PageMetricCard icon="users" title="Students" value={students.length} tone="purple" />
+        <PageMetricCard
+          icon="book-open"
+          title="Current lesson"
+          value={active ? "Started" : "Not started"}
+          tone={active ? "success" : "warning"}
+        />
+        <PageMetricCard icon="pie-chart" title="Attendance" value={attendanceRows} tone="blue" />
+      </div>
+
+      <div className="grid grid-cols-[minmax(0,0.95fr)_minmax(360px,1fr)] items-start gap-5 max-[1280px]:grid-cols-1">
         <DashboardChecklist
           oauthStatus={oauthStatus}
           students={students}
@@ -1045,19 +1206,99 @@ function MenuPage(props) {
           historyRecords={historyRecords}
           goToPage={goToPage}
         />
-        <DashboardLessonCard
-          meetings={meetings}
-          historyRecords={historyRecords}
-          goToPage={goToPage}
-        />
+        <div className="grid gap-5">
+          <Card>
+            <CardHeader title="Attendance overview" />
+            {historyRecords.length ? (
+              <div className="grid gap-4 p-6">
+                <div className="grid grid-cols-3 gap-3">
+                  <StatusTile label="Rows" value={attendanceRows} icon="pie-chart" tone="blue" />
+                  <StatusTile label="Sessions" value={meetings.length} icon="calendar-days" />
+                  <StatusTile label="Last sync" value={formatShortDate(lastActivityTime([], [], historyRecords))} icon="clock" />
+                </div>
+              </div>
+            ) : (
+              <EmptyState
+                icon="bar-chart-3"
+                title="No attendance data yet."
+                detail="Start your first lesson to see analytics here.">
+                <ActionButton icon="video" variant="primary" onClick={() => goToPage("live-attendance")}>
+                  Open current lesson
+                </ActionButton>
+              </EmptyState>
+            )}
+          </Card>
+          <Card>
+            <CardHeader title="Quick actions" />
+            <div className="grid grid-cols-2 gap-3 p-5 2xl:grid-cols-4">
+              {[
+                ["Open", "Current lesson", "video", "live-attendance"],
+                ["Manage", "Meetings", "calendar-days", "meetings"],
+                ["Manage", "Students", "users", "students"],
+                ["View", "Reports", "bar-chart-3", "reports"]
+              ].map(([eyebrow, label, icon, target]) => (
+                <button
+                  key={label}
+                  className="flex min-h-[78px] items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] p-3 text-left transition hover:-translate-y-px"
+                  type="button"
+                  onClick={() => goToPage(target)}>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent text-ink">
+                      <Icon name={icon} size={21} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-bold text-muted">{eyebrow}</span>
+                      <strong className="block text-sm font-black leading-tight">{label}</strong>
+                    </span>
+                  </span>
+                  <Icon name="chevron-down" size={16} className="-rotate-90 text-warning" />
+                </button>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
-      <MiniStats meetings={meetings} students={students} records={historyRecords} />
-      <AttendanceTrend
-        records={historyRecords}
-        meetings={meetings}
-        trendFilter={trendFilter}
-        setTrendFilter={setTrendFilter}
-      />
+
+      <Card>
+        <CardHeader title="Recent activity">
+          <ActionButton compact onClick={() => goToPage("meetings")}>View all</ActionButton>
+        </CardHeader>
+        {recentRows.length ? (
+          <div className={tableWrapClass}>
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  {["Session", "Lesson", "Started", "Status"].map((head) => (
+                    <th key={head} className={thClass}>{head}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {recentRows.map((meeting) => (
+                  <tr key={meeting.id}>
+                    <td className={tdClass}>#{meeting.id}</td>
+                    <td className={tdClass}>{meeting.title || meeting.zoom_meeting_id}</td>
+                    <td className={tdClass}>{formatShortDate(meeting.started_at)}</td>
+                    <td className={tdClass}>
+                      <Badge tone={meeting.ended_at ? "neutral" : "success"}>
+                        {meeting.ended_at ? "Closed" : "Active"}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 p-6">
+            <SoftIcon icon="clock" size="sm" />
+            <span>
+              <strong className="block font-black">No recent activity yet.</strong>
+              <span className="text-sm text-muted">Your recent lessons and actions will appear here.</span>
+            </span>
+          </div>
+        )}
+      </Card>
     </section>
   );
 }
@@ -1107,7 +1348,7 @@ function MeetingsPage({
         <div className="flex gap-3">
           <FieldWithIcon icon="search">
             <input
-              className={cx(inputClass, "w-64")}
+              className={cx(inputClass, "w-[340px]")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search meetings"
@@ -1125,19 +1366,32 @@ function MeetingsPage({
             </select>
           </FieldWithIcon>
         </div>
+        <ActionButton
+          icon="filter-x"
+          onClick={() => {
+            setSearch("");
+            setMode("all");
+          }}>
+          Clear filters
+        </ActionButton>
       </div>
 
       <Card>
-        <CardHeader title="Save Meeting" icon="save" />
+        <CardHeader
+          title="Saved Zoom meetings"
+          meta="Save recurring Zoom meetings here for quick lesson setup."
+        />
         <form
-          className="grid grid-cols-[1fr_180px_160px_150px_auto] items-end gap-3 p-5"
+          className="grid grid-cols-[minmax(220px,1fr)_180px_160px_150px_auto] items-end gap-4 p-5"
           onSubmit={submitSavedMeeting}>
           <label className={labelClass}>
             Meeting name
             <input
+              id="saved-meeting-title"
               className={inputClass}
               value={draft.title}
               onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+              placeholder="e.g. Grade 3 Math - Morning"
             />
           </label>
           <label className={labelClass}>
@@ -1146,6 +1400,7 @@ function MeetingsPage({
               className={inputClass}
               value={draft.meeting_number}
               onChange={(event) => setDraft({ ...draft, meeting_number: event.target.value })}
+              placeholder="e.g. 72501545228"
               required
             />
           </label>
@@ -1155,6 +1410,7 @@ function MeetingsPage({
               className={inputClass}
               value={draft.passcode}
               onChange={(event) => setDraft({ ...draft, passcode: event.target.value })}
+              placeholder="e.g. 123456"
             />
           </label>
           <label className={labelClass}>
@@ -1175,16 +1431,18 @@ function MeetingsPage({
             Save meeting
           </ActionButton>
         </form>
+        <div className="border-t border-dashed border-line">
+          <SavedMeetingsTable
+            embedded
+            meetings={filtered}
+            trackedMeetings={meetings}
+            ownershipChecks={ownershipChecks}
+            setDraft={setDraft}
+            deleteSavedMeeting={deleteSavedMeeting}
+            checkSavedMeeting={checkSavedMeeting}
+          />
+        </div>
       </Card>
-
-      <SavedMeetingsTable
-        meetings={filtered}
-        trackedMeetings={meetings}
-        ownershipChecks={ownershipChecks}
-        setDraft={setDraft}
-        deleteSavedMeeting={deleteSavedMeeting}
-        checkSavedMeeting={checkSavedMeeting}
-      />
       <TrackedMeetingsTable
         meetings={meetings}
         updateMeeting={updateMeeting}
@@ -1206,6 +1464,7 @@ function meetingJoinUrl(meeting) {
 }
 
 function SavedMeetingsTable({
+  embedded = false,
   meetings,
   trackedMeetings,
   ownershipChecks,
@@ -1213,11 +1472,8 @@ function SavedMeetingsTable({
   deleteSavedMeeting,
   checkSavedMeeting
 }) {
-  return (
-    <Card>
-      <CardHeader title="Saved Meetings" icon="calendar-days">
-        <Badge>{meetings.length}</Badge>
-      </CardHeader>
+  const content = (
+    <React.Fragment>
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
@@ -1307,16 +1563,39 @@ function SavedMeetingsTable({
                 );
               })
             ) : (
-              <EmptyRow colSpan={7}>No saved meetings match this view.</EmptyRow>
+              <tr>
+                <td colSpan={7}>
+                  <EmptyState
+                    icon="calendar-days"
+                    title="No saved meetings yet"
+                    detail="Add your first recurring Zoom meeting above to make lesson setup faster."
+                    compact
+                  />
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
+    </React.Fragment>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Saved Zoom meetings" icon="calendar-days">
+        <Badge>{meetings.length}</Badge>
+      </CardHeader>
+      {content}
     </Card>
   );
 }
 
 function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
+  const [showAll, setShowAll] = useState(false);
   const sortedMeetings = [...meetings].sort((left, right) => {
     const rawLeftTime = new Date(left.started_at || left.updated_at || 0).getTime();
     const rawRightTime = new Date(right.started_at || right.updated_at || 0).getTime();
@@ -1327,12 +1606,14 @@ function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
     }
     return right.id - left.id;
   });
-  const visibleMeetings = sortedMeetings.slice(0, 5);
+  const visibleMeetings = showAll ? sortedMeetings : sortedMeetings.slice(0, 5);
 
   return (
     <Card>
-      <CardHeader title="Tracked Meeting Sessions" icon="calendar-days">
-        <Badge>{visibleMeetings.length}</Badge>
+      <CardHeader title="Recent lesson sessions">
+        <ActionButton compact onClick={() => setShowAll(!showAll)}>
+          {showAll ? "Show recent" : "View all sessions"}
+        </ActionButton>
       </CardHeader>
       <div className={tableWrapClass}>
         <table className={tableClass}>
@@ -1341,7 +1622,7 @@ function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
               {[
                 "Session",
                 "Zoom ID",
-                "Title",
+                "Lesson title",
                 "Group",
                 "Started",
                 "Last sync",
@@ -1365,7 +1646,16 @@ function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
                 />
               ))
             ) : (
-              <EmptyRow colSpan={8}>No tracked sessions yet.</EmptyRow>
+              <tr>
+                <td colSpan={8}>
+                  <EmptyState
+                    icon="calendar-days"
+                    title="No lesson sessions yet"
+                    detail="Join a Zoom lesson to start tracking live attendance."
+                    compact
+                  />
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -1436,16 +1726,49 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
   );
 }
 
+function LessonSideCard({ title, count, icon, children, emptyTitle, emptyDetail }) {
+  return (
+    <Card>
+      <CardHeader title={title}>
+        <Badge>{count}</Badge>
+      </CardHeader>
+      {count ? (
+        <div className="p-5">{children}</div>
+      ) : (
+        <EmptyState icon={icon} title={emptyTitle} detail={emptyDetail} compact />
+      )}
+    </Card>
+  );
+}
+
+function NameList({ records }) {
+  return (
+    <div className="grid gap-2">
+      {records.slice(0, MAX_ATTENDANCE).map((record) => (
+        <div
+          key={`${record.meeting_session_id || record.meeting_id || "record"}-${record.participant_name}`}
+          className="flex items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] px-3 py-2 text-sm">
+          <span className="truncate font-black">{record.participant_name}</span>
+          {record.total_seconds ? <span className="text-muted">{formatDuration(record.total_seconds)}</span> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LiveAttendancePage({
   currentRecords,
   unmatchedRecords,
   historyRecords,
   students,
   meetings,
+  savedMeetings = [],
   oauthStatus,
   sdkConfig,
   goToPage,
-  createAlias
+  createAlias,
+  updateMeeting,
+  closeMeeting
 }) {
   const currentMeeting = activeMeeting(meetings);
   const lastSync = lastActivityTime(currentRecords, unmatchedRecords, historyRecords);
@@ -1456,65 +1779,249 @@ function LiveAttendancePage({
     currentRecords,
     unmatchedRecords
   });
-  const primaryLabel = currentMeeting ? "Join Zoom" : "Start lesson";
+  const groups = uniqueGroups(students);
+  const defaultGroup = currentMeeting?.group_name || groups[0] || "";
+  const defaultTitle = currentMeeting?.title || (defaultGroup ? `${defaultGroup} lesson` : "New lesson");
+  const account = zoomAccountLabel(oauthStatus);
+  const [selectedMeetingId, setSelectedMeetingId] = useState("");
+  const [lessonTitle, setLessonTitle] = useState(defaultTitle);
+  const [groupName, setGroupName] = useState(defaultGroup);
+  const [teacherName, setTeacherName] = useState(account || "");
+  const [joinAsHost, setJoinAsHost] = useState(true);
+  const [lessonNotice, setLessonNotice] = useState("");
+  const selectedSavedMeeting = savedMeetings.find((meeting) => String(meeting.id) === selectedMeetingId);
+  const participantRecords = [...currentRecords, ...unmatchedRecords];
+  const readyToStart = Boolean(oauthStatus?.authorized) && sdkConfig?.configured !== false;
+  const joinHref = selectedSavedMeeting
+    ? meetingJoinUrl({ ...selectedSavedMeeting, join_as_host: joinAsHost })
+    : joinAsHost
+      ? "/teacher-meeting?joinAsHost=1"
+      : "/teacher-meeting";
+
+  useEffect(() => {
+    setLessonTitle(defaultTitle);
+    setGroupName(defaultGroup);
+  }, [currentMeeting?.id, defaultTitle, defaultGroup]);
+
+  useEffect(() => {
+    if (account) {
+      setTeacherName(account);
+    }
+  }, [account]);
+
+  async function saveLesson() {
+    if (currentMeeting && updateMeeting) {
+      await updateMeeting(currentMeeting.id, lessonTitle, groupName);
+      setLessonNotice("Lesson details saved.");
+      return;
+    }
+    window.localStorage?.setItem(
+      "teacher-console-lesson-draft",
+      JSON.stringify({ lessonTitle, groupName, teacherName, selectedMeetingId, joinAsHost })
+    );
+    setLessonNotice("Lesson draft saved on this device.");
+  }
+
+  async function deleteLesson() {
+    if (currentMeeting && closeMeeting) {
+      await closeMeeting(currentMeeting.id);
+      setLessonNotice("Current lesson closed.");
+      return;
+    }
+    setSelectedMeetingId("");
+    setLessonTitle("New lesson");
+    setGroupName("");
+    setLessonNotice("Lesson draft cleared.");
+  }
 
   return (
     <section className="grid gap-5">
-      <div className="grid grid-cols-[minmax(220px,0.75fr)_minmax(320px,1.35fr)_minmax(260px,0.9fr)] items-start gap-5">
+      <div className="grid grid-cols-[minmax(280px,0.85fr)_minmax(420px,1.3fr)_minmax(300px,0.95fr)] items-start gap-5 max-[1280px]:grid-cols-1">
         <Card>
-          <CardHeader title={primaryLabel} icon={currentMeeting ? "video" : "play-circle"} />
-          <div className="grid gap-3 p-5">
-            <ActionButton as="a" icon="video" variant="primary" href="/teacher-meeting">
-              {primaryLabel}
+          <CardHeader title="Start lesson" icon="video" />
+          <div className="grid gap-4 p-5">
+            <label className={labelClass}>
+              Saved meeting
+              <FieldWithIcon icon="chevron-down">
+                <select
+                  className={inputClass}
+                  value={selectedMeetingId}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    const nextMeeting = savedMeetings.find((meeting) => String(meeting.id) === nextValue);
+                    setSelectedMeetingId(nextValue);
+                    if (nextMeeting) {
+                      setJoinAsHost(Boolean(nextMeeting.join_as_host));
+                      setLessonTitle(nextMeeting.title || lessonTitle);
+                    }
+                  }}>
+                  <option value="">New meeting</option>
+                  {savedMeetings.map((meeting) => (
+                    <option key={meeting.id} value={meeting.id}>
+                      {meeting.title || meeting.meeting_number}
+                    </option>
+                  ))}
+                </select>
+              </FieldWithIcon>
+            </label>
+            <label className={labelClass}>
+              Lesson title
+              <input
+                className={inputClass}
+                value={lessonTitle}
+                onChange={(event) => setLessonTitle(event.target.value)}
+              />
+            </label>
+            <label className={labelClass}>
+              Group
+              <input
+                className={inputClass}
+                value={groupName}
+                onChange={(event) => setGroupName(event.target.value)}
+              />
+            </label>
+            <label className={labelClass}>
+              Teacher name
+              <input
+                className={inputClass}
+                value={teacherName}
+                onChange={(event) => setTeacherName(event.target.value)}
+              />
+            </label>
+            <label className="inline-flex items-start gap-3 text-sm font-bold text-muted">
+              <input
+                className="mt-1 accent-accent"
+                type="checkbox"
+                checked={joinAsHost}
+                onChange={(event) => setJoinAsHost(event.target.checked)}
+              />
+              <span>
+                <strong className="block text-ink">Join as host</strong>
+                <span>You will join the Zoom meeting as host.</span>
+              </span>
+            </label>
+            <ActionButton as="a" icon="video" variant="primary" href={joinHref}>
+              Join Zoom
             </ActionButton>
-            <ActionButton
-              icon="calendar-days"
-              onClick={() => goToPage("meetings")}>
-              Saved meetings
+            <ActionButton icon="save" onClick={saveLesson}>
+              Save lesson
             </ActionButton>
-            <div className="grid gap-2">
+            <ActionButton icon="trash-2" variant="danger" onClick={deleteLesson}>
+              Delete
+            </ActionButton>
+            {lessonNotice ? <p className="text-sm font-bold text-muted">{lessonNotice}</p> : null}
+          </div>
+        </Card>
+
+        <div className="grid gap-5">
+          <div
+            className={cx(
+              "flex items-center gap-5 rounded-lg border p-6 shadow-soft",
+              readyToStart
+                ? "border-green-200 bg-green-50 text-success"
+                : "border-yellow-300 bg-yellow-50 text-warning"
+            )}>
+            <SoftIcon icon={readyToStart ? "check-circle-2" : "info"} tone={readyToStart ? "success" : "warning"} />
+            <span>
+              <strong className="block text-xl font-black text-ink">
+                {readyToStart ? "Ready to start" : "Connect Zoom to start"}
+              </strong>
+              <span className="mt-1 block text-sm font-bold text-muted">
+                {readyToStart
+                  ? "Zoom is connected. Join a meeting to begin attendance sync."
+                  : "Zoom authorization and SDK credentials are required before attendance sync."}
+              </span>
+            </span>
+          </div>
+          <Card>
+            <CardHeader title="Live sync status">
+              <button className="text-ink" type="button" onClick={() => window.location.reload()}>
+                <Icon name="refresh-cw" size={22} />
+              </button>
+            </CardHeader>
+            <div className="grid grid-cols-2 gap-4 p-5">
               <StatusTile
-                label="Zoom"
+                label="Zoom connection"
                 value={oauthStatus?.authorized ? "Connected" : "Not connected"}
                 tone={oauthStatus?.authorized ? "success" : "warning"}
                 icon="video"
               />
               <StatusTile
-                label="Lesson"
-                value={lessonState.label}
-                tone={lessonState.tone}
+                label="Meeting status"
+                value={currentMeeting ? "Joined" : "Not joined"}
+                tone={currentMeeting ? "success" : "warning"}
                 icon="users"
               />
               <StatusTile
-                label="Sync"
+                label="Participant reading"
+                value={participantRecords.length ? "Reading" : "Waiting"}
+                tone={participantRecords.length ? "success" : "purple"}
+                icon="users"
+              />
+              <StatusTile
+                label="Attendance sync"
                 value={currentMeeting ? "Active" : "Idle"}
                 tone={currentMeeting ? "success" : "neutral"}
                 icon="refresh-cw"
               />
+              <StatusTile label="Sync interval" value="Every 5 seconds" icon="pie-chart" tone="blue" />
               <StatusTile label="Last sync" value={formatShortDate(lastSync)} icon="clock" />
             </div>
-          </div>
-        </Card>
-        <Card>
-          <CardHeader title="Participants / Matched Students" icon="users">
-            <Badge>{currentRecords.length}</Badge>
-          </CardHeader>
-          <ParticipantsTable records={currentRecords} />
-        </Card>
-        <Card>
-          <CardHeader title="Unmatched Names" icon="user-search">
-            <Badge tone={unmatchedRecords.length ? "warning" : "neutral"}>
-              {unmatchedRecords.length}
-            </Badge>
-          </CardHeader>
-          <UnmatchedTable
-            records={unmatchedRecords}
-            students={students}
-            createAlias={createAlias}
-          />
-        </Card>
+            <details className="border-t border-line px-5 py-4">
+              <summary className="flex cursor-pointer items-center justify-between gap-3 text-sm font-bold text-ink">
+                <span className="inline-flex items-center gap-2">
+                  <Icon name="info" size={18} />
+                  Advanced sync details
+                </span>
+                <Icon name="chevron-down" size={18} />
+              </summary>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <StatusTile
+                  label="SDK"
+                  value={sdkConfig?.configured ? "Configured" : "Missing credentials"}
+                  tone={sdkConfig?.configured ? "success" : "danger"}
+                  icon="code-2"
+                />
+                <StatusTile label="State" value={lessonState.label} tone={lessonState.tone} icon="info" />
+              </div>
+            </details>
+          </Card>
+        </div>
+
+        <div className="grid gap-5">
+          <LessonSideCard
+            title="Participants"
+            count={participantRecords.length}
+            icon="users"
+            emptyTitle="No participants yet."
+            emptyDetail="After you join a Zoom meeting, participants will appear here.">
+            <NameList records={participantRecords} />
+          </LessonSideCard>
+          <LessonSideCard
+            title="Matched students"
+            count={currentRecords.length}
+            icon="user-check"
+            emptyTitle="No matched students yet."
+            emptyDetail="We'll match participants to your roster once they're detected.">
+            <NameList records={currentRecords} />
+          </LessonSideCard>
+          <LessonSideCard
+            title="Names to review"
+            count={unmatchedRecords.length}
+            icon="user-search"
+            emptyTitle="No names to review."
+            emptyDetail="Unmatched participant names will appear here for you to review.">
+            <UnmatchedTable
+              records={unmatchedRecords}
+              students={students}
+              createAlias={createAlias}
+            />
+          </LessonSideCard>
+        </div>
       </div>
-      <HistoryTable title="Attendance Timeline" records={historyRecords} />
+      <div className="max-h-[420px] overflow-auto">
+        <HistoryTable title="Attendance timeline" records={historyRecords} />
+      </div>
     </section>
   );
 }
@@ -1557,11 +2064,10 @@ function ParticipantsTable({ records }) {
 
 function HistoryTable({ title = "Attendance History", records }) {
   const rows = historyLimit(records);
+  const isTimeline = title.toLocaleLowerCase().includes("timeline");
   return (
     <Card>
-      <CardHeader title={title} icon="clock">
-        <Badge>{rows.length}</Badge>
-      </CardHeader>
+      <CardHeader title={title} />
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
@@ -1599,7 +2105,20 @@ function HistoryTable({ title = "Attendance History", records }) {
                 </tr>
               ))
             ) : (
-              <EmptyRow colSpan={7}>No attendance history yet.</EmptyRow>
+              <tr>
+                <td colSpan={7}>
+                  <EmptyState
+                    icon="clock"
+                    title={isTimeline ? "No attendance timeline yet." : "No attendance history yet."}
+                    detail={
+                      isTimeline
+                        ? "Live attendance records will appear here after participants are synced."
+                        : "Attendance records will appear here after live lessons are synced."
+                    }
+                    compact
+                  />
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -1747,6 +2266,18 @@ function GoogleSheetImportPanel({
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const botEmail = googleConfig?.bot_email || googleConfig?.service_account_email || "";
   const historyRows = (importHistory || []).filter((run) => run.import_kind === importKind).slice(0, 5);
+  const setupSteps =
+    importKind === "schedule"
+      ? [
+          "Open your Google Sheet.",
+          "Click Share and add the bot email as Editor.",
+          "Paste the sheet URL and load tabs."
+        ]
+      : [
+          "Open your Google Sheet.",
+          "Share it with the bot email as Editor.",
+          "Paste the sheet URL below and load tabs."
+        ];
 
   async function loadTabs(event) {
     event.preventDefault();
@@ -1803,19 +2334,34 @@ function GoogleSheetImportPanel({
         </Badge>
       </CardHeader>
       <div className="grid gap-4 p-5">
-        <label className={labelClass}>
-          Bot email
-          <span className="grid grid-cols-[1fr_auto] gap-2">
-            <input
-              className={inputClass}
-              value={botEmail || "Bot email is not configured"}
-              readOnly
-            />
-            <ActionButton icon="copy" disabled={!botEmail} onClick={copyBotEmail}>
-              Copy
-            </ActionButton>
-          </span>
-        </label>
+        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.9fr)]">
+          <label className={labelClass}>
+            Bot email
+            <span className="grid grid-cols-[1fr_auto] gap-2">
+              <input
+                className={inputClass}
+                value={botEmail || "Bot email is not configured"}
+                readOnly
+              />
+              <ActionButton icon="copy" disabled={!botEmail} onClick={copyBotEmail}>
+                Copy
+              </ActionButton>
+            </span>
+          </label>
+          <div>
+            <span className="text-xs font-black uppercase text-muted">Setup steps</span>
+            <div className="mt-3 grid gap-2">
+              {setupSteps.map((step, index) => (
+                <div key={step} className="flex items-center gap-3 text-sm text-ink">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-line bg-[#FFFDF7] text-xs font-black">
+                    {index + 1}
+                  </span>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
         <form className="grid grid-cols-[1fr_auto] items-end gap-3" onSubmit={loadTabs}>
           <label className={labelClass}>
             Google Sheet URL
@@ -1929,7 +2475,16 @@ function GoogleSheetImportPanel({
             </table>
           </div>
         ) : (
-          <span className="text-sm text-muted">No saved Google Sheet connection yet.</span>
+          <div className="rounded-lg border border-line bg-[#FFFDF7] p-4">
+            <strong className="block text-sm font-black">
+              {importKind === "schedule" ? "No Google Sheets connected yet." : "No Google Sheets connected yet."}
+            </strong>
+            <span className="mt-1 block text-sm text-muted">
+              {importKind === "schedule"
+                ? "Connect a sheet to enable automatic schedule sync."
+                : "Connect a sheet to enable automatic roster sync."}
+            </span>
+          </div>
         )}
         {historyRows.length ? (
           <div className={tableWrapClass}>
@@ -1986,6 +2541,8 @@ function StudentsPage({
   const [preview, setPreview] = useState(null);
   const [mapping, setMapping] = useState({});
   const [status, setStatus] = useState("Import a roster or add students manually.");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("list");
   const groups = uniqueGroups(students);
   const filtered = students.filter((student) => {
     const aliases = (student.aliases || []).join(" ");
@@ -1999,6 +2556,7 @@ function StudentsPage({
     event.preventDefault();
     await createStudent(newStudent.full_name, newStudent.group_name);
     setNewStudent({ full_name: "", group_name: "" });
+    setShowAddForm(false);
   }
 
   async function submitImportPreview(event) {
@@ -2026,76 +2584,179 @@ function StudentsPage({
     setMapping({});
   }
 
+  function activateTab(nextTab, elementId) {
+    setActiveTab(nextTab);
+    document.getElementById(elementId)?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  const showEmptyRoster = !students.length && !search && !group;
+
   return (
     <section className="grid gap-5">
-      <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
-        <div className="flex gap-3">
-          <FieldWithIcon icon="search">
-            <input
-              className={cx(inputClass, "w-72")}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search students or aliases"
-            />
-          </FieldWithIcon>
-          <FieldWithIcon icon="list-filter">
-            <select
-              className={cx(inputClass, "w-52")}
-              value={group}
-              onChange={(event) => setGroup(event.target.value)}>
-              <option value="">All groups</option>
-              {groups.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </FieldWithIcon>
+      <Card>
+        <div className="flex gap-8 border-b border-line px-5">
+          {[
+            ["list", "Student list", "student-list-card"],
+            ["import", "Import", "student-import-card"],
+            ["sheet", "Google Sheet", "students-sheet-card"]
+          ].map(([key, label, target]) => (
+            <button
+              key={key}
+              className={cx(
+                "min-h-14 border-b-4 px-1 text-base font-black transition",
+                activeTab === key
+                  ? "border-accent text-ink"
+                  : "border-transparent text-muted hover:text-ink"
+              )}
+              type="button"
+              onClick={() => activateTab(key, target)}>
+              {label}
+            </button>
+          ))}
         </div>
-      </div>
+        <div className="flex items-center justify-between gap-3 p-5">
+          <div className="flex gap-3">
+            <FieldWithIcon icon="search">
+              <input
+                className={cx(inputClass, "w-[390px]")}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search students or aliases"
+              />
+            </FieldWithIcon>
+            <FieldWithIcon icon="list-filter">
+              <select
+                className={cx(inputClass, "w-52")}
+                value={group}
+                onChange={(event) => setGroup(event.target.value)}>
+                <option value="">All groups</option>
+                {groups.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </FieldWithIcon>
+          </div>
+          <ActionButton icon="plus" onClick={() => setShowAddForm(true)}>
+            Add student
+          </ActionButton>
+        </div>
+      </Card>
 
-      <div className="grid grid-cols-2 gap-5">
-        <Card>
-          <CardHeader title="Add Student" icon="user-plus" />
-          <form
-            className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 p-5"
-            onSubmit={submitStudent}>
-            <label className={labelClass}>
-              Student name
-              <input
-                className={inputClass}
-                value={newStudent.full_name}
-                onChange={(event) =>
-                  setNewStudent({ ...newStudent, full_name: event.target.value })
-                }
-                required
-              />
-            </label>
-            <label className={labelClass}>
-              Group
-              <input
-                className={inputClass}
-                value={newStudent.group_name}
-                onChange={(event) =>
-                  setNewStudent({ ...newStudent, group_name: event.target.value })
-                }
-                required
-              />
-            </label>
-            <ActionButton icon="user-plus" variant="primary" type="submit">
-              Add student
-            </ActionButton>
-          </form>
+      <div className="grid grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] items-start gap-5 max-[1280px]:grid-cols-1">
+        <Card id="student-list-card">
+          <CardHeader title="Student list" />
+          {showAddForm ? (
+            <form
+              className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 border-b border-line p-5"
+              onSubmit={submitStudent}>
+              <label className={labelClass}>
+                Student name
+                <input
+                  className={inputClass}
+                  value={newStudent.full_name}
+                  onChange={(event) =>
+                    setNewStudent({ ...newStudent, full_name: event.target.value })
+                  }
+                  required
+                />
+              </label>
+              <label className={labelClass}>
+                Group
+                <input
+                  className={inputClass}
+                  value={newStudent.group_name}
+                  onChange={(event) =>
+                    setNewStudent({ ...newStudent, group_name: event.target.value })
+                  }
+                  required
+                />
+              </label>
+              <ActionButton icon="user-plus" variant="primary" type="submit">
+                Add student
+              </ActionButton>
+            </form>
+          ) : null}
+          {showEmptyRoster ? (
+            <React.Fragment>
+              <EmptyState
+                icon="id-card"
+                title="No students yet."
+                detail="Add students manually, import a CSV/Excel file, or connect a Google Sheet.">
+                <ActionButton icon="user-plus" variant="primary" onClick={() => setShowAddForm(true)}>
+                  Add student
+                </ActionButton>
+                <ActionButton icon="upload" onClick={() => activateTab("import", "student-import-card")}>
+                  Import file
+                </ActionButton>
+                <ActionButton icon="table-2" onClick={() => activateTab("sheet", "students-sheet-card")}>
+                  Connect Google Sheet
+                </ActionButton>
+              </EmptyState>
+              <div className={tableWrapClass}>
+                <table className={tableClass}>
+                  <thead>
+                    <tr>
+                      {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map((head) => (
+                        <th key={head} className={thClass}>{head}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <EmptyRow colSpan={5}>No students match this view.</EmptyRow>
+                  </tbody>
+                </table>
+              </div>
+            </React.Fragment>
+          ) : (
+            <div className={tableWrapClass}>
+              <table className={tableClass}>
+                <thead>
+                  <tr>
+                    {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map(
+                      (head) => (
+                        <th key={head} className={thClass}>
+                          {head}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length ? (
+                    filtered.map((student) => {
+                      const present = currentRecords.some((record) =>
+                        studentKeys(student).includes(normalize(record.participant_name))
+                      );
+                      return (
+                        <StudentRow
+                          key={student.id}
+                          student={student}
+                          present={present}
+                          createAlias={createAlias}
+                        />
+                      );
+                    })
+                  ) : (
+                    <EmptyRow colSpan={5}>No students match this view.</EmptyRow>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
-        <Card>
-          <CardHeader title="Import Students" meta={status} icon="upload" />
-          <form
-            className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
-            onSubmit={submitImportPreview}>
-            <label className={labelClass}>
-              CSV or Excel file
-              <FileControl
+
+        <div className="grid gap-5">
+          <Card id="student-import-card">
+            <CardHeader
+              title="Import students"
+              meta="Upload a CSV or Excel file to add or update students."
+            />
+            <form className="grid gap-4 p-5" onSubmit={submitImportPreview}>
+              <DropZone
                 file={file}
+                title="Drag and drop a file here, or"
                 accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 onChange={(event) => {
                   setFile(event.target.files?.[0] || null);
@@ -2103,91 +2764,60 @@ function StudentsPage({
                   setMapping({});
                 }}
               />
-            </label>
-            <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
-              <Icon name="replace" size={16} />
-              <input
-                type="checkbox"
-                checked={replaceExisting}
-                onChange={(event) => setReplaceExisting(event.target.checked)}
-              />{" "}
-              Replace
-            </label>
-            <ActionButton icon="eye" variant="primary" type="submit">
-              Preview
-            </ActionButton>
-          </form>
-          <ImportPreviewPanel
-            preview={preview}
-            mapping={mapping}
-            setMapping={setMapping}
-            fields={[
-              { key: "full_name", label: "Student name" },
-              { key: "group_name", label: "Group" },
-              { key: "aliases", label: "Aliases / Zoom names" }
-            ]}
-            onConfirm={confirmImport}
-            confirmLabel="Confirm import"
-          />
-        </Card>
-      </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <DownloadTemplateButton kind="students">Download template</DownloadTemplateButton>
+                <span className="text-sm text-muted">Accepted columns: student_name, group, aliases</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+                  <input
+                    className="accent-accent"
+                    type="checkbox"
+                    checked={replaceExisting}
+                    onChange={(event) => setReplaceExisting(event.target.checked)}
+                  />
+                  Replace existing students
+                </label>
+                <ActionButton icon="eye" variant="primary" type="submit">
+                  Preview import
+                </ActionButton>
+              </div>
+              {status ? <p className="text-sm font-bold text-muted">{status}</p> : null}
+            </form>
+            <ImportPreviewPanel
+              preview={preview}
+              mapping={mapping}
+              setMapping={setMapping}
+              fields={[
+                { key: "full_name", label: "Student name" },
+                { key: "group_name", label: "Group" },
+                { key: "aliases", label: "Aliases / Zoom names" }
+              ]}
+              onConfirm={confirmImport}
+              confirmLabel="Confirm import"
+            />
+          </Card>
 
-      <GoogleSheetImportPanel
-        title="Google Sheet Students"
-        importKind="students"
-        googleConfig={googleConfig}
-        sources={googleStudentSources}
-        importHistory={importHistory}
-        loadGoogleSheetTabs={loadGoogleSheetTabs}
-        previewGoogleSheetImport={previewGoogleSheetImport}
-        saveGoogleSheetSource={saveGoogleSheetSource}
-        syncGoogleSheetSource={syncGoogleSheetSource}
-        fields={[
-          { key: "full_name", label: "Student name" },
-          { key: "group_name", label: "Group" },
-          { key: "aliases", label: "Aliases / Zoom names" }
-        ]}
-      />
-
-      <Card>
-        <CardHeader title="Student Roster" icon="users">
-          <Badge>{filtered.length}</Badge>
-        </CardHeader>
-        <div className={tableWrapClass}>
-          <table className={tableClass}>
-            <thead>
-              <tr>
-                {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map(
-                  (head) => (
-                    <th key={head} className={thClass}>
-                      {head}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length ? (
-                filtered.map((student) => {
-                  const present = currentRecords.some((record) =>
-                    studentKeys(student).includes(normalize(record.participant_name))
-                  );
-                  return (
-                    <StudentRow
-                      key={student.id}
-                      student={student}
-                      present={present}
-                      createAlias={createAlias}
-                    />
-                  );
-                })
-              ) : (
-                <EmptyRow colSpan={5}>No students match this view.</EmptyRow>
-              )}
-            </tbody>
-          </table>
+          <div id="students-sheet-card">
+            <GoogleSheetImportPanel
+              title="Google Sheet students"
+              importKind="students"
+              googleConfig={googleConfig}
+              sources={googleStudentSources}
+              importHistory={importHistory}
+              loadGoogleSheetTabs={loadGoogleSheetTabs}
+              previewGoogleSheetImport={previewGoogleSheetImport}
+              saveGoogleSheetSource={saveGoogleSheetSource}
+              syncGoogleSheetSource={syncGoogleSheetSource}
+              fields={[
+                { key: "full_name", label: "Student name" },
+                { key: "group_name", label: "Group" },
+                { key: "aliases", label: "Aliases / Zoom names" }
+              ]}
+            />
+          </div>
         </div>
-      </Card>
+      </div>
     </section>
   );
 }
@@ -2238,8 +2868,18 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
     const to = filters.to ? new Date(`${filters.to}T23:59:59`) : null;
     const dateMatches =
       Number.isNaN(startsAt.getTime()) || ((!from || startsAt >= from) && (!to || startsAt <= to));
-    return (!filters.group || summary.group_name === filters.group) && dateMatches;
+    const meetingMatches =
+      !filters.meetingId ||
+      normalize(`${summary.meeting_id || ""} ${summary.zoom_meeting_id || ""} ${summary.meeting_session_id || ""}`).includes(
+        normalize(filters.meetingId)
+      );
+    return (!filters.group || summary.group_name === filters.group) && dateMatches && meetingMatches;
   });
+  const totalSessions = new Set(
+    filteredSummaries.map(
+      (summary) => summary.meeting_session_id || `${summary.lesson_title || ""}-${summary.lesson_starts_at || ""}`
+    )
+  ).size;
   const average = filteredSummaries.length
     ? Math.round(
         (filteredSummaries.filter((summary) => summary.status === "п").length /
@@ -2264,91 +2904,145 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
     );
   }
 
+  function applyDatePreset(preset) {
+    const today = new Date();
+    const toDateInput = (date) => date.toISOString().slice(0, 10);
+    const start = new Date(today);
+    if (preset === "today") {
+      setFilters({ ...filters, from: toDateInput(today), to: toDateInput(today) });
+      return;
+    }
+    if (preset === "week") {
+      const day = today.getDay() || 7;
+      start.setDate(today.getDate() - day + 1);
+      setFilters({ ...filters, from: toDateInput(start), to: toDateInput(today) });
+      return;
+    }
+    if (preset === "month") {
+      start.setDate(1);
+      setFilters({ ...filters, from: toDateInput(start), to: toDateInput(today) });
+      return;
+    }
+    setFilters({ ...filters, from: "", to: "" });
+  }
+
   return (
     <section className="grid gap-5">
-      <div className="grid grid-cols-4 gap-3">
-        <StatusTile label="Total sessions" value={filteredSummaries.length} icon="calendar-days" />
-        <StatusTile
-          label="Average attendance"
+      <div className="grid grid-cols-4 gap-4 max-[1280px]:grid-cols-2">
+        <PageMetricCard icon="video" title="Total sessions" value={totalSessions} tone="success" />
+        <PageMetricCard
+          icon="users"
+          title="Average attendance"
           value={`${average}%`}
-          tone={average >= 70 ? "success" : "warning"}
-          icon="user-check"
+          tone="purple"
         />
-        <StatusTile
-          label="Absences"
+        <PageMetricCard
+          icon="book-open"
+          title="Absences"
           value={filteredSummaries.filter((summary) => summary.status !== "п").length}
           tone="warning"
-          icon="user-x"
         />
-        <StatusTile
-          label="Attendance rows"
+        <PageMetricCard
+          icon="pie-chart"
+          title="Attendance rows"
           value={Math.min(historyRecords.length, MAX_ATTENDANCE)}
-          icon="clock"
+          tone="blue"
         />
       </div>
-      <div className="grid gap-3 rounded-lg border border-line bg-panel p-3 shadow-soft">
-        <div className="grid grid-cols-[150px_150px_minmax(160px,1fr)_minmax(140px,0.8fr)] gap-3">
-          <label className={labelClass}>
-            Start date
-            <FieldWithIcon icon="calendar">
-              <input
-                className={inputClass}
-                type="date"
-                value={filters.from}
-                onChange={(event) => setFilters({ ...filters, from: event.target.value })}
-              />
-            </FieldWithIcon>
-          </label>
-          <label className={labelClass}>
-            End date
-            <FieldWithIcon icon="calendar">
-              <input
-                className={inputClass}
-                type="date"
-                value={filters.to}
-                onChange={(event) => setFilters({ ...filters, to: event.target.value })}
-              />
-            </FieldWithIcon>
-          </label>
-          <label className={labelClass}>
-            Group
-            <FieldWithIcon icon="list-filter">
-              <select
-                className={cx(inputClass, "w-52")}
-                value={filters.group}
-                onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
-                <option value="">All groups</option>
-                {groups.map((group) => (
-                  <option key={group} value={group}>
-                    {group}
-                  </option>
-                ))}
-              </select>
-            </FieldWithIcon>
-          </label>
-          <label className={labelClass}>
-            Meeting ID
-            <FieldWithIcon icon="hash">
-              <input
-                className={inputClass}
-                value={filters.meetingId}
-                onChange={(event) => setFilters({ ...filters, meetingId: event.target.value })}
-              />
-            </FieldWithIcon>
-          </label>
+      <Card>
+        <div className="grid grid-cols-[minmax(0,1fr)_320px] gap-6 p-6 max-[1280px]:grid-cols-1">
+          <div className="grid gap-4">
+            <h2 className="m-0 text-xl font-black">Filters</h2>
+            <div className="grid grid-cols-[150px_150px_minmax(180px,1fr)_minmax(160px,0.8fr)] gap-4">
+              <label className={labelClass}>
+                Start date
+                <FieldWithIcon icon="calendar">
+                  <input
+                    className={inputClass}
+                    type="date"
+                    value={filters.from}
+                    onChange={(event) => setFilters({ ...filters, from: event.target.value })}
+                  />
+                </FieldWithIcon>
+              </label>
+              <label className={labelClass}>
+                End date
+                <FieldWithIcon icon="calendar">
+                  <input
+                    className={inputClass}
+                    type="date"
+                    value={filters.to}
+                    onChange={(event) => setFilters({ ...filters, to: event.target.value })}
+                  />
+                </FieldWithIcon>
+              </label>
+              <label className={labelClass}>
+                Group
+                <FieldWithIcon icon="list-filter">
+                  <select
+                    className={inputClass}
+                    value={filters.group}
+                    onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
+                    <option value="">All groups</option>
+                    {groups.map((group) => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
+                </FieldWithIcon>
+              </label>
+              <label className={labelClass}>
+                Meeting ID
+                <FieldWithIcon icon="hash">
+                  <input
+                    className={inputClass}
+                    value={filters.meetingId}
+                    onChange={(event) => setFilters({ ...filters, meetingId: event.target.value })}
+                    placeholder="Enter meeting ID"
+                  />
+                </FieldWithIcon>
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {[
+                ["today", "Today"],
+                ["week", "This week"],
+                ["month", "This month"],
+                ["custom", "Custom"]
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  className={cx(
+                    "min-h-10 rounded-lg border px-6 text-sm font-black",
+                    key === "custom"
+                      ? "border-[#D9C300] bg-yellow-100 text-ink"
+                      : "border-line bg-panel text-ink"
+                  )}
+                  type="button"
+                  onClick={() => applyDatePreset(key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-3 border-l border-line pl-6 max-[1280px]:border-l-0 max-[1280px]:border-t max-[1280px]:pl-0 max-[1280px]:pt-5">
+            <ActionButton as="a" icon="download" href={`/attendance/export.csv${exportQuery}`}>
+              Export attendance CSV
+            </ActionButton>
+            <ActionButton as="a" icon="file-spreadsheet" href="/reports/attendance-matrix.csv">
+              Export matrix CSV
+            </ActionButton>
+            <ActionButton
+              id="generate-attendance-journal"
+              icon="clipboard-list"
+              variant="primary"
+              onClick={submitSummary}>
+              Generate attendance journal
+            </ActionButton>
+          </div>
         </div>
-        <div className="flex flex-wrap justify-end gap-2">
-          <ActionButton as="a" icon="download" href={`/attendance/export.csv${exportQuery}`}>
-            Export attendance CSV
-          </ActionButton>
-          <ActionButton as="a" icon="file-spreadsheet" href="/reports/attendance-matrix.csv">
-            Export matrix CSV
-          </ActionButton>
-          <ActionButton icon="clipboard-list" variant="primary" onClick={submitSummary}>
-            Generate attendance journal
-          </ActionButton>
-        </div>
-      </div>
+      </Card>
       {status ? <p className="text-sm font-bold text-muted">{status}</p> : null}
       <SummaryTable summaries={filteredSummaries} />
       <HistoryTable records={historyRecords} />
@@ -2359,9 +3053,7 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
 function SummaryTable({ summaries }) {
   return (
     <Card>
-      <CardHeader title="Attendance Journal" icon="clipboard-list">
-        <Badge>{summaries.length}</Badge>
-      </CardHeader>
+      <CardHeader title="Attendance journal" />
       <div className={tableWrapClass}>
         <table className={tableClass}>
           <thead>
@@ -2392,9 +3084,16 @@ function SummaryTable({ summaries }) {
                 </tr>
               ))
             ) : (
-              <EmptyRow colSpan={6}>
-                Waiting for scheduled attendance updates, or generate the journal manually.
-              </EmptyRow>
+              <tr>
+                <td colSpan={6}>
+                  <EmptyState
+                    icon="bar-chart-3"
+                    title="No journal generated yet."
+                    detail="Choose filters and click Generate attendance journal."
+                    compact
+                  />
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -2453,131 +3152,141 @@ function SettingsPage({
 
   return (
     <section className="grid gap-5">
-      <div className="grid gap-5">
-          <Card>
-            <CardHeader title="Zoom Integration" icon="settings">
-              <Badge tone={oauthStatus?.authorized ? "success" : "warning"}>
-                {oauthStatus?.authorized ? "Connected" : "Needs OAuth"}
-              </Badge>
-            </CardHeader>
-            <div className="grid grid-cols-4 gap-3 p-5">
-              <StatusTile
-                label="OAuth"
-                value={oauthStatus?.authorized ? "Connected" : "Not connected"}
-                tone={oauthStatus?.authorized ? "success" : "warning"}
-                icon="video"
-              />
-              <StatusTile
-                label="Account"
-                value={oauthStatus?.display_name || oauthStatus?.email || "Unknown"}
-                icon="user"
-              />
-              <StatusTile
-                label="SDK"
-                value={sdkConfig?.configured ? "Configured" : "Missing credentials"}
-                tone={sdkConfig?.configured ? "success" : "danger"}
-                icon="code-2"
-              />
-              <StatusTile
-                label="ZAK"
-                value={oauthStatus?.authorized ? "Available" : "Requires OAuth"}
-                icon="key-round"
-              />
-            </div>
-            <div className="flex gap-2 px-5 pb-5">
-              <ActionButton
-                icon={oauthStatus?.authorized ? "user-cog" : "log-in"}
-                variant="primary"
-                onClick={() => {
-                  window.location.href = "/zoom/oauth/start?prompt=login";
-                }}>
-                {oauthStatus?.authorized ? "Authorize different account" : "Authorize Zoom"}
-              </ActionButton>
-              {oauthStatus?.authorized ? (
-                <ActionButton icon="unplug" variant="danger" onClick={disconnectZoom}>
-                  Disconnect Zoom
-                </ActionButton>
-              ) : null}
-            </div>
-          </Card>
+      <Card>
+        <CardHeader title="Zoom integration" />
+        <div className="grid grid-cols-4 gap-4 p-5 max-[1280px]:grid-cols-2">
+          <StatusTile
+            label="Zoom authorization"
+            value={oauthStatus?.authorized ? "Connected" : "Not connected"}
+            tone={oauthStatus?.authorized ? "success" : "warning"}
+            icon="video"
+          />
+          <StatusTile
+            label="Zoom account"
+            value={oauthStatus?.display_name || oauthStatus?.email || "Unknown"}
+            icon="users"
+            tone="purple"
+          />
+          <StatusTile
+            label="Zoom SDK"
+            value={sdkConfig?.configured ? "Configured" : "Missing credentials"}
+            tone={sdkConfig?.configured ? "warning" : "danger"}
+            icon="code-2"
+          />
+          <StatusTile
+            label="Host token"
+            value={oauthStatus?.authorized ? "Available" : "Requires OAuth"}
+            tone="blue"
+            icon="shield-check"
+          />
+        </div>
+        <div className="flex gap-3 px-5 pb-5">
+          <ActionButton
+            icon={oauthStatus?.authorized ? "user-cog" : "log-in"}
+            variant="primary"
+            onClick={() => {
+              window.location.href = "/zoom/oauth/start?prompt=login";
+            }}>
+            {oauthStatus?.authorized ? "Authorize different account" : "Authorize Zoom"}
+          </ActionButton>
+          {oauthStatus?.authorized ? (
+            <ActionButton icon="unplug" variant="danger" onClick={disconnectZoom}>
+              Disconnect Zoom
+            </ActionButton>
+          ) : null}
+        </div>
+      </Card>
 
-          <Card>
-            <CardHeader title="Groups" icon="users" />
-            <div className="flex flex-wrap gap-2 p-5">
-              {groups.length ? (
-                groups.map((group) => <Badge key={group}>{group}</Badge>)
-              ) : (
-                <span className="text-sm text-muted">No groups imported yet.</span>
-              )}
+      <Card>
+        <CardHeader title="Groups" />
+        <div className="p-5">
+          {groups.length ? (
+            <div className="flex flex-wrap gap-2">
+              {groups.map((group) => <Badge key={group}>{group}</Badge>)}
             </div>
-          </Card>
+          ) : (
+            <div className="flex items-center gap-4 rounded-lg border border-line bg-[#FFFDF7] p-4">
+              <SoftIcon icon="users" size="sm" />
+              <span>
+                <strong className="block text-sm font-black">No groups yet.</strong>
+                <span className="text-sm text-muted">Import students or schedule data to create groups.</span>
+              </span>
+            </div>
+          )}
+        </div>
+      </Card>
 
-          <Card>
-            <CardHeader title="Schedule Import" meta={status} icon="upload" />
-            <form
-              className="grid grid-cols-[1fr_auto_auto] items-end gap-3 p-5"
-              onSubmit={submitSchedulePreview}>
-              <label className={labelClass}>
-                Schedule CSV or Excel
-                <FileControl
-                  file={file}
-                  accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={(event) => {
-                    setFile(event.target.files?.[0] || null);
-                    setPreview(null);
-                    setMapping({});
-                  }}
-                />
-              </label>
+      <Card>
+        <CardHeader
+          title="Schedule import"
+          meta="Import schedule CSV or Excel for attendance journals."
+        />
+        <form className="grid gap-4 p-5" onSubmit={submitSchedulePreview}>
+          <div className="grid grid-cols-[minmax(320px,0.55fr)_1fr] items-center gap-5 max-[1280px]:grid-cols-1">
+            <DropZone
+              file={file}
+              title="Drag and drop your CSV or Excel file here"
+              accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              icon="upload"
+              onChange={(event) => {
+                setFile(event.target.files?.[0] || null);
+                setPreview(null);
+                setMapping({});
+              }}
+            />
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <DownloadTemplateButton kind="schedule">Download schedule template</DownloadTemplateButton>
               <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
-                <Icon name="replace" size={16} />
                 <input
+                  className="accent-accent"
                   type="checkbox"
                   checked={replaceExisting}
                   onChange={(event) => setReplaceExisting(event.target.checked)}
-                />{" "}
-                Replace
+                />
+                Replace existing schedule
               </label>
               <ActionButton icon="eye" variant="primary" type="submit">
-                Preview
+                Preview schedule import
               </ActionButton>
-            </form>
-            <ImportPreviewPanel
-              preview={preview}
-              mapping={mapping}
-              setMapping={setMapping}
-              fields={[
-                { key: "date", label: "Lesson date" },
-                { key: "start_time", label: "Start time" },
-                { key: "end_time", label: "End time" },
-                { key: "group_name", label: "Group" },
-                { key: "title", label: "Title" }
-              ]}
-              onConfirm={confirmScheduleImport}
-              confirmLabel="Confirm schedule import"
-            />
-            <ScheduleTable entries={schedule} />
-          </Card>
+            </div>
+          </div>
+          {status ? <p className="text-sm font-bold text-muted">{status}</p> : null}
+        </form>
+        <ImportPreviewPanel
+          preview={preview}
+          mapping={mapping}
+          setMapping={setMapping}
+          fields={[
+            { key: "date", label: "Lesson date" },
+            { key: "start_time", label: "Start time" },
+            { key: "end_time", label: "End time" },
+            { key: "group_name", label: "Group" },
+            { key: "title", label: "Title" }
+          ]}
+          onConfirm={confirmScheduleImport}
+          confirmLabel="Confirm schedule import"
+        />
+        <ScheduleTable entries={schedule} />
+      </Card>
 
-          <GoogleSheetImportPanel
-            title="Google Sheet Schedule"
-            importKind="schedule"
-            googleConfig={googleConfig}
-            sources={googleScheduleSources}
-            importHistory={importHistory}
-            loadGoogleSheetTabs={loadGoogleSheetTabs}
-            previewGoogleSheetImport={previewGoogleSheetImport}
-            saveGoogleSheetSource={saveGoogleSheetSource}
-            syncGoogleSheetSource={syncGoogleSheetSource}
-            fields={[
-              { key: "date", label: "Lesson date" },
-              { key: "start_time", label: "Start time" },
-              { key: "end_time", label: "End time" },
-              { key: "group_name", label: "Group" },
-              { key: "title", label: "Title" }
-            ]}
-          />
-      </div>
+      <GoogleSheetImportPanel
+        title="Google Sheet schedule"
+        importKind="schedule"
+        googleConfig={googleConfig}
+        sources={googleScheduleSources}
+        importHistory={importHistory}
+        loadGoogleSheetTabs={loadGoogleSheetTabs}
+        previewGoogleSheetImport={previewGoogleSheetImport}
+        saveGoogleSheetSource={saveGoogleSheetSource}
+        syncGoogleSheetSource={syncGoogleSheetSource}
+        fields={[
+          { key: "date", label: "Lesson date" },
+          { key: "start_time", label: "Start time" },
+          { key: "end_time", label: "End time" },
+          { key: "group_name", label: "Group" },
+          { key: "title", label: "Title" }
+        ]}
+      />
     </section>
   );
 }
@@ -2933,7 +3642,13 @@ function App() {
           closeMeeting={closeMeeting}
         />
       ) : null}
-      {page === "live-attendance" ? <LiveAttendancePage {...commonPageProps} /> : null}
+      {page === "live-attendance" ? (
+        <LiveAttendancePage
+          {...commonPageProps}
+          updateMeeting={updateMeeting}
+          closeMeeting={closeMeeting}
+        />
+      ) : null}
       {page === "students" ? (
         <StudentsPage
           students={data.students}
