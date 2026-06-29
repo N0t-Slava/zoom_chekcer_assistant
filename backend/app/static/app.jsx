@@ -22,7 +22,7 @@ const tones = {
 };
 
 const buttonBase =
-  "inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-black transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-black transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60";
 const primaryButton = `${buttonBase} border-[#D9C300] bg-accent text-ink`;
 const secondaryButton = `${buttonBase} border-line bg-panel text-ink`;
 const dangerButton = `${buttonBase} border-red-200 bg-red-50 text-danger`;
@@ -68,12 +68,13 @@ const iconShapes = {
     { tag: "circle", cx: "9", cy: "7", r: "4" },
     { tag: "path", d: "M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" }
   ],
-  "bar-chart-3": [
-    { tag: "path", d: "M3 3v18h18M18 17V9M13 17V5M8 17v-3" }
-  ],
+  "bar-chart-3": [{ tag: "path", d: "M3 3v18h18M18 17V9M13 17V5M8 17v-3" }],
   settings: [
     { tag: "circle", cx: "12", cy: "12", r: "3" },
-    { tag: "path", d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1v.2a2 2 0 0 1-4 0V21a1.65 1.65 0 0 0-.4-1 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.4h-.2a2 2 0 0 1 0-4H3a1.65 1.65 0 0 0 1-.4 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1v-.2a2 2 0 0 1 4 0V3a1.65 1.65 0 0 0 .4 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .4h.2a2 2 0 0 1 0 4H21a1.65 1.65 0 0 0-1 .4 1.65 1.65 0 0 0-.6 1Z" }
+    {
+      tag: "path",
+      d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1v.2a2 2 0 0 1-4 0V21a1.65 1.65 0 0 0-.4-1 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.4h-.2a2 2 0 0 1 0-4H3a1.65 1.65 0 0 0 1-.4 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1v-.2a2 2 0 0 1 4 0V3a1.65 1.65 0 0 0 .4 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .4h.2a2 2 0 0 1 0 4H21a1.65 1.65 0 0 0-1 .4 1.65 1.65 0 0 0-.6 1Z"
+    }
   ],
   "refresh-cw": [
     { tag: "path", d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" },
@@ -128,9 +129,7 @@ const iconShapes = {
     { tag: "path", d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" },
     { tag: "path", d: "M17 21v-8H7v8M7 3v5h8" }
   ],
-  "trash-2": [
-    { tag: "path", d: "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" }
-  ],
+  "trash-2": [{ tag: "path", d: "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" }],
   pencil: [
     { tag: "path", d: "M17 3a2.85 2.85 0 0 1 4 4L7 21l-4 1 1-4Z" },
     { tag: "path", d: "m15 5 4 4" }
@@ -171,9 +170,7 @@ const iconShapes = {
     { tag: "rect", x: "3", y: "4", width: "18", height: "16", rx: "2" },
     { tag: "path", d: "M3 10h18M10 4v16" }
   ],
-  "chevron-down": [
-    { tag: "path", d: "m6 9 6 6 6-6" }
-  ],
+  "chevron-down": [{ tag: "path", d: "m6 9 6 6 6-6" }],
   "toggle-right": [
     { tag: "rect", x: "2", y: "6", width: "20", height: "12", rx: "6" },
     { tag: "circle", cx: "16", cy: "12", r: "2" }
@@ -190,31 +187,28 @@ const iconShapes = {
     { tag: "circle", cx: "11", cy: "11", r: "8" },
     { tag: "path", d: "m21 21-4.3-4.3" }
   ],
-  "list-filter": [
-    { tag: "path", d: "M3 6h18M7 12h10M10 18h4" }
-  ],
+  "list-filter": [{ tag: "path", d: "M3 6h18M7 12h10M10 18h4" }],
   "filter-x": [
     { tag: "path", d: "M3 4h18l-7 8v6l-4 2v-8Z" },
     { tag: "path", d: "m17 17 4 4M21 17l-4 4" }
   ],
-  hash: [
-    { tag: "path", d: "M4 9h16M4 15h16M10 3 8 21M16 3l-2 18" }
-  ],
+  hash: [{ tag: "path", d: "M4 9h16M4 15h16M10 3 8 21M16 3l-2 18" }],
   "file-spreadsheet": [
     { tag: "path", d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" },
     { tag: "path", d: "M14 2v6h6M8 13h8M8 17h8M11 9v12" }
   ],
   "clipboard-list": [
     { tag: "rect", x: "8", y: "2", width: "8", height: "4", rx: "1" },
-    { tag: "path", d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M8 12h8M8 16h8" }
+    {
+      tag: "path",
+      d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M8 12h8M8 16h8"
+    }
   ],
   unplug: [
     { tag: "path", d: "m19 5-3 3M22 2l-3 3M2 22l7-7M9 15l4 4a4 4 0 0 0 6-6l-4-4" },
     { tag: "path", d: "M10 10 6 6M14 6l-4 4" }
   ],
-  "code-2": [
-    { tag: "path", d: "m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16" }
-  ],
+  "code-2": [{ tag: "path", d: "m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16" }],
   "key-round": [
     { tag: "circle", cx: "8", cy: "15", r: "4" },
     { tag: "path", d: "M10.8 12.2 21 2M18 5l2 2M15 8l2 2" }
@@ -227,16 +221,17 @@ const iconShapes = {
     { tag: "circle", cx: "12", cy: "12", r: "10" },
     { tag: "path", d: "M12 6v6l4 2" }
   ],
-  plus: [
-    { tag: "path", d: "M5 12h14M12 5v14" }
-  ],
+  plus: [{ tag: "path", d: "M5 12h14M12 5v14" }],
   sparkles: [
     { tag: "path", d: "m12 3-1.9 5.8L4 11l6.1 2.2L12 19l1.9-5.8L20 11l-6.1-2.2Z" },
     { tag: "path", d: "M5 3v4M3 5h4M19 17v4M17 19h4" }
   ],
   "book-open": [
     { tag: "path", d: "M12 7v14" },
-    { tag: "path", d: "M3 18a1 1 0 0 1 1-1h5a3 3 0 0 1 3 3 3 3 0 0 1 3-3h5a1 1 0 0 1 1 1V5a1 1 0 0 0-1-1h-5a3 3 0 0 0-3 3 3 3 0 0 0-3-3H4a1 1 0 0 0-1 1Z" }
+    {
+      tag: "path",
+      d: "M3 18a1 1 0 0 1 1-1h5a3 3 0 0 1 3 3 3 3 0 0 1 3-3h5a1 1 0 0 1 1 1V5a1 1 0 0 0-1-1h-5a3 3 0 0 0-3 3 3 3 0 0 0-3-3H4a1 1 0 0 0-1 1Z"
+    }
   ],
   "pie-chart": [
     { tag: "path", d: "M21.21 15.89A10 10 0 1 1 8 2.83" },
@@ -302,7 +297,7 @@ function ActionButton({
   const content = (
     <React.Fragment>
       {icon ? <Icon name={icon} size={iconSize || (compact ? 16 : 18)} /> : null}
-      <span className="truncate">{children}</span>
+      {children ? <span className="truncate">{children}</span> : null}
     </React.Fragment>
   );
   if (as === "a") {
@@ -336,7 +331,8 @@ function FieldWithIcon({ icon, children }) {
 
 function FileControl({ file, onChange, accept, label = "Choose file" }) {
   return (
-    <span className={cx(secondaryButton, "relative w-full justify-start border-dashed bg-[#FFFDF7]")}>
+    <span
+      className={cx(secondaryButton, "relative w-full justify-start border-dashed bg-[#FFFDF7]")}>
       <Icon name="upload" size={18} />
       <span className="truncate">{file?.name || label}</span>
       <input
@@ -493,33 +489,25 @@ function Badge({ children, tone = "neutral" }) {
 }
 
 function zoomAccountLabel(oauthStatus) {
-  return (
-    oauthStatus?.email ||
-    oauthStatus?.display_name ||
-    oauthStatus?.user_id ||
-    ""
-  );
+  return oauthStatus?.email || oauthStatus?.display_name || oauthStatus?.user_id || "";
 }
 
-function ZoomStatusPill({ oauthStatus }) {
+function ZoomStatusPill({ oauthStatus, className = "" }) {
   const checking = !oauthStatus;
   const connected = Boolean(oauthStatus?.authorized);
   const account = zoomAccountLabel(oauthStatus);
   const label = checking
     ? "Zoom checking"
     : connected
-      ? account
-        ? `Zoom connected \u00b7 ${account}`
-        : "Zoom connected"
+      ? account || "Connected"
       : "Zoom not connected";
 
   return (
     <div
       className={cx(
-        "inline-flex min-h-11 max-w-[420px] items-center gap-2 rounded-lg border bg-panel px-4 text-sm font-black shadow-soft",
-        connected
-          ? "border-line text-ink"
-          : "border-yellow-300 text-warning"
+        "inline-flex min-h-11 max-w-[420px] items-center gap-1.5 rounded-lg border bg-panel px-4 text-sm font-black shadow-soft",
+        connected ? "border-line text-ink" : "border-yellow-300 text-warning",
+        className
       )}>
       <span
         className={cx("h-2.5 w-2.5 shrink-0 rounded-full", connected ? "bg-success" : "bg-warning")}
@@ -529,7 +517,13 @@ function ZoomStatusPill({ oauthStatus }) {
   );
 }
 
-function currentLessonStatus({ oauthStatus, sdkConfig, meetings, currentRecords, unmatchedRecords }) {
+function currentLessonStatus({
+  oauthStatus,
+  sdkConfig,
+  meetings,
+  currentRecords,
+  unmatchedRecords
+}) {
   if (!oauthStatus) {
     return { label: "Ready", tone: "neutral" };
   }
@@ -546,14 +540,18 @@ function currentLessonStatus({ oauthStatus, sdkConfig, meetings, currentRecords,
 }
 
 function Card({ children, className = "", ...props }) {
-  return <article className={cx(cardClass, className)} {...props}>{children}</article>;
+  return (
+    <article className={cx(cardClass, className)} {...props}>
+      {children}
+    </article>
+  );
 }
 
 function CardHeader({ title, meta, icon, children }) {
   return (
     <div className={cardHeaderClass}>
       <div className="min-w-0">
-        <h2 className="m-0 inline-flex items-center gap-2 text-xl font-black">
+        <h2 className="m-0 inline-flex items-center gap-1.5 text-xl font-black">
           {icon ? <Icon name={icon} size={20} /> : null}
           <span>{title}</span>
         </h2>
@@ -591,7 +589,7 @@ function PageMetricCard({ icon, title, value, tone = "neutral" }) {
               : "text-ink";
   return (
     <Card className="min-h-[124px]">
-      <div className="flex h-full items-center gap-5 p-6">
+      <div className="flex h-full items-center gap-3 p-6">
         <span className={cx("grid h-16 w-16 shrink-0 place-items-center rounded-full", toneClass)}>
           <Icon name={icon} size={31} />
         </span>
@@ -652,7 +650,7 @@ function DownloadTemplateButton({ kind, children }) {
   const templates = {
     students: {
       name: "students-template.csv",
-      content: "student_name,group,aliases\nIvan Petrov,252,\"Ivan P.;I. Petrov\"\n"
+      content: 'student_name,group,aliases\nIvan Petrov,252,"Ivan P.;I. Petrov"\n'
     },
     schedule: {
       name: "schedule-template.csv",
@@ -679,9 +677,16 @@ function DownloadTemplateButton({ kind, children }) {
   );
 }
 
-function DropZone({ file, onChange, accept, title, browseLabel = "Browse files", icon = "cloud-upload" }) {
+function DropZone({
+  file,
+  onChange,
+  accept,
+  title,
+  browseLabel = "Browse files",
+  icon = "cloud-upload"
+}) {
   return (
-    <label className="relative flex min-h-[86px] cursor-pointer items-center justify-center gap-4 rounded-lg border border-dashed border-line bg-[#FFFDF7] px-5 py-4 text-sm font-bold text-muted">
+    <label className="relative flex min-h-[86px] cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-dashed border-line bg-[#FFFDF7] px-5 py-4 text-sm font-bold text-muted">
       <SoftIcon icon={icon} size="sm" />
       <span className="min-w-0">
         <strong className="block truncate text-ink">{file?.name || title}</strong>
@@ -689,7 +694,12 @@ function DropZone({ file, onChange, accept, title, browseLabel = "Browse files",
           {browseLabel}
         </span>
       </span>
-      <input className="absolute inset-0 cursor-pointer opacity-0" type="file" accept={accept} onChange={onChange} />
+      <input
+        className="absolute inset-0 cursor-pointer opacity-0"
+        type="file"
+        accept={accept}
+        onChange={onChange}
+      />
     </label>
   );
 }
@@ -710,7 +720,7 @@ function StatusTile({ label, value, tone = "neutral", wide = false, icon }) {
   return (
     <div
       className={cx(
-        "flex items-center gap-4 rounded-lg border border-line bg-[#FFFDF7] p-4",
+        "flex items-center gap-2.5 rounded-lg border border-line bg-[#FFFDF7] p-4",
         wide && "sm:col-span-2"
       )}>
       {icon ? <SoftIcon icon={icon} tone={tone} size="sm" /> : null}
@@ -745,26 +755,16 @@ function Shell({ page, goToPage, oauthStatus, children }) {
   }
 
   return (
-    <div className="grid min-h-screen min-w-[1040px] grid-cols-[268px_minmax(760px,1fr)]">
+    <div className="grid min-h-screen min-w-[1040px] grid-cols-[300px_minmax(760px,1fr)]">
       <aside className="sticky top-0 flex h-screen flex-col gap-5 overflow-y-auto border-r border-line bg-[#FFFDF7] px-4 py-5">
-        <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-line bg-panel p-3">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-black">
-            T
-          </span>
-          <span className="min-w-0">
-            <strong className="block truncate font-black">Teacher console</strong>
-            <small className="block truncate text-xs font-bold text-muted">
-              Roster and live sync
-            </small>
-          </span>
-        </div>
+        <ZoomStatusPill oauthStatus={oauthStatus} className="w-full max-w-none justify-start" />
 
         <nav className="grid gap-2" aria-label="Primary navigation">
           {pages.map((item) => (
             <button
               key={item.id}
               className={cx(
-                "inline-flex min-h-11 items-center gap-3 rounded-lg border px-3 text-left text-sm font-black transition",
+                "inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-left text-sm font-black transition",
                 page === item.id
                   ? "border-[#D9C300] bg-yellow-100 text-ink"
                   : "border-transparent text-muted hover:bg-panel hover:text-ink"
@@ -778,7 +778,7 @@ function Shell({ page, goToPage, oauthStatus, children }) {
         </nav>
 
         <div className="mt-auto grid gap-2 border-t border-line pt-4 text-sm font-black">
-          <span className="inline-flex items-center gap-2 text-muted">
+          <span className="inline-flex items-center gap-1.5 text-muted">
             <span
               className={cx(
                 "h-2.5 w-2.5 rounded-full",
@@ -788,7 +788,7 @@ function Shell({ page, goToPage, oauthStatus, children }) {
             {zoomLabel}
           </span>
           <a
-            className="inline-flex items-center gap-2 font-black underline decoration-accent decoration-4 underline-offset-4"
+            className="inline-flex items-center gap-1.5 font-black underline decoration-accent decoration-4 underline-offset-4"
             href="/#live-attendance">
             <Icon name="video" size={16} />
             Open current lesson
@@ -830,12 +830,9 @@ function Header({
         <h1 className="text-5xl font-black leading-none">{pageTitles[page] || "Dashboard"}</h1>
       </div>
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <ZoomStatusPill oauthStatus={oauthStatus} />
         {isCurrentLesson ? <Badge tone={lessonStatus.tone}>{lessonStatus.label}</Badge> : null}
-        {(isDashboard || isMeetings || isSettings) ? (
-          <ActionButton icon="refresh-cw" onClick={refreshData}>
-            Refresh
-          </ActionButton>
+        {isDashboard || isMeetings || isSettings ? (
+          <ActionButton icon="refresh-cw" onClick={refreshData}></ActionButton>
         ) : null}
         {isDashboard ? (
           <ActionButton icon="video" variant="primary" onClick={() => goToPage("live-attendance")}>
@@ -855,7 +852,9 @@ function Header({
             icon="cloud-upload"
             variant="primary"
             onClick={() =>
-              document.getElementById("student-import-card")?.scrollIntoView({ block: "start", behavior: "smooth" })
+              document
+                .getElementById("student-import-card")
+                ?.scrollIntoView({ block: "start", behavior: "smooth" })
             }>
             Import students
           </ActionButton>
@@ -931,7 +930,7 @@ function AttendanceTrend({ records, meetings, trendFilter, setTrendFilter }) {
             <button
               key={filter.key}
               className={cx(
-                "inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-xs font-black",
+                "inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-black",
                 trendFilter === filter.key
                   ? "border-ink bg-ink text-white"
                   : "border-line bg-panel text-muted"
@@ -1070,13 +1069,13 @@ function AliasRow({ record, students, suggested, createAlias }) {
 function DashboardStep({ index, title, detail, done, actionLabel, href, onAction, icon }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border border-line bg-[#FFFDF7] p-4">
-      <div className="flex min-w-0 items-start gap-3">
+      <div className="flex min-w-0 items-start gap-2">
         <span
           className={cx(
-            "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm font-black",
+            "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm",
             done
-              ? "border-green-200 bg-green-50 text-success"
-              : "border-line bg-panel text-muted"
+              ? "border-green-200/70 bg-green-50 text-success font-medium"
+              : "border-line/50 bg-[#F6F3EA] text-ink/60 font-normal"
           )}>
           {done ? <Icon name="check-circle-2" size={18} /> : index}
         </span>
@@ -1090,7 +1089,14 @@ function DashboardStep({ index, title, detail, done, actionLabel, href, onAction
   );
 }
 
-function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, historyRecords, goToPage }) {
+function DashboardChecklist({
+  oauthStatus,
+  students,
+  savedMeetings,
+  meetings,
+  historyRecords,
+  goToPage
+}) {
   const zoomConnected = Boolean(oauthStatus?.authorized);
   const active = activeMeeting(meetings);
   const account = zoomAccountLabel(oauthStatus);
@@ -1148,7 +1154,7 @@ function DashboardChecklist({ oauthStatus, students, savedMeetings, meetings, hi
         {steps.map((step, index) => (
           <DashboardStep key={step.title} index={index + 1} {...step} />
         ))}
-        <p className="mt-2 inline-flex items-center gap-2 text-sm text-muted">
+        <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted">
           <Icon name="sparkles" size={16} />
           Complete the steps to get the most out of Teacher Console.
         </p>
@@ -1214,7 +1220,11 @@ function MenuPage(props) {
                 <div className="grid grid-cols-3 gap-3">
                   <StatusTile label="Rows" value={attendanceRows} icon="pie-chart" tone="blue" />
                   <StatusTile label="Sessions" value={meetings.length} icon="calendar-days" />
-                  <StatusTile label="Last sync" value={formatShortDate(lastActivityTime([], [], historyRecords))} icon="clock" />
+                  <StatusTile
+                    label="Last sync"
+                    value={formatShortDate(lastActivityTime([], [], historyRecords))}
+                    icon="clock"
+                  />
                 </div>
               </div>
             ) : (
@@ -1222,7 +1232,10 @@ function MenuPage(props) {
                 icon="bar-chart-3"
                 title="No attendance data yet."
                 detail="Start your first lesson to see analytics here.">
-                <ActionButton icon="video" variant="primary" onClick={() => goToPage("live-attendance")}>
+                <ActionButton
+                  icon="video"
+                  variant="primary"
+                  onClick={() => goToPage("live-attendance")}>
                   Open current lesson
                 </ActionButton>
               </EmptyState>
@@ -1239,10 +1252,10 @@ function MenuPage(props) {
               ].map(([eyebrow, label, icon, target]) => (
                 <button
                   key={label}
-                  className="flex min-h-[78px] items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] p-3 text-left transition hover:-translate-y-px"
+                  className="flex min-h-[78px] items-center justify-between gap-2 rounded-lg border border-line bg-[#FFFDF7] p-3 text-left transition hover:-translate-y-px"
                   type="button"
                   onClick={() => goToPage(target)}>
-                  <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex min-w-0 items-center gap-2">
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent text-ink">
                       <Icon name={icon} size={21} />
                     </span>
@@ -1261,7 +1274,9 @@ function MenuPage(props) {
 
       <Card>
         <CardHeader title="Recent activity">
-          <ActionButton compact onClick={() => goToPage("meetings")}>View all</ActionButton>
+          <ActionButton compact onClick={() => goToPage("meetings")}>
+            View all
+          </ActionButton>
         </CardHeader>
         {recentRows.length ? (
           <div className={tableWrapClass}>
@@ -1269,7 +1284,9 @@ function MenuPage(props) {
               <thead>
                 <tr>
                   {["Session", "Lesson", "Started", "Status"].map((head) => (
-                    <th key={head} className={thClass}>{head}</th>
+                    <th key={head} className={thClass}>
+                      {head}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -1290,11 +1307,13 @@ function MenuPage(props) {
             </table>
           </div>
         ) : (
-          <div className="flex items-center gap-4 p-6">
+          <div className="flex items-center gap-2.5 p-6">
             <SoftIcon icon="clock" size="sm" />
             <span>
               <strong className="block font-black">No recent activity yet.</strong>
-              <span className="text-sm text-muted">Your recent lessons and actions will appear here.</span>
+              <span className="text-sm text-muted">
+                Your recent lessons and actions will appear here.
+              </span>
             </span>
           </div>
         )}
@@ -1539,10 +1558,7 @@ function SavedMeetingsTable({
                       <ActionButton as="a" compact icon="video" href={meetingJoinUrl(meeting)}>
                         Join
                       </ActionButton>
-                      <ActionButton
-                        compact
-                        icon="pencil"
-                        onClick={() => setDraft(meeting)}>
+                      <ActionButton compact icon="pencil" onClick={() => setDraft(meeting)}>
                         Edit
                       </ActionButton>
                       <ActionButton
@@ -1586,9 +1602,7 @@ function SavedMeetingsTable({
 
   return (
     <Card>
-      <CardHeader title="Saved Zoom meetings" icon="calendar-days">
-        <Badge>{meetings.length}</Badge>
-      </CardHeader>
+      <CardHeader title="Saved Zoom meetings" icon="calendar-days" />
       {content}
     </Card>
   );
@@ -1729,9 +1743,7 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
 function LessonSideCard({ title, count, icon, children, emptyTitle, emptyDetail }) {
   return (
     <Card>
-      <CardHeader title={title}>
-        <Badge>{count}</Badge>
-      </CardHeader>
+      <CardHeader title={title} />
       {count ? (
         <div className="p-5">{children}</div>
       ) : (
@@ -1749,7 +1761,9 @@ function NameList({ records }) {
           key={`${record.meeting_session_id || record.meeting_id || "record"}-${record.participant_name}`}
           className="flex items-center justify-between gap-3 rounded-lg border border-line bg-[#FFFDF7] px-3 py-2 text-sm">
           <span className="truncate font-black">{record.participant_name}</span>
-          {record.total_seconds ? <span className="text-muted">{formatDuration(record.total_seconds)}</span> : null}
+          {record.total_seconds ? (
+            <span className="text-muted">{formatDuration(record.total_seconds)}</span>
+          ) : null}
         </div>
       ))}
     </div>
@@ -1781,7 +1795,8 @@ function LiveAttendancePage({
   });
   const groups = uniqueGroups(students);
   const defaultGroup = currentMeeting?.group_name || groups[0] || "";
-  const defaultTitle = currentMeeting?.title || (defaultGroup ? `${defaultGroup} lesson` : "New lesson");
+  const defaultTitle =
+    currentMeeting?.title || (defaultGroup ? `${defaultGroup} lesson` : "New lesson");
   const account = zoomAccountLabel(oauthStatus);
   const [selectedMeetingId, setSelectedMeetingId] = useState("");
   const [lessonTitle, setLessonTitle] = useState(defaultTitle);
@@ -1789,7 +1804,9 @@ function LiveAttendancePage({
   const [teacherName, setTeacherName] = useState(account || "");
   const [joinAsHost, setJoinAsHost] = useState(true);
   const [lessonNotice, setLessonNotice] = useState("");
-  const selectedSavedMeeting = savedMeetings.find((meeting) => String(meeting.id) === selectedMeetingId);
+  const selectedSavedMeeting = savedMeetings.find(
+    (meeting) => String(meeting.id) === selectedMeetingId
+  );
   const participantRecords = [...currentRecords, ...unmatchedRecords];
   const readyToStart = Boolean(oauthStatus?.authorized) && sdkConfig?.configured !== false;
   const joinHref = selectedSavedMeeting
@@ -1848,7 +1865,9 @@ function LiveAttendancePage({
                   value={selectedMeetingId}
                   onChange={(event) => {
                     const nextValue = event.target.value;
-                    const nextMeeting = savedMeetings.find((meeting) => String(meeting.id) === nextValue);
+                    const nextMeeting = savedMeetings.find(
+                      (meeting) => String(meeting.id) === nextValue
+                    );
                     setSelectedMeetingId(nextValue);
                     if (nextMeeting) {
                       setJoinAsHost(Boolean(nextMeeting.join_as_host));
@@ -1888,7 +1907,7 @@ function LiveAttendancePage({
                 onChange={(event) => setTeacherName(event.target.value)}
               />
             </label>
-            <label className="inline-flex items-start gap-3 text-sm font-bold text-muted">
+            <label className="inline-flex items-start gap-2 text-sm font-bold text-muted">
               <input
                 className="mt-1 accent-accent"
                 type="checkbox"
@@ -1916,12 +1935,15 @@ function LiveAttendancePage({
         <div className="grid gap-5">
           <div
             className={cx(
-              "flex items-center gap-5 rounded-lg border p-6 shadow-soft",
+              "flex items-center gap-3 rounded-lg border p-6 shadow-soft",
               readyToStart
                 ? "border-green-200 bg-green-50 text-success"
                 : "border-yellow-300 bg-yellow-50 text-warning"
             )}>
-            <SoftIcon icon={readyToStart ? "check-circle-2" : "info"} tone={readyToStart ? "success" : "warning"} />
+            <SoftIcon
+              icon={readyToStart ? "check-circle-2" : "info"}
+              tone={readyToStart ? "success" : "warning"}
+            />
             <span>
               <strong className="block text-xl font-black text-ink">
                 {readyToStart ? "Ready to start" : "Connect Zoom to start"}
@@ -1964,12 +1986,17 @@ function LiveAttendancePage({
                 tone={currentMeeting ? "success" : "neutral"}
                 icon="refresh-cw"
               />
-              <StatusTile label="Sync interval" value="Every 5 seconds" icon="pie-chart" tone="blue" />
+              <StatusTile
+                label="Sync interval"
+                value="Every 5 seconds"
+                icon="pie-chart"
+                tone="blue"
+              />
               <StatusTile label="Last sync" value={formatShortDate(lastSync)} icon="clock" />
             </div>
             <details className="border-t border-line px-5 py-4">
               <summary className="flex cursor-pointer items-center justify-between gap-3 text-sm font-bold text-ink">
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5">
                   <Icon name="info" size={18} />
                   Advanced sync details
                 </span>
@@ -1982,7 +2009,12 @@ function LiveAttendancePage({
                   tone={sdkConfig?.configured ? "success" : "danger"}
                   icon="code-2"
                 />
-                <StatusTile label="State" value={lessonState.label} tone={lessonState.tone} icon="info" />
+                <StatusTile
+                  label="State"
+                  value={lessonState.label}
+                  tone={lessonState.tone}
+                  icon="info"
+                />
               </div>
             </details>
           </Card>
@@ -2109,7 +2141,9 @@ function HistoryTable({ title = "Attendance History", records }) {
                 <td colSpan={7}>
                   <EmptyState
                     icon="clock"
-                    title={isTimeline ? "No attendance timeline yet." : "No attendance history yet."}
+                    title={
+                      isTimeline ? "No attendance timeline yet." : "No attendance history yet."
+                    }
                     detail={
                       isTimeline
                         ? "Live attendance records will appear here after participants are synced."
@@ -2163,7 +2197,9 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
   const sampleHeaders = preview.headers || [];
   const sampleRows = preview.sample_rows || [];
   const confidence =
-    typeof preview.confidence === "number" ? `${Math.round(preview.confidence * 100)}% confidence` : null;
+    typeof preview.confidence === "number"
+      ? `${Math.round(preview.confidence * 100)}% confidence`
+      : null;
   const metadata = [
     preview.table_type ? `Type: ${preview.table_type}` : null,
     preview.mapping_source ? `Mapping: ${preview.mapping_source}` : null,
@@ -2171,7 +2207,9 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
   ].filter(Boolean);
   return (
     <div className="grid gap-4 border-t border-line p-5">
-      {metadata.length ? <div className="text-sm font-bold text-muted">{metadata.join(" / ")}</div> : null}
+      {metadata.length ? (
+        <div className="text-sm font-bold text-muted">{metadata.join(" / ")}</div>
+      ) : null}
       <div className="grid grid-cols-3 gap-3">
         {fields.map((field) => (
           <label className={labelClass} key={field.key}>
@@ -2195,7 +2233,9 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
       {preview.warnings?.length ? (
         <div className="grid gap-2">
           {preview.warnings.map((warning) => (
-            <div key={warning} className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-bold text-warning">
+            <div
+              key={warning}
+              className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-bold text-warning">
               {warning}
             </div>
           ))}
@@ -2261,11 +2301,15 @@ function GoogleSheetImportPanel({
   const [selectedTab, setSelectedTab] = useState("");
   const [preview, setPreview] = useState(null);
   const [mapping, setMapping] = useState({});
-  const [status, setStatus] = useState("Share the sheet with the bot as Editor, then paste the URL.");
+  const [status, setStatus] = useState(
+    "Share the sheet with the bot as Editor, then paste the URL."
+  );
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const botEmail = googleConfig?.bot_email || googleConfig?.service_account_email || "";
-  const historyRows = (importHistory || []).filter((run) => run.import_kind === importKind).slice(0, 5);
+  const historyRows = (importHistory || [])
+    .filter((run) => run.import_kind === importKind)
+    .slice(0, 5);
   const setupSteps =
     importKind === "schedule"
       ? [
@@ -2308,7 +2352,14 @@ function GoogleSheetImportPanel({
       return;
     }
     setStatus("Saving Google Sheet connection...");
-    await saveGoogleSheetSource(importKind, sheetUrl, selectedTab, mapping, preview, autoSyncEnabled);
+    await saveGoogleSheetSource(
+      importKind,
+      sheetUrl,
+      selectedTab,
+      mapping,
+      preview,
+      autoSyncEnabled
+    );
     setStatus("Google Sheet connection saved.");
   }
 
@@ -2352,7 +2403,7 @@ function GoogleSheetImportPanel({
             <span className="text-xs font-black uppercase text-muted">Setup steps</span>
             <div className="mt-3 grid gap-2">
               {setupSteps.map((step, index) => (
-                <div key={step} className="flex items-center gap-3 text-sm text-ink">
+                <div key={step} className="flex items-center gap-2 text-sm text-ink">
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-line bg-[#FFFDF7] text-xs font-black">
                     {index + 1}
                   </span>
@@ -2410,7 +2461,7 @@ function GoogleSheetImportPanel({
             <ActionButton icon="eye" onClick={previewSheet}>
               Preview
             </ActionButton>
-            <label className="inline-flex items-center gap-2 pb-2 text-sm font-bold text-muted">
+            <label className="inline-flex items-center gap-1.5 pb-2 text-sm font-bold text-muted">
               <Icon name="toggle-right" size={16} />
               <input
                 type="checkbox"
@@ -2433,7 +2484,7 @@ function GoogleSheetImportPanel({
       <div className="grid gap-3 border-t border-line p-5">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm font-black text-ink">Saved Google Sheets</span>
-          <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+          <label className="inline-flex items-center gap-1.5 text-sm font-bold text-muted">
             <Icon name="replace" size={16} />
             <input
               type="checkbox"
@@ -2477,7 +2528,9 @@ function GoogleSheetImportPanel({
         ) : (
           <div className="rounded-lg border border-line bg-[#FFFDF7] p-4">
             <strong className="block text-sm font-black">
-              {importKind === "schedule" ? "No Google Sheets connected yet." : "No Google Sheets connected yet."}
+              {importKind === "schedule"
+                ? "No Google Sheets connected yet."
+                : "No Google Sheets connected yet."}
             </strong>
             <span className="mt-1 block text-sm text-muted">
               {importKind === "schedule"
@@ -2501,7 +2554,9 @@ function GoogleSheetImportPanel({
               <tbody>
                 {historyRows.map((run) => (
                   <tr key={run.id}>
-                    <td className={tdClass}>{formatShortDate(run.finished_at || run.started_at)}</td>
+                    <td className={tdClass}>
+                      {formatShortDate(run.finished_at || run.started_at)}
+                    </td>
                     <td className={tdClass}>{run.source_type}</td>
                     <td className={tdClass}>{run.status}</td>
                     <td className={tdClass}>{run.row_count}</td>
@@ -2684,13 +2739,20 @@ function StudentsPage({
                 icon="id-card"
                 title="No students yet."
                 detail="Add students manually, import a CSV/Excel file, or connect a Google Sheet.">
-                <ActionButton icon="user-plus" variant="primary" onClick={() => setShowAddForm(true)}>
+                <ActionButton
+                  icon="user-plus"
+                  variant="primary"
+                  onClick={() => setShowAddForm(true)}>
                   Add student
                 </ActionButton>
-                <ActionButton icon="upload" onClick={() => activateTab("import", "student-import-card")}>
+                <ActionButton
+                  icon="upload"
+                  onClick={() => activateTab("import", "student-import-card")}>
                   Import file
                 </ActionButton>
-                <ActionButton icon="table-2" onClick={() => activateTab("sheet", "students-sheet-card")}>
+                <ActionButton
+                  icon="table-2"
+                  onClick={() => activateTab("sheet", "students-sheet-card")}>
                   Connect Google Sheet
                 </ActionButton>
               </EmptyState>
@@ -2698,9 +2760,13 @@ function StudentsPage({
                 <table className={tableClass}>
                   <thead>
                     <tr>
-                      {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map((head) => (
-                        <th key={head} className={thClass}>{head}</th>
-                      ))}
+                      {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map(
+                        (head) => (
+                          <th key={head} className={thClass}>
+                            {head}
+                          </th>
+                        )
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -2766,10 +2832,12 @@ function StudentsPage({
               />
               <div className="flex flex-wrap items-center gap-3">
                 <DownloadTemplateButton kind="students">Download template</DownloadTemplateButton>
-                <span className="text-sm text-muted">Accepted columns: student_name, group, aliases</span>
+                <span className="text-sm text-muted">
+                  Accepted columns: student_name, group, aliases
+                </span>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+                <label className="inline-flex items-center gap-1.5 text-sm font-bold text-muted">
                   <input
                     className="accent-accent"
                     type="checkbox"
@@ -2870,14 +2938,18 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
       Number.isNaN(startsAt.getTime()) || ((!from || startsAt >= from) && (!to || startsAt <= to));
     const meetingMatches =
       !filters.meetingId ||
-      normalize(`${summary.meeting_id || ""} ${summary.zoom_meeting_id || ""} ${summary.meeting_session_id || ""}`).includes(
-        normalize(filters.meetingId)
-      );
-    return (!filters.group || summary.group_name === filters.group) && dateMatches && meetingMatches;
+      normalize(
+        `${summary.meeting_id || ""} ${summary.zoom_meeting_id || ""} ${summary.meeting_session_id || ""}`
+      ).includes(normalize(filters.meetingId));
+    return (
+      (!filters.group || summary.group_name === filters.group) && dateMatches && meetingMatches
+    );
   });
   const totalSessions = new Set(
     filteredSummaries.map(
-      (summary) => summary.meeting_session_id || `${summary.lesson_title || ""}-${summary.lesson_starts_at || ""}`
+      (summary) =>
+        summary.meeting_session_id ||
+        `${summary.lesson_title || ""}-${summary.lesson_starts_at || ""}`
     )
   ).size;
   const average = filteredSummaries.length
@@ -3202,14 +3274,18 @@ function SettingsPage({
         <div className="p-5">
           {groups.length ? (
             <div className="flex flex-wrap gap-2">
-              {groups.map((group) => <Badge key={group}>{group}</Badge>)}
+              {groups.map((group) => (
+                <Badge key={group}>{group}</Badge>
+              ))}
             </div>
           ) : (
-            <div className="flex items-center gap-4 rounded-lg border border-line bg-[#FFFDF7] p-4">
+            <div className="flex items-center gap-2.5 rounded-lg border border-line bg-[#FFFDF7] p-4">
               <SoftIcon icon="users" size="sm" />
               <span>
                 <strong className="block text-sm font-black">No groups yet.</strong>
-                <span className="text-sm text-muted">Import students or schedule data to create groups.</span>
+                <span className="text-sm text-muted">
+                  Import students or schedule data to create groups.
+                </span>
               </span>
             </div>
           )}
@@ -3235,8 +3311,10 @@ function SettingsPage({
               }}
             />
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <DownloadTemplateButton kind="schedule">Download schedule template</DownloadTemplateButton>
-              <label className="inline-flex items-center gap-2 text-sm font-bold text-muted">
+              <DownloadTemplateButton kind="schedule">
+                Download schedule template
+              </DownloadTemplateButton>
+              <label className="inline-flex items-center gap-1.5 text-sm font-bold text-muted">
                 <input
                   className="accent-accent"
                   type="checkbox"
@@ -3517,7 +3595,14 @@ function App() {
     });
   }
 
-  async function saveGoogleSheetSource(importKind, sheetUrl, selectedTab, mapping, preview, autoSyncEnabled = false) {
+  async function saveGoogleSheetSource(
+    importKind,
+    sheetUrl,
+    selectedTab,
+    mapping,
+    preview,
+    autoSyncEnabled = false
+  ) {
     const result = await fetchJson("/google-sheets/sources", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
