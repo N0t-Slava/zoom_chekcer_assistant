@@ -1,4 +1,4 @@
-const { useCallback, useEffect, useMemo, useState } = React;
+const { useCallback, useEffect, useMemo, useRef, useState } = React;
 
 const MAX_ATTENDANCE = 30;
 const REFRESH_INTERVAL_MS = 5000;
@@ -13,6 +13,374 @@ const pages = [
 ];
 
 const pageTitles = Object.fromEntries(pages.map((page) => [page.id, page.label]));
+
+const FLOATING_ROOT_ID = "teacher-console-floating-root";
+const LANGUAGE_STORAGE_KEY = "teacher-console-language";
+const languageOptions = [
+  { id: "uk", label: "UA", flag: "🇺🇦", title: "Українська" },
+  { id: "en", label: "EN", flag: "🇬🇧", title: "English" }
+];
+
+const textTranslations = {
+  uk: {
+    "Primary navigation": "Основна навігація",
+    "Row actions": "Дії рядка",
+    "Choose file": "Вибрати файл",
+    "Browse files": "Огляд файлів",
+    "Teacher console": "Панель викладача",
+    "Roster and live sync": "Журнал і live-синхронізація",
+    Dashboard: "Панель",
+    "Current Lesson": "Поточний урок",
+    "Current lesson": "Поточний урок",
+    Meetings: "Зустрічі",
+    Students: "Студенти",
+    Reports: "Звіти",
+    Settings: "Налаштування",
+    "Zoom checking": "Перевірка Zoom",
+    "Zoom connected": "Zoom підключено",
+    "Zoom not connected": "Zoom не підключено",
+    Connected: "Підключено",
+    "Not connected": "Не підключено",
+    Ready: "Готово",
+    Error: "Помилка",
+    Syncing: "Синхронізація",
+    Active: "Активно",
+    active: "активно",
+    Closed: "Закрито",
+    Tracked: "Відстежено",
+    Idle: "Без дій",
+    Waiting: "Очікування",
+    Reading: "Читання",
+    Joined: "Приєднано",
+    "Not joined": "Не приєднано",
+    Configured: "Налаштовано",
+    "Missing credentials": "Немає облікових даних",
+    Available: "Доступно",
+    "Requires OAuth": "Потрібен OAuth",
+    Unknown: "Невідомо",
+    Never: "Ніколи",
+    Done: "Готово",
+    Pending: "Очікує",
+    Present: "Присутній",
+    Absent: "Відсутній",
+    "Not active": "Не активний",
+    "Needs review": "Потрібна перевірка",
+    Lessons: "Уроки",
+    "Start / Join lesson": "Почати / приєднатися",
+    "New meeting": "Нова зустріч",
+    "Generate journal": "Створити журнал",
+    "Open current lesson": "Відкрити поточний урок",
+    "Setup checklist": "Чекліст налаштування",
+    "Connect Zoom": "Підключити Zoom",
+    "Import students": "Імпорт студентів",
+    "Save or select a meeting": "Зберегти або вибрати зустріч",
+    "Start current lesson": "Почати поточний урок",
+    "Generate report": "Створити звіт",
+    "Your Zoom account is connected.": "Ваш акаунт Zoom підключено.",
+    "Connect Zoom so host join and live sync are available.":
+      "Підключіть Zoom, щоб був доступний вхід як host і live-синхронізація.",
+    "Add students manually, import a file, or connect a Google Sheet.":
+      "Додайте студентів вручну, імпортуйте файл або підключіть Google Sheet.",
+    "Keep recurring Zoom meetings ready for lesson setup.":
+      "Збережіть регулярні Zoom-зустрічі для швидкого налаштування уроку.",
+    "Open Current Lesson to join Zoom and begin attendance sync.":
+      "Відкрийте поточний урок, щоб приєднатися до Zoom і почати синхронізацію відвідуваності.",
+    "Review synced attendance and generate journals after lessons.":
+      "Переглядайте синхронізовану відвідуваність і створюйте журнали після уроків.",
+    "Complete the steps to get the most out of Teacher Console.":
+      "Виконайте кроки, щоб використати панель викладача максимально ефективно.",
+    "Zoom status": "Статус Zoom",
+    "Ready to sync": "Готово до синхронізації",
+    "0 in all groups": "0 у всіх групах",
+    "Not started": "Не розпочато",
+    "No active lesson": "Немає активного уроку",
+    Attendance: "Відвідуваність",
+    "0 records": "0 записів",
+    "Attendance overview": "Огляд відвідуваності",
+    Rows: "Рядки",
+    Sessions: "Сесії",
+    "Last sync": "Остання синхронізація",
+    "No attendance data yet.": "Даних відвідуваності ще немає.",
+    "Start your first lesson to see analytics here.":
+      "Почніть перший урок, щоб побачити тут аналітику.",
+    "Quick actions": "Швидкі дії",
+    Open: "Відкрити",
+    Manage: "Керувати",
+    View: "Переглянути",
+    "Recent activity": "Остання активність",
+    "View all": "Переглянути все",
+    "No recent activity yet.": "Останньої активності ще немає.",
+    "Your recent lessons and actions will appear here.":
+      "Ваші останні уроки та дії з'являться тут.",
+    "Search meetings": "Пошук зустрічей",
+    "All meetings": "Усі зустрічі",
+    "Host meetings": "Зустрічі host",
+    "Participant meetings": "Зустрічі учасника",
+    "Recently used": "Нещодавно використані",
+    "Clear filters": "Очистити фільтри",
+    "Saved Zoom meetings": "Збережені Zoom-зустрічі",
+    "Save recurring Zoom meetings here for quick lesson setup.":
+      "Зберігайте тут регулярні Zoom-зустрічі для швидкого налаштування уроку.",
+    "Meeting name": "Назва зустрічі",
+    "Meeting ID": "ID зустрічі",
+    Passcode: "Код доступу",
+    Role: "Роль",
+    Host: "Host",
+    Participant: "Учасник",
+    "Save meeting": "Зберегти зустріч",
+    "Owner/access": "Власник/доступ",
+    "Last used": "Останнє використання",
+    Sync: "Синхронізація",
+    Actions: "Дії",
+    "Untitled meeting": "Зустріч без назви",
+    "Not checked": "Не перевірено",
+    "No access": "Немає доступу",
+    "Owner match": "Власник збігається",
+    Readable: "Доступно для читання",
+    Join: "Приєднатися",
+    Edit: "Редагувати",
+    Check: "Перевірити",
+    Delete: "Видалити",
+    "No saved meetings yet": "Збережених зустрічей ще немає",
+    "Add your first recurring Zoom meeting above to make lesson setup faster.":
+      "Додайте першу регулярну Zoom-зустріч вище, щоб швидше налаштовувати уроки.",
+    "Recent lesson sessions": "Останні сесії уроків",
+    "View all sessions": "Усі сесії",
+    "Show recent": "Показати останні",
+    Session: "Сесія",
+    "Zoom ID": "Zoom ID",
+    "Lesson title": "Назва уроку",
+    Group: "Група",
+    Started: "Початок",
+    Status: "Статус",
+    "Save changes": "Зберегти зміни",
+    "Close session": "Закрити сесію",
+    "Export CSV": "Експорт CSV",
+    "No lesson sessions yet": "Сесій уроків ще немає",
+    "Join a Zoom lesson to start tracking live attendance.":
+      "Приєднайтеся до Zoom-уроку, щоб почати відстежувати відвідуваність наживо.",
+    "Start lesson": "Почати урок",
+    "Saved meeting": "Збережена зустріч",
+    "New lesson": "Новий урок",
+    "Teacher name": "Ім'я викладача",
+    "Join as host": "Приєднатися як host",
+    "You will join the Zoom meeting as host.": "Ви приєднаєтесь до Zoom-зустрічі як host.",
+    "Join Zoom": "Увійти в Zoom",
+    "Save lesson": "Зберегти урок",
+    "Lesson details saved.": "Дані уроку збережено.",
+    "Lesson draft saved on this device.": "Чернетку уроку збережено на цьому пристрої.",
+    "Current lesson closed.": "Поточний урок закрито.",
+    "Lesson draft cleared.": "Чернетку уроку очищено.",
+    "Ready to start": "Готово до старту",
+    "Connect Zoom to start": "Підключіть Zoom для старту",
+    "Zoom is connected. Join a meeting to begin attendance sync.":
+      "Zoom підключено. Приєднайтеся до зустрічі, щоб почати синхронізацію відвідуваності.",
+    "Zoom authorization and SDK credentials are required before attendance sync.":
+      "Для синхронізації відвідуваності потрібні авторизація Zoom і SDK-дані.",
+    "Live sync status": "Статус live-синхронізації",
+    "Zoom connection": "Підключення Zoom",
+    "Meeting status": "Статус зустрічі",
+    "Participant reading": "Зчитування учасників",
+    "Attendance sync": "Синхронізація відвідуваності",
+    "Sync interval": "Інтервал синхронізації",
+    "Every 5 seconds": "Кожні 5 секунд",
+    "Advanced sync details": "Додаткові деталі синхронізації",
+    State: "Стан",
+    Participants: "Учасники",
+    "No participants yet.": "Учасників ще немає.",
+    "After you join a Zoom meeting, participants will appear here.":
+      "Після приєднання до Zoom-зустрічі учасники з'являться тут.",
+    "Matched students": "Зіставлені студенти",
+    "No matched students yet.": "Зіставлених студентів ще немає.",
+    "We'll match participants to your roster once they're detected.":
+      "Ми зіставимо учасників із вашим списком, коли їх буде виявлено.",
+    "Names to review": "Імена для перевірки",
+    "No names to review.": "Немає імен для перевірки.",
+    "Unmatched participant names will appear here for you to review.":
+      "Незіставлені імена учасників з'являться тут для перевірки.",
+    "Attendance timeline": "Таймлайн відвідуваності",
+    "Attendance History": "Історія відвідуваності",
+    "No attendance timeline yet.": "Таймлайну відвідуваності ще немає.",
+    "No attendance history yet.": "Історії відвідуваності ще немає.",
+    "Live attendance records will appear here after participants are synced.":
+      "Записи відвідуваності наживо з'являться тут після синхронізації учасників.",
+    "Attendance records will appear here after live lessons are synced.":
+      "Записи відвідуваності з'являться тут після синхронізації live-уроків.",
+    Name: "Ім'я",
+    Meeting: "Зустріч",
+    "First seen": "Вперше помічено",
+    "Last seen": "Востаннє помічено",
+    Duration: "Тривалість",
+    Total: "Усього",
+    "No active participants yet.": "Активних учасників ще немає.",
+    "Zoom name": "Ім'я в Zoom",
+    "Suggested student": "Запропонований студент",
+    Action: "Дія",
+    "All active participants match the selected roster.":
+      "Усі активні учасники збігаються з вибраним списком.",
+    "Create alias / Link": "Створити псевдонім / зв'язати",
+    "Student list": "Список студентів",
+    Import: "Імпорт",
+    "Google Sheet": "Google Sheet",
+    "Search students or aliases": "Пошук студентів або псевдонімів",
+    "All groups": "Усі групи",
+    "Add student": "Додати студента",
+    "Student name": "Ім'я студента",
+    "No students yet.": "Студентів ще немає.",
+    "Add students manually, import a CSV/Excel file, or connect a Google Sheet.":
+      "Додайте студентів вручну, імпортуйте CSV/Excel або підключіть Google Sheet.",
+    "Import file": "Імпортувати файл",
+    "Connect Google Sheet": "Підключити Google Sheet",
+    "No students match this view.": "Немає студентів для цього перегляду.",
+    "Upload a CSV or Excel file to add or update students.":
+      "Завантажте CSV або Excel, щоб додати чи оновити студентів.",
+    "Drag and drop a file here, or": "Перетягніть файл сюди або",
+    "Download template": "Завантажити шаблон",
+    "Accepted columns: student_name, group, aliases":
+      "Прийняті колонки: student_name, group, aliases",
+    "Replace existing students": "Замінити наявних студентів",
+    "Preview import": "Переглянути імпорт",
+    "Import a roster or add students manually.": "Імпортуйте список або додайте студентів вручну.",
+    "Choose a CSV or XLSX file first.": "Спочатку виберіть CSV або XLSX файл.",
+    "Reading file...": "Читання файлу...",
+    "Importing...": "Імпорт...",
+    "Confirm import": "Підтвердити імпорт",
+    "Google Sheet students": "Студенти з Google Sheet",
+    "Aliases": "Псевдоніми",
+    "Attendance status": "Статус відвідуваності",
+    "Aliases / Zoom names": "Псевдоніми / імена Zoom",
+    None: "Немає",
+    "Zoom display name": "Ім'я в Zoom",
+    "Add alias": "Додати псевдонім",
+    Filters: "Фільтри",
+    "Total sessions": "Усього сесій",
+    "Average attendance": "Середня відвідуваність",
+    Absences: "Відсутності",
+    "Attendance rows": "Рядки відвідуваності",
+    "Start date": "Дата початку",
+    "End date": "Дата завершення",
+    "Enter meeting ID": "Введіть ID зустрічі",
+    Today: "Сьогодні",
+    "This week": "Цей тиждень",
+    "This month": "Цей місяць",
+    Custom: "Власний",
+    "Export attendance CSV": "Експорт відвідуваності CSV",
+    "Export matrix CSV": "Експорт матриці CSV",
+    "Generate attendance journal": "Створити журнал відвідуваності",
+    Generating: "Створення",
+    "Generating...": "Створення...",
+    Student: "Студент",
+    Lesson: "Урок",
+    Start: "Початок",
+    "Attendance journal": "Журнал відвідуваності",
+    "No journal generated yet.": "Журнал ще не створено.",
+    "Choose filters and click Generate attendance journal.":
+      "Виберіть фільтри й натисніть «Створити журнал відвідуваності».",
+    "Zoom integration": "Інтеграція Zoom",
+    "Zoom authorization": "Авторизація Zoom",
+    "Zoom account": "Акаунт Zoom",
+    "Zoom SDK": "Zoom SDK",
+    "Host token": "Host token",
+    "Authorize different account": "Авторизувати інший акаунт",
+    "Authorize Zoom": "Авторизувати Zoom",
+    "Disconnect Zoom": "Відключити Zoom",
+    Groups: "Групи",
+    "No groups yet.": "Груп ще немає.",
+    "Import students or schedule data to create groups.":
+      "Імпортуйте студентів або розклад, щоб створити групи.",
+    "Schedule import": "Імпорт розкладу",
+    "Import schedule CSV or Excel for attendance journals.":
+      "Імпортуйте CSV або Excel розкладу для журналів відвідуваності.",
+    "Import schedule CSV for attendance journals.":
+      "Імпортуйте CSV розкладу для журналів відвідуваності.",
+    "Drag and drop your CSV or Excel file here": "Перетягніть CSV або Excel файл сюди",
+    "Download schedule template": "Завантажити шаблон розкладу",
+    "Replace existing schedule": "Замінити наявний розклад",
+    "Preview schedule import": "Переглянути імпорт розкладу",
+    "Confirm schedule import": "Підтвердити імпорт розкладу",
+    "Lesson date": "Дата уроку",
+    "Start time": "Час початку",
+    "End time": "Час завершення",
+    Title: "Назва",
+    Starts: "Починається",
+    Ends: "Завершується",
+    "No schedule imported yet.": "Розклад ще не імпортовано.",
+    "Google Sheet schedule": "Розклад з Google Sheet",
+    "Share the sheet with the bot as Editor, then paste the URL.":
+      "Поділіться таблицею з ботом як Editor, потім вставте URL.",
+    "Bot ready": "Бот готовий",
+    "Bot missing": "Бот відсутній",
+    "Bot email": "Email бота",
+    "Bot email is not configured": "Email бота не налаштовано",
+    Copy: "Копіювати",
+    "Setup steps": "Кроки налаштування",
+    "Open your Google Sheet.": "Відкрийте Google Sheet.",
+    "Click Share and add the bot email as Editor.":
+      "Натисніть Share і додайте email бота як Editor.",
+    "Share it with the bot email as Editor.": "Поділіться з email бота як Editor.",
+    "Paste the sheet URL and load tabs.": "Вставте URL таблиці та завантажте вкладки.",
+    "Paste the sheet URL below and load tabs.": "Вставте URL таблиці нижче та завантажте вкладки.",
+    "Google Sheet URL": "URL Google Sheet",
+    "Load tabs": "Завантажити вкладки",
+    "Sheet tab": "Вкладка таблиці",
+    Preview: "Переглянути",
+    "Auto-sync": "Автосинхронізація",
+    "Save connection": "Зберегти підключення",
+    "Saved Google Sheets": "Збережені Google Sheets",
+    "Replace on sync": "Замінити під час синхронізації",
+    On: "Увімкнено",
+    Off: "Вимкнено",
+    "Sync now": "Синхронізувати зараз",
+    Tab: "Вкладка",
+    Type: "Тип",
+    Auto: "Авто",
+    When: "Коли",
+    Source: "Джерело",
+    Imported: "Імпортовано",
+    Skipped: "Пропущено",
+    "No Google Sheets connected yet.": "Google Sheets ще не підключено.",
+    "Connect a sheet to enable automatic schedule sync.":
+      "Підключіть таблицю, щоб увімкнути автоматичну синхронізацію розкладу.",
+    "Connect a sheet to enable automatic roster sync.":
+      "Підключіть таблицю, щоб увімкнути автоматичну синхронізацію списку.",
+    "Reading sheet tabs...": "Читання вкладок таблиці...",
+    "Choose a tab and preview mapping.": "Виберіть вкладку й перегляньте зіставлення.",
+    "No tabs found.": "Вкладок не знайдено.",
+    "Paste a Sheet URL and choose a tab first.":
+      "Спочатку вставте URL таблиці та виберіть вкладку.",
+    "Reading sample rows...": "Читання прикладів рядків...",
+    "Preview and confirm mapping before saving.":
+      "Перегляньте й підтвердіть зіставлення перед збереженням.",
+    "Saving Google Sheet connection...": "Збереження підключення Google Sheet...",
+    "Google Sheet connection saved.": "Підключення Google Sheet збережено.",
+    "Syncing Google Sheet...": "Синхронізація Google Sheet...",
+    "Bot email copied.": "Email бота скопійовано.",
+    "Not mapped": "Не зіставлено",
+    "No rows detected.": "Рядків не знайдено.",
+    "Confirm mapping before saving.": "Підтвердьте зіставлення перед збереженням.",
+    "e.g. Grade 3 Math - Morning": "наприклад, Grade 3 Math - Morning",
+    "e.g. 72501545228": "наприклад, 72501545228",
+    "e.g. 123456": "наприклад, 123456"
+  }
+};
+
+const translationPatterns = {
+  uk: [
+    [/^Connected as (.+)\.$/, (match) => `Підключено як ${match[1]}.`],
+    [/^Preview ready: (\d+) rows detected\.$/, (match) => `Перегляд готовий: ${match[1]} рядків знайдено.`],
+    [/^(\d+) rows detected\. Confirm mapping before saving\.$/, (match) => `${match[1]} рядків знайдено. Підтвердьте зіставлення перед збереженням.`],
+    [/^Imported (\d+), created (\d+), updated (\d+), skipped (\d+)(.*)\.$/, (match) => `Імпортовано ${match[1]}, створено ${match[2]}, оновлено ${match[3]}, пропущено ${match[4]}${match[5]}.`],
+    [/^Generated (\d+): (\d+) present, (\d+) absent\.(.*)$/, (match) => `Створено ${match[1]}: присутні ${match[2]}, відсутні ${match[3]}.${match[4]}`],
+    [/^Type: (.+)$/, (match) => `Тип: ${match[1]}`],
+    [/^Mapping: (.+)$/, (match) => `Зіставлення: ${match[1]}`],
+    [/^(\d+)% confidence$/, (match) => `${match[1]}% впевненості`],
+    [/^Session #(\d+)$/, (match) => `Сесія #${match[1]}`]
+  ]
+};
+
+const translationAttributes = ["placeholder", "aria-label", "title"];
+const originalTextValues = new WeakMap();
+const originalAttributeValues = new WeakMap();
 
 const tones = {
   success: "border-green-200 bg-green-50 text-success",
@@ -29,9 +397,10 @@ const dangerButton = `${buttonBase} border-red-200 bg-red-50 text-danger`;
 const successButton = `${buttonBase} border-green-200 bg-green-50 text-success`;
 const compactButton = "min-h-8 px-2.5 text-xs";
 const inputClass =
-  "min-h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200";
-const labelClass = "grid gap-1 text-xs font-black uppercase text-muted";
-const cardClass = "overflow-hidden rounded-lg border border-line bg-panel shadow-soft";
+  "min-h-10 min-w-0 w-full rounded-lg border border-line bg-panel px-3 text-sm text-ink outline-none focus:border-[#D9C300] focus:ring-4 focus:ring-yellow-200";
+const selectClass = cx(inputClass, "appearance-none pr-10");
+const labelClass = "grid min-w-0 gap-1 text-xs font-black uppercase text-muted";
+const cardClass = "rounded-lg border border-line bg-panel shadow-soft";
 const cardHeaderClass = "flex items-start justify-between gap-3 border-b border-line px-5 py-4";
 const tableWrapClass = "overflow-x-auto";
 const tableClass = "min-w-full border-separate border-spacing-0 text-sm";
@@ -41,6 +410,191 @@ const tdClass = "border-b border-line px-3 py-3 align-middle whitespace-nowrap";
 
 function cx(...values) {
   return values.filter(Boolean).join(" ");
+}
+
+function getInitialLanguage() {
+  try {
+    const stored = window.localStorage?.getItem(LANGUAGE_STORAGE_KEY);
+    return languageOptions.some((language) => language.id === stored) ? stored : "en";
+  } catch (error) {
+    return "en";
+  }
+}
+
+function translateTextValue(value, language) {
+  if (language === "en") {
+    return value;
+  }
+  const dictionary = textTranslations[language];
+  if (!dictionary || typeof value !== "string") {
+    return value;
+  }
+  const leading = value.match(/^\s*/)?.[0] || "";
+  const trailing = value.match(/\s*$/)?.[0] || "";
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return value;
+  }
+  const direct = dictionary[trimmed];
+  if (direct) {
+    return `${leading}${direct}${trailing}`;
+  }
+  const patterns = translationPatterns[language] || [];
+  for (const [pattern, formatter] of patterns) {
+    const match = trimmed.match(pattern);
+    if (match) {
+      return `${leading}${formatter(match)}${trailing}`;
+    }
+  }
+  return value;
+}
+
+function isKnownTranslatedValue(original, current) {
+  return languageOptions.some((language) => translateTextValue(original, language.id) === current);
+}
+
+function currentOriginalText(node, language) {
+  const current = node.nodeValue;
+  const existing = originalTextValues.get(node);
+  if (existing === undefined) {
+    originalTextValues.set(node, current);
+    return current;
+  }
+  const expected = translateTextValue(existing, language);
+  if (current !== existing && current !== expected && !isKnownTranslatedValue(existing, current)) {
+    originalTextValues.set(node, current);
+    return current;
+  }
+  return existing;
+}
+
+function currentOriginalAttribute(element, attribute, language) {
+  let originals = originalAttributeValues.get(element);
+  if (!originals) {
+    originals = {};
+    originalAttributeValues.set(element, originals);
+  }
+  const current = element.getAttribute(attribute);
+  const existing = originals[attribute];
+  if (existing === undefined) {
+    originals[attribute] = current;
+    return current;
+  }
+  const expected = translateTextValue(existing, language);
+  if (current !== existing && current !== expected && !isKnownTranslatedValue(existing, current)) {
+    originals[attribute] = current;
+    return current;
+  }
+  return existing;
+}
+
+function applyTranslations(root, language) {
+  if (!root) {
+    return;
+  }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (
+        !node.nodeValue?.trim() ||
+        !parent ||
+        parent.closest("[data-no-translate]") ||
+        ["SCRIPT", "STYLE", "TEXTAREA", "CODE"].includes(parent.tagName)
+      ) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const textNodes = [];
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode);
+  }
+  textNodes.forEach((node) => {
+    const original = currentOriginalText(node, language);
+    const translated = translateTextValue(original, language);
+    if (node.nodeValue !== translated) {
+      node.nodeValue = translated;
+    }
+  });
+  root.querySelectorAll("*").forEach((element) => {
+    translationAttributes.forEach((attribute) => {
+      if (!element.hasAttribute(attribute)) {
+        return;
+      }
+      const original = currentOriginalAttribute(element, attribute, language);
+      const translated = translateTextValue(original, language);
+      if (element.getAttribute(attribute) !== translated) {
+        element.setAttribute(attribute, translated);
+      }
+    });
+  });
+}
+
+function TranslationLayer({ language, children }) {
+  const rootRef = useRef(null);
+  useEffect(() => {
+    document.documentElement.lang = language === "uk" ? "uk" : "en";
+    const root = rootRef.current;
+    if (!root) {
+      return undefined;
+    }
+    let frameId = 0;
+    const scheduleTranslate = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => applyTranslations(root, language));
+    };
+    const observer = new MutationObserver(scheduleTranslate);
+    scheduleTranslate();
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: translationAttributes
+    });
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
+  }, [language]);
+  return (
+    <div ref={rootRef} className="contents">
+      {children}
+      <div id={FLOATING_ROOT_ID} className="contents" />
+    </div>
+  );
+}
+
+function LanguageSwitcher({ language, onLanguageChange }) {
+  return (
+    <div className="grid gap-2 pb-2">
+      <div className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-panel p-1 shadow-soft">
+        {languageOptions.map((option) => {
+          const active = language === option.id;
+          return (
+            <button
+              key={option.id}
+              className={cx(
+                "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-black transition-all duration-200",
+                active
+                  ? "border-[#D9C300] bg-yellow-100 text-ink shadow-sm"
+                  : "border-transparent text-muted hover:bg-[#FFF7D6] hover:text-ink"
+              )}
+              type="button"
+              aria-pressed={active}
+              title={option.title}
+              onClick={() => onLanguageChange(option.id)}>
+              <span className="text-lg leading-none" aria-hidden="true">
+                {option.flag}
+              </span>
+              <span>{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 const iconShapes = {
@@ -171,6 +725,11 @@ const iconShapes = {
     { tag: "path", d: "M3 10h18M10 4v16" }
   ],
   "chevron-down": [{ tag: "path", d: "m6 9 6 6 6-6" }],
+  "ellipsis-vertical": [
+    { tag: "circle", cx: "12", cy: "5", r: "1" },
+    { tag: "circle", cx: "12", cy: "12", r: "1" },
+    { tag: "circle", cx: "12", cy: "19", r: "1" }
+  ],
   "toggle-right": [
     { tag: "rect", x: "2", y: "6", width: "20", height: "12", rx: "6" },
     { tag: "circle", cx: "16", cy: "12", r: "2" }
@@ -316,7 +875,7 @@ function ActionButton({
 
 function FieldWithIcon({ icon, children }) {
   return (
-    <span className="relative block">
+    <span className="relative block min-w-0">
       <Icon
         name={icon}
         size={16}
@@ -326,6 +885,418 @@ function FieldWithIcon({ icon, children }) {
         className: cx(children.props.className, "pl-9")
       })}
     </span>
+  );
+}
+
+function optionValue(option) {
+  if (!React.isValidElement(option)) {
+    return "";
+  }
+  const value = option.props.value;
+  return value === undefined || value === null ? String(option.props.children || "") : String(value);
+}
+
+function floatingRoot() {
+  return document.getElementById(FLOATING_ROOT_ID) || document.body;
+}
+
+function selectFloatingStyle(anchor) {
+  if (!anchor) {
+    return null;
+  }
+  const rect = anchor.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const gutter = 8;
+  const gap = 4;
+  const maxMenuHeight = 256;
+  const minUsefulHeight = 144;
+  const width = Math.max(rect.width, 160);
+  const left = Math.min(Math.max(gutter, rect.left), Math.max(gutter, viewportWidth - width - gutter));
+  const belowSpace = viewportHeight - rect.bottom - gutter;
+  const aboveSpace = rect.top - gutter;
+  const openAbove = belowSpace < minUsefulHeight && aboveSpace > belowSpace;
+  const availableSpace = Math.max(openAbove ? aboveSpace : belowSpace, 96);
+  const maxHeight = Math.min(maxMenuHeight, Math.max(96, availableSpace - gap));
+  const style = {
+    left,
+    width,
+    maxHeight,
+    zIndex: 10000
+  };
+
+  if (openAbove) {
+    style.bottom = Math.max(gutter, viewportHeight - rect.top + gap);
+  } else {
+    style.top = Math.min(rect.bottom + gap, viewportHeight - gutter);
+  }
+
+  return style;
+}
+
+function actionsFloatingStyle(anchor) {
+  if (!anchor) {
+    return null;
+  }
+  const rect = anchor.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  return {
+    right: Math.max(8, (window.innerWidth || document.documentElement.clientWidth) - rect.left),
+    top: Math.min(Math.max(8, rect.top + rect.height / 2), viewportHeight - 8),
+    zIndex: 10000
+  };
+}
+
+function SelectField({
+  icon,
+  className = "",
+  children,
+  value,
+  defaultValue,
+  onChange,
+  disabled = false,
+  ...props
+}) {
+  const [open, setOpen] = useState(false);
+  const [floatingStyle, setFloatingStyle] = useState(null);
+  const rootRef = useRef(null);
+  const menuRef = useRef(null);
+  const options = React.Children.toArray(children).filter(React.isValidElement);
+  const fallbackValue = options.length ? optionValue(options[0]) : "";
+  const selectedValue = String(value ?? defaultValue ?? fallbackValue);
+  const selectedOption =
+    options.find((option) => optionValue(option) === selectedValue) || options[0] || null;
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    function updatePosition() {
+      setFloatingStyle(selectFloatingStyle(rootRef.current));
+    }
+
+    function closeFromOutside(event) {
+      const clickedRoot = rootRef.current?.contains(event.target);
+      const clickedMenu = menuRef.current?.contains(event.target);
+      if (
+        rootRef.current &&
+        !clickedRoot &&
+        !clickedMenu
+      ) {
+        setOpen(false);
+      }
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    updatePosition();
+    document.addEventListener("mousedown", closeFromOutside);
+    document.addEventListener("touchstart", closeFromOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      document.removeEventListener("mousedown", closeFromOutside);
+      document.removeEventListener("touchstart", closeFromOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open]);
+
+  function chooseOption(option) {
+    if (option.props.disabled) {
+      return;
+    }
+    const nextValue = optionValue(option);
+    onChange?.({
+      target: { value: nextValue, name: props.name },
+      currentTarget: { value: nextValue, name: props.name }
+    });
+    setOpen(false);
+  }
+
+  const dropdown =
+    open && !disabled && floatingStyle
+      ? ReactDOM.createPortal(
+          <div
+            ref={menuRef}
+            className="overflow-hidden rounded-lg border border-line bg-panel shadow-soft"
+            style={{
+              position: "fixed",
+              left: floatingStyle.left,
+              top: floatingStyle.top,
+              bottom: floatingStyle.bottom,
+              width: floatingStyle.width,
+              zIndex: floatingStyle.zIndex
+            }}>
+            <div
+              className="overflow-auto rounded-b-lg p-1"
+              role="listbox"
+              style={{ maxHeight: floatingStyle.maxHeight }}>
+              {options.map((option, index) => {
+                const nextValue = optionValue(option);
+                const selected = nextValue === selectedValue;
+                const optionDisabled = Boolean(option.props.disabled);
+                return (
+                  <button
+                    key={option.key || `${nextValue}-${index}`}
+                    className={cx(
+                      "flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-3 text-left text-sm font-bold text-ink transition hover:bg-[#FFF7D6] focus:bg-[#FFF7D6] focus:outline-none",
+                      selected && "bg-yellow-50",
+                      optionDisabled && "cursor-not-allowed opacity-50"
+                    )}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    disabled={optionDisabled}
+                    onClick={() => chooseOption(option)}>
+                    <span className="min-w-0 truncate">{option.props.children}</span>
+                    {selected ? (
+                      <Icon name="check" size={16} className="shrink-0 text-success" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>,
+          floatingRoot()
+        )
+      : null;
+
+  return (
+    <span ref={rootRef} className={cx("relative block min-w-0", className)}>
+      {icon ? (
+        <Icon
+          name={icon}
+          size={16}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+        />
+      ) : null}
+      <button
+        className={cx(
+          selectClass,
+          "flex items-center text-left",
+          icon && "pl-9",
+          disabled && "cursor-not-allowed opacity-60"
+        )}
+        type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        {...props}>
+        <span className="min-w-0 flex-1 truncate">{selectedOption?.props.children || ""}</span>
+      </button>
+      <Icon
+        name="chevron-down"
+        size={16}
+        className={cx(
+          "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 transition duration-150",
+          open && "rotate-180"
+        )}
+      />
+      {dropdown}
+    </span>
+  );
+}
+
+function timeSortValue(value) {
+  const time = new Date(value || 0).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function normalizeSortValue(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "boolean") {
+    return value ? 1 : 0;
+  }
+  return String(value).toLocaleLowerCase();
+}
+
+function compareSortValues(left, right) {
+  const normalizedLeft = normalizeSortValue(left);
+  const normalizedRight = normalizeSortValue(right);
+  if (typeof normalizedLeft === "number" && typeof normalizedRight === "number") {
+    return normalizedLeft - normalizedRight;
+  }
+  return String(normalizedLeft).localeCompare(String(normalizedRight), undefined, {
+    numeric: true,
+    sensitivity: "base"
+  });
+}
+
+function sortRows(rows, sortConfig, columns) {
+  const column = columns.find((item) => item.key === sortConfig.key);
+  if (!column || column.sortable === false) {
+    return rows;
+  }
+  const direction = sortConfig.direction === "desc" ? -1 : 1;
+  return [...rows].sort((left, right) => {
+    const leftValue = column.sortValue ? column.sortValue(left) : left?.[column.key];
+    const rightValue = column.sortValue ? column.sortValue(right) : right?.[column.key];
+    return compareSortValues(leftValue, rightValue) * direction;
+  });
+}
+
+function useTableSort(defaultKey, defaultDirection = "asc") {
+  const [sortConfig, setSortConfig] = useState({
+    key: defaultKey,
+    direction: defaultDirection
+  });
+  useEffect(() => {
+    setSortConfig((current) =>
+      current.key || !defaultKey ? current : { key: defaultKey, direction: defaultDirection }
+    );
+  }, [defaultKey, defaultDirection]);
+  const toggleSort = useCallback((key) => {
+    setSortConfig((current) =>
+      current.key === key
+        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "asc" }
+    );
+  }, []);
+  return { sortConfig, toggleSort };
+}
+
+function SortableHeaderRow({ columns, sortConfig, onSort }) {
+  return (
+    <thead>
+      <tr>
+        {columns.map((column) => {
+          const active = sortConfig?.key === column.key;
+          const canSort = column.key && column.sortable !== false;
+          return (
+            <th key={column.key || column.label} className={cx(thClass, column.className)}>
+              {canSort ? (
+                <button
+                  className="inline-flex items-center gap-1.5 text-left uppercase"
+                  type="button"
+                  onClick={() => onSort(column.key)}>
+                  <span>{column.label}</span>
+                  <Icon
+                    name="chevron-down"
+                    size={14}
+                    className={cx(
+                      "transition duration-150",
+                      active ? "opacity-100" : "opacity-40",
+                      active && sortConfig.direction === "asc" ? "rotate-180" : "rotate-0"
+                    )}
+                  />
+                </button>
+              ) : (
+                column.label
+              )}
+            </th>
+          );
+        })}
+      </tr>
+    </thead>
+  );
+}
+
+function actionMenuItems(children) {
+  return React.Children.map(children, (child) => {
+    if (!React.isValidElement(child)) {
+      return child;
+    }
+    return React.cloneElement(child, {
+      className: cx("w-full justify-start whitespace-nowrap", child.props.className)
+    });
+  });
+}
+
+function ActionsMenu({ children, label = "Row actions" }) {
+  const [open, setOpen] = useState(false);
+  const [floatingStyle, setFloatingStyle] = useState(null);
+  const rootRef = useRef(null);
+  const menuRef = useRef(null);
+  const closeTimerRef = useRef(null);
+
+  const updatePosition = useCallback(() => {
+    setFloatingStyle(actionsFloatingStyle(rootRef.current));
+  }, []);
+
+  const showMenu = useCallback(() => {
+    window.clearTimeout(closeTimerRef.current);
+    setOpen(true);
+    setFloatingStyle(actionsFloatingStyle(rootRef.current));
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 120);
+  }, []);
+
+  useEffect(() => {
+    return () => window.clearTimeout(closeTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, updatePosition]);
+
+  const menu =
+    open && floatingStyle
+      ? ReactDOM.createPortal(
+          <div
+            ref={menuRef}
+            className="py-4 pr-3"
+            style={{
+              position: "fixed",
+              right: floatingStyle.right,
+              top: floatingStyle.top,
+              transform: "translateY(-50%)",
+              zIndex: floatingStyle.zIndex
+            }}
+            onMouseEnter={showMenu}
+            onMouseLeave={scheduleClose}
+            onFocus={showMenu}
+            onBlur={scheduleClose}>
+            <div className="grid gap-1 overflow-hidden rounded-lg border border-line bg-panel p-2 shadow-soft">
+              {actionMenuItems(children)}
+            </div>
+          </div>,
+          floatingRoot()
+        )
+      : null;
+
+  return (
+    <div
+      ref={rootRef}
+      className="relative inline-flex justify-end"
+      onMouseEnter={showMenu}
+      onMouseLeave={scheduleClose}
+      onFocus={showMenu}
+      onBlur={scheduleClose}>
+      <button
+        className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-panel text-ink transition hover:bg-[#FFF7D6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-200"
+        type="button"
+        aria-label={label}>
+        <Icon name="ellipsis-vertical" size={18} />
+      </button>
+      {menu}
+    </div>
   );
 }
 
@@ -741,7 +1712,15 @@ function StatusTile({ label, value, tone = "neutral", wide = false, icon }) {
   );
 }
 
-function Shell({ page, goToPage, oauthStatus, children }) {
+function Shell({
+  page,
+  goToPage,
+  oauthStatus,
+  language,
+  onLanguageChange,
+  languageChanging,
+  children
+}) {
   const checkingZoom = !oauthStatus;
   const zoomConnected = Boolean(oauthStatus?.authorized);
   const zoomLabel = checkingZoom
@@ -778,6 +1757,7 @@ function Shell({ page, goToPage, oauthStatus, children }) {
         </nav>
 
         <div className="mt-auto grid gap-2 border-t border-line pt-4 text-sm font-black">
+          <LanguageSwitcher language={language} onLanguageChange={onLanguageChange} />
           <span className="inline-flex items-center gap-1.5 text-muted">
             <span
               className={cx(
@@ -795,7 +1775,13 @@ function Shell({ page, goToPage, oauthStatus, children }) {
           </a>
         </div>
       </aside>
-      <main className="grid content-start gap-5 bg-canvas px-8 py-7 pb-12">{children}</main>
+      <main
+        className={cx(
+          "grid content-start gap-5 bg-canvas px-8 py-7 pb-12 transition-all duration-200 ease-out",
+          languageChanging ? "translate-y-0.5 opacity-60" : "translate-y-0 opacity-100"
+        )}>
+        {children}
+      </main>
     </div>
   );
 }
@@ -990,19 +1976,21 @@ function MiniStats({ meetings, students, records }) {
 }
 
 function UnmatchedTable({ records, students, createAlias }) {
-  const rows = records.slice(0, MAX_ATTENDANCE);
+  const columns = [
+    { key: "participant_name", label: "Zoom name" },
+    {
+      key: "suggested",
+      label: "Suggested student",
+      sortValue: (record) => suggestStudent(students, record)?.full_name || ""
+    },
+    { key: "actions", label: "Action", sortable: false }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("participant_name");
+  const rows = sortRows(records.slice(0, MAX_ATTENDANCE), sortConfig, columns);
   return (
     <div className={tableWrapClass}>
       <table className={tableClass}>
-        <thead>
-          <tr>
-            {["Zoom name", "Suggested student", "Action"].map((head) => (
-              <th key={head} className={thClass}>
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
+        <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
         <tbody>
           {rows.length ? (
             rows.map((record) => {
@@ -1039,28 +2027,29 @@ function AliasRow({ record, students, suggested, createAlias }) {
     <tr>
       <td className={tdClass}>{record.participant_name}</td>
       <td className={tdClass}>
-        <FieldWithIcon icon="user-check">
-          <select
-            className={cx(inputClass, "min-w-40")}
-            value={studentId}
-            disabled={!students.length}
-            onChange={(event) => setStudentId(event.target.value)}>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.full_name} ({student.group_name})
-              </option>
-            ))}
-          </select>
-        </FieldWithIcon>
+        <SelectField
+          icon="user-check"
+          className="min-w-40"
+          value={studentId}
+          disabled={!students.length}
+          onChange={(event) => setStudentId(event.target.value)}>
+          {students.map((student) => (
+            <option key={student.id} value={student.id}>
+              {student.full_name} ({student.group_name})
+            </option>
+          ))}
+        </SelectField>
       </td>
       <td className={tdClass}>
-        <ActionButton
-          compact
-          icon="link-2"
-          disabled={!studentId}
-          onClick={() => createAlias(Number(studentId), record.participant_name)}>
-          Create alias / Link
-        </ActionButton>
+        <ActionsMenu>
+          <ActionButton
+            compact
+            icon="link-2"
+            disabled={!studentId}
+            onClick={() => createAlias(Number(studentId), record.participant_name)}>
+            Create alias / Link
+          </ActionButton>
+        </ActionsMenu>
       </td>
     </tr>
   );
@@ -1176,13 +2165,29 @@ function MenuPage(props) {
   } = props;
   const active = activeMeeting(meetings);
   const attendanceRows = Math.min(historyRecords.length, MAX_ATTENDANCE);
-  const recentRows = [...meetings]
-    .sort((left, right) => {
-      const leftTime = new Date(left.started_at || left.updated_at || 0).getTime();
-      const rightTime = new Date(right.started_at || right.updated_at || 0).getTime();
-      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
-    })
-    .slice(0, 3);
+  const recentColumns = [
+    { key: "id", label: "Session" },
+    {
+      key: "title",
+      label: "Lesson",
+      sortValue: (meeting) => meeting.title || meeting.zoom_meeting_id
+    },
+    {
+      key: "started_at",
+      label: "Started",
+      sortValue: (meeting) => timeSortValue(meeting.started_at)
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortValue: (meeting) => (meeting.ended_at ? "Closed" : "Active")
+    }
+  ];
+  const { sortConfig: recentSortConfig, toggleSort: toggleRecentSort } = useTableSort(
+    "started_at",
+    "desc"
+  );
+  const recentRows = sortRows(meetings, recentSortConfig, recentColumns).slice(0, 3);
 
   return (
     <section className="grid gap-5">
@@ -1281,15 +2286,11 @@ function MenuPage(props) {
         {recentRows.length ? (
           <div className={tableWrapClass}>
             <table className={tableClass}>
-              <thead>
-                <tr>
-                  {["Session", "Lesson", "Started", "Status"].map((head) => (
-                    <th key={head} className={thClass}>
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+              <SortableHeaderRow
+                columns={recentColumns}
+                sortConfig={recentSortConfig}
+                onSort={toggleRecentSort}
+              />
               <tbody>
                 {recentRows.map((meeting) => (
                   <tr key={meeting.id}>
@@ -1373,17 +2374,16 @@ function MeetingsPage({
               placeholder="Search meetings"
             />
           </FieldWithIcon>
-          <FieldWithIcon icon="list-filter">
-            <select
-              className={cx(inputClass, "w-52")}
-              value={mode}
-              onChange={(event) => setMode(event.target.value)}>
-              <option value="all">All meetings</option>
-              <option value="host">Host meetings</option>
-              <option value="participant">Participant meetings</option>
-              <option value="recent">Recently used</option>
-            </select>
-          </FieldWithIcon>
+          <SelectField
+            icon="list-filter"
+            className="w-52"
+            value={mode}
+            onChange={(event) => setMode(event.target.value)}>
+            <option value="all">All meetings</option>
+            <option value="host">Host meetings</option>
+            <option value="participant">Participant meetings</option>
+            <option value="recent">Recently used</option>
+          </SelectField>
         </div>
         <ActionButton
           icon="filter-x"
@@ -1434,17 +2434,14 @@ function MeetingsPage({
           </label>
           <label className={labelClass}>
             Role
-            <FieldWithIcon icon="chevron-down">
-              <select
-                className={inputClass}
-                value={draft.join_as_host ? "host" : "participant"}
-                onChange={(event) =>
-                  setDraft({ ...draft, join_as_host: event.target.value === "host" })
-                }>
-                <option value="host">Host</option>
-                <option value="participant">Participant</option>
-              </select>
-            </FieldWithIcon>
+            <SelectField
+              value={draft.join_as_host ? "host" : "participant"}
+              onChange={(event) =>
+                setDraft({ ...draft, join_as_host: event.target.value === "host" })
+              }>
+              <option value="host">Host</option>
+              <option value="participant">Participant</option>
+            </SelectField>
           </label>
           <ActionButton icon="save" variant="primary" type="submit">
             Save meeting
@@ -1491,30 +2488,55 @@ function SavedMeetingsTable({
   deleteSavedMeeting,
   checkSavedMeeting
 }) {
+  const columns = [
+    {
+      key: "title",
+      label: "Meeting name",
+      sortValue: (meeting) => meeting.title || "Untitled meeting"
+    },
+    { key: "meeting_number", label: "Meeting ID" },
+    {
+      key: "join_as_host",
+      label: "Role",
+      sortValue: (meeting) => (meeting.join_as_host ? "Host" : "Participant")
+    },
+    {
+      key: "owner",
+      label: "Owner/access",
+      sortValue: (meeting) => {
+        const check = ownershipChecks[meeting.meeting_number];
+        if (!check) return "Not checked";
+        if (!check.can_read) return "No access";
+        return check.owner_matches_authorized_user ? "Owner match" : "Readable";
+      }
+    },
+    {
+      key: "updated_at",
+      label: "Last used",
+      sortValue: (meeting) => timeSortValue(meeting.updated_at)
+    },
+    {
+      key: "sync",
+      label: "Sync",
+      sortValue: (meeting) => {
+        const tracked = trackedMeetings.find(
+          (item) => item.zoom_meeting_id === meeting.meeting_number
+        );
+        return tracked ? (tracked.ended_at ? "Tracked" : "Active") : "Idle";
+      }
+    },
+    { key: "actions", label: "Actions", sortable: false }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("updated_at", "desc");
+  const sortedMeetings = sortRows(meetings, sortConfig, columns);
   const content = (
     <React.Fragment>
       <div className={tableWrapClass}>
         <table className={tableClass}>
-          <thead>
-            <tr>
-              {[
-                "Meeting name",
-                "Meeting ID",
-                "Role",
-                "Owner/access",
-                "Last used",
-                "Sync",
-                "Actions"
-              ].map((head) => (
-                <th key={head} className={thClass}>
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
           <tbody>
-            {meetings.length ? (
-              meetings.map((meeting) => {
+            {sortedMeetings.length ? (
+              sortedMeetings.map((meeting) => {
                 const check = ownershipChecks[meeting.meeting_number];
                 const tracked = trackedMeetings.find(
                   (item) => item.zoom_meeting_id === meeting.meeting_number
@@ -1554,26 +2576,28 @@ function SavedMeetingsTable({
                         {tracked ? (tracked.ended_at ? "Tracked" : "Active") : "Idle"}
                       </Badge>
                     </td>
-                    <td className={cx(tdClass, "space-x-2")}>
-                      <ActionButton as="a" compact icon="video" href={meetingJoinUrl(meeting)}>
-                        Join
-                      </ActionButton>
-                      <ActionButton compact icon="pencil" onClick={() => setDraft(meeting)}>
-                        Edit
-                      </ActionButton>
-                      <ActionButton
-                        compact
-                        icon="shield-check"
-                        onClick={() => checkSavedMeeting(meeting.meeting_number)}>
-                        Check
-                      </ActionButton>
-                      <ActionButton
-                        compact
-                        icon="trash-2"
-                        variant="danger"
-                        onClick={() => deleteSavedMeeting(meeting.id)}>
-                        Delete
-                      </ActionButton>
+                    <td className={tdClass}>
+                      <ActionsMenu>
+                        <ActionButton as="a" compact icon="video" href={meetingJoinUrl(meeting)}>
+                          Join
+                        </ActionButton>
+                        <ActionButton compact icon="pencil" onClick={() => setDraft(meeting)}>
+                          Edit
+                        </ActionButton>
+                        <ActionButton
+                          compact
+                          icon="shield-check"
+                          onClick={() => checkSavedMeeting(meeting.meeting_number)}>
+                          Check
+                        </ActionButton>
+                        <ActionButton
+                          compact
+                          icon="trash-2"
+                          variant="danger"
+                          onClick={() => deleteSavedMeeting(meeting.id)}>
+                          Delete
+                        </ActionButton>
+                      </ActionsMenu>
                     </td>
                   </tr>
                 );
@@ -1610,16 +2634,31 @@ function SavedMeetingsTable({
 
 function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
   const [showAll, setShowAll] = useState(false);
-  const sortedMeetings = [...meetings].sort((left, right) => {
-    const rawLeftTime = new Date(left.started_at || left.updated_at || 0).getTime();
-    const rawRightTime = new Date(right.started_at || right.updated_at || 0).getTime();
-    const leftTime = Number.isNaN(rawLeftTime) ? 0 : rawLeftTime;
-    const rightTime = Number.isNaN(rawRightTime) ? 0 : rawRightTime;
-    if (rightTime !== leftTime) {
-      return rightTime - leftTime;
-    }
-    return right.id - left.id;
-  });
+  const columns = [
+    { key: "id", label: "Session" },
+    { key: "zoom_meeting_id", label: "Zoom ID" },
+    { key: "title", label: "Lesson title", sortValue: (meeting) => meeting.title || "" },
+    { key: "group_name", label: "Group", sortValue: (meeting) => meeting.group_name || "" },
+    {
+      key: "started_at",
+      label: "Started",
+      sortValue: (meeting) => timeSortValue(meeting.started_at)
+    },
+    {
+      key: "last_sync",
+      label: "Last sync",
+      sortValue: (meeting) =>
+        timeSortValue(meeting.ended_at || meeting.updated_at || meeting.started_at)
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortValue: (meeting) => (meeting.ended_at ? "Closed" : "Active")
+    },
+    { key: "actions", label: "Actions", sortable: false }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("started_at", "desc");
+  const sortedMeetings = sortRows(meetings, sortConfig, columns);
   const visibleMeetings = showAll ? sortedMeetings : sortedMeetings.slice(0, 5);
 
   return (
@@ -1631,24 +2670,7 @@ function TrackedMeetingsTable({ meetings, updateMeeting, closeMeeting }) {
       </CardHeader>
       <div className={tableWrapClass}>
         <table className={tableClass}>
-          <thead>
-            <tr>
-              {[
-                "Session",
-                "Zoom ID",
-                "Lesson title",
-                "Group",
-                "Started",
-                "Last sync",
-                "Status",
-                "Actions"
-              ].map((head) => (
-                <th key={head} className={thClass}>
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
           <tbody>
             {visibleMeetings.length ? (
               visibleMeetings.map((meeting) => (
@@ -1713,28 +2735,30 @@ function TrackedMeetingRow({ meeting, updateMeeting, closeMeeting }) {
           {meeting.ended_at ? "Closed" : "Active"}
         </Badge>
       </td>
-      <td className={cx(tdClass, "space-x-2")}>
-        <ActionButton
-          compact
-          icon="save"
-          onClick={() => updateMeeting(meeting.id, title, groupName)}>
-          Save changes
-        </ActionButton>
-        <ActionButton
-          compact
-          icon="x-circle"
-          variant="danger"
-          disabled={Boolean(meeting.ended_at)}
-          onClick={() => closeMeeting(meeting.id)}>
-          Close session
-        </ActionButton>
-        <ActionButton
-          as="a"
-          compact
-          icon="download"
-          href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}>
-          Export CSV
-        </ActionButton>
+      <td className={tdClass}>
+        <ActionsMenu>
+          <ActionButton
+            compact
+            icon="save"
+            onClick={() => updateMeeting(meeting.id, title, groupName)}>
+            Save changes
+          </ActionButton>
+          <ActionButton
+            compact
+            icon="x-circle"
+            variant="danger"
+            disabled={Boolean(meeting.ended_at)}
+            onClick={() => closeMeeting(meeting.id)}>
+            Close session
+          </ActionButton>
+          <ActionButton
+            as="a"
+            compact
+            icon="download"
+            href={`/attendance/export.csv?meeting_session_id=${meeting.id}`}>
+            Export CSV
+          </ActionButton>
+        </ActionsMenu>
       </td>
     </tr>
   );
@@ -1859,29 +2883,26 @@ function LiveAttendancePage({
           <div className="grid gap-4 p-5">
             <label className={labelClass}>
               Saved meeting
-              <FieldWithIcon icon="chevron-down">
-                <select
-                  className={inputClass}
-                  value={selectedMeetingId}
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    const nextMeeting = savedMeetings.find(
-                      (meeting) => String(meeting.id) === nextValue
-                    );
-                    setSelectedMeetingId(nextValue);
-                    if (nextMeeting) {
-                      setJoinAsHost(Boolean(nextMeeting.join_as_host));
-                      setLessonTitle(nextMeeting.title || lessonTitle);
-                    }
-                  }}>
-                  <option value="">New meeting</option>
-                  {savedMeetings.map((meeting) => (
-                    <option key={meeting.id} value={meeting.id}>
-                      {meeting.title || meeting.meeting_number}
-                    </option>
-                  ))}
-                </select>
-              </FieldWithIcon>
+              <SelectField
+                value={selectedMeetingId}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  const nextMeeting = savedMeetings.find(
+                    (meeting) => String(meeting.id) === nextValue
+                  );
+                  setSelectedMeetingId(nextValue);
+                  if (nextMeeting) {
+                    setJoinAsHost(Boolean(nextMeeting.join_as_host));
+                    setLessonTitle(nextMeeting.title || lessonTitle);
+                  }
+                }}>
+                <option value="">New meeting</option>
+                {savedMeetings.map((meeting) => (
+                  <option key={meeting.id} value={meeting.id}>
+                    {meeting.title || meeting.meeting_number}
+                  </option>
+                ))}
+              </SelectField>
             </label>
             <label className={labelClass}>
               Lesson title
@@ -2059,19 +3080,23 @@ function LiveAttendancePage({
 }
 
 function ParticipantsTable({ records }) {
-  const rows = records.slice(0, MAX_ATTENDANCE);
+  const columns = [
+    { key: "participant_name", label: "Name" },
+    { key: "meeting_id", label: "Meeting" },
+    { key: "meeting_session_id", label: "Session" },
+    {
+      key: "last_seen",
+      label: "Last seen",
+      sortValue: (record) => timeSortValue(record.last_seen)
+    },
+    { key: "total_seconds", label: "Duration" }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("last_seen", "desc");
+  const rows = sortRows(records.slice(0, MAX_ATTENDANCE), sortConfig, columns);
   return (
     <div className={tableWrapClass}>
       <table className={tableClass}>
-        <thead>
-          <tr>
-            {["Name", "Meeting", "Session", "Last seen", "Duration"].map((head) => (
-              <th key={head} className={thClass}>
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
+        <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
         <tbody>
           {rows.length ? (
             rows.map((record) => (
@@ -2095,24 +3120,32 @@ function ParticipantsTable({ records }) {
 }
 
 function HistoryTable({ title = "Attendance History", records }) {
-  const rows = historyLimit(records);
+  const columns = [
+    { key: "participant_name", label: "Name" },
+    { key: "meeting_id", label: "Meeting" },
+    { key: "meeting_session_id", label: "Session" },
+    { key: "status", label: "Status" },
+    {
+      key: "first_seen",
+      label: "First seen",
+      sortValue: (record) => timeSortValue(record.first_seen)
+    },
+    {
+      key: "last_seen",
+      label: "Last seen",
+      sortValue: (record) => timeSortValue(record.last_seen)
+    },
+    { key: "total_seconds", label: "Total" }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("last_seen", "desc");
+  const rows = sortRows(historyLimit(records), sortConfig, columns);
   const isTimeline = title.toLocaleLowerCase().includes("timeline");
   return (
     <Card>
       <CardHeader title={title} />
       <div className={tableWrapClass}>
         <table className={tableClass}>
-          <thead>
-            <tr>
-              {["Name", "Meeting", "Session", "Status", "First seen", "Last seen", "Total"].map(
-                (head) => (
-                  <th key={head} className={thClass}>
-                    {head}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
+          <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
           <tbody>
             {rows.length ? (
               rows.map((record) => (
@@ -2191,11 +3224,18 @@ function fileToBase64(file) {
 }
 
 function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, confirmLabel }) {
+  const sampleHeaders = preview?.headers || [];
+  const sampleRows = preview?.sample_rows || [];
+  const sampleColumns = sampleHeaders.map((header) => ({
+    key: header,
+    label: header,
+    sortValue: (row) => row[header] || ""
+  }));
+  const { sortConfig, toggleSort } = useTableSort(sampleHeaders[0] || "");
+  const sortedSampleRows = sortRows(sampleRows, sortConfig, sampleColumns);
   if (!preview) {
     return null;
   }
-  const sampleHeaders = preview.headers || [];
-  const sampleRows = preview.sample_rows || [];
   const confidence =
     typeof preview.confidence === "number"
       ? `${Math.round(preview.confidence * 100)}% confidence`
@@ -2214,19 +3254,17 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
         {fields.map((field) => (
           <label className={labelClass} key={field.key}>
             {field.label}
-            <FieldWithIcon icon="list-filter">
-              <select
-                className={inputClass}
-                value={mapping[field.key] || ""}
-                onChange={(event) => setMapping({ ...mapping, [field.key]: event.target.value })}>
-                <option value="">Not mapped</option>
-                {preview.headers.map((header) => (
-                  <option key={header} value={header}>
-                    {header}
-                  </option>
-                ))}
-              </select>
-            </FieldWithIcon>
+            <SelectField
+              icon="list-filter"
+              value={mapping[field.key] || ""}
+              onChange={(event) => setMapping({ ...mapping, [field.key]: event.target.value })}>
+              <option value="">Not mapped</option>
+              {preview.headers.map((header) => (
+                <option key={header} value={header}>
+                  {header}
+                </option>
+              ))}
+            </SelectField>
           </label>
         ))}
       </div>
@@ -2243,18 +3281,10 @@ function ImportPreviewPanel({ preview, mapping, setMapping, fields, onConfirm, c
       ) : null}
       <div className={tableWrapClass}>
         <table className={tableClass}>
-          <thead>
-            <tr>
-              {sampleHeaders.map((header) => (
-                <th key={header} className={thClass}>
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <SortableHeaderRow columns={sampleColumns} sortConfig={sortConfig} onSort={toggleSort} />
           <tbody>
-            {sampleRows.length ? (
-              sampleRows.map((row, index) => (
+            {sortedSampleRows.length ? (
+              sortedSampleRows.map((row, index) => (
                 <tr key={index}>
                   {sampleHeaders.map((header) => (
                     <td key={header} className={tdClass}>
@@ -2307,9 +3337,47 @@ function GoogleSheetImportPanel({
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const botEmail = googleConfig?.bot_email || googleConfig?.service_account_email || "";
-  const historyRows = (importHistory || [])
-    .filter((run) => run.import_kind === importKind)
-    .slice(0, 5);
+  const sourceColumns = [
+    { key: "selected_tab", label: "Tab" },
+    { key: "table_type", label: "Type" },
+    {
+      key: "auto_sync_enabled",
+      label: "Auto",
+      sortValue: (source) => (source.auto_sync_enabled ? "On" : "Off")
+    },
+    {
+      key: "last_synced_at",
+      label: "Last sync",
+      sortValue: (source) => timeSortValue(source.last_synced_at)
+    },
+    { key: "actions", label: "", sortable: false }
+  ];
+  const historyColumns = [
+    {
+      key: "finished_at",
+      label: "When",
+      sortValue: (run) => timeSortValue(run.finished_at || run.started_at)
+    },
+    { key: "source_type", label: "Source" },
+    { key: "status", label: "Status" },
+    { key: "row_count", label: "Rows" },
+    { key: "imported_count", label: "Imported" },
+    { key: "skipped_count", label: "Skipped" }
+  ];
+  const { sortConfig: sourceSortConfig, toggleSort: toggleSourceSort } = useTableSort(
+    "last_synced_at",
+    "desc"
+  );
+  const { sortConfig: historySortConfig, toggleSort: toggleHistorySort } = useTableSort(
+    "finished_at",
+    "desc"
+  );
+  const sortedSources = sortRows(sources || [], sourceSortConfig, sourceColumns);
+  const historyRows = sortRows(
+    (importHistory || []).filter((run) => run.import_kind === importKind),
+    historySortConfig,
+    historyColumns
+  ).slice(0, 5);
   const setupSteps =
     importKind === "schedule"
       ? [
@@ -2441,22 +3509,19 @@ function GoogleSheetImportPanel({
           <div className="grid grid-cols-[1fr_auto_auto] items-end gap-3">
             <label className={labelClass}>
               Sheet tab
-              <FieldWithIcon icon="chevron-down">
-                <select
-                  className={inputClass}
-                  value={selectedTab}
-                  onChange={(event) => {
-                    setSelectedTab(event.target.value);
-                    setPreview(null);
-                    setMapping({});
-                  }}>
-                  {tabs.map((tab) => (
-                    <option key={tab} value={tab}>
-                      {tab}
-                    </option>
-                  ))}
-                </select>
-              </FieldWithIcon>
+              <SelectField
+                value={selectedTab}
+                onChange={(event) => {
+                  setSelectedTab(event.target.value);
+                  setPreview(null);
+                  setMapping({});
+                }}>
+                {tabs.map((tab) => (
+                  <option key={tab} value={tab}>
+                    {tab}
+                  </option>
+                ))}
+              </SelectField>
             </label>
             <ActionButton icon="eye" onClick={previewSheet}>
               Preview
@@ -2497,17 +3562,13 @@ function GoogleSheetImportPanel({
         {sources?.length ? (
           <div className={tableWrapClass}>
             <table className={tableClass}>
-              <thead>
-                <tr>
-                  {["Tab", "Type", "Auto", "Last sync", ""].map((head) => (
-                    <th key={head} className={thClass}>
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+              <SortableHeaderRow
+                columns={sourceColumns}
+                sortConfig={sourceSortConfig}
+                onSort={toggleSourceSort}
+              />
               <tbody>
-                {sources.map((source) => (
+                {sortedSources.map((source) => (
                   <tr key={source.id}>
                     <td className={tdClass}>{source.selected_tab}</td>
                     <td className={tdClass}>{source.table_type}</td>
@@ -2516,9 +3577,14 @@ function GoogleSheetImportPanel({
                       {source.last_synced_at ? formatShortDate(source.last_synced_at) : "Never"}
                     </td>
                     <td className={tdClass}>
-                      <ActionButton compact icon="refresh-cw" onClick={() => syncSource(source.id)}>
-                        Sync now
-                      </ActionButton>
+                      <ActionsMenu>
+                        <ActionButton
+                          compact
+                          icon="refresh-cw"
+                          onClick={() => syncSource(source.id)}>
+                          Sync now
+                        </ActionButton>
+                      </ActionsMenu>
                     </td>
                   </tr>
                 ))}
@@ -2542,15 +3608,11 @@ function GoogleSheetImportPanel({
         {historyRows.length ? (
           <div className={tableWrapClass}>
             <table className={tableClass}>
-              <thead>
-                <tr>
-                  {["When", "Source", "Status", "Rows", "Imported", "Skipped"].map((head) => (
-                    <th key={head} className={thClass}>
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+              <SortableHeaderRow
+                columns={historyColumns}
+                sortConfig={historySortConfig}
+                onSort={toggleHistorySort}
+              />
               <tbody>
                 {historyRows.map((run) => (
                   <tr key={run.id}>
@@ -2606,6 +3668,29 @@ function StudentsPage({
       (!group || student.group_name === group) && (!search || haystack.includes(normalize(search)))
     );
   });
+  const studentColumns = [
+    { key: "full_name", label: "Student name" },
+    { key: "group_name", label: "Group" },
+    {
+      key: "aliases",
+      label: "Aliases",
+      sortValue: (student) => (student.aliases || []).join(", ")
+    },
+    {
+      key: "attendance",
+      label: "Attendance status",
+      sortValue: (student) =>
+        currentRecords.some((record) =>
+          studentKeys(student).includes(normalize(record.participant_name))
+        )
+          ? "Present"
+          : "Not active"
+    },
+    { key: "actions", label: "Actions", sortable: false }
+  ];
+  const { sortConfig: studentSortConfig, toggleSort: toggleStudentSort } =
+    useTableSort("full_name");
+  const sortedStudents = sortRows(filtered, studentSortConfig, studentColumns);
 
   async function submitStudent(event) {
     event.preventDefault();
@@ -2679,19 +3764,18 @@ function StudentsPage({
                 placeholder="Search students or aliases"
               />
             </FieldWithIcon>
-            <FieldWithIcon icon="list-filter">
-              <select
-                className={cx(inputClass, "w-52")}
-                value={group}
-                onChange={(event) => setGroup(event.target.value)}>
-                <option value="">All groups</option>
-                {groups.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </FieldWithIcon>
+            <SelectField
+              icon="list-filter"
+              className="w-52"
+              value={group}
+              onChange={(event) => setGroup(event.target.value)}>
+              <option value="">All groups</option>
+              {groups.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </SelectField>
           </div>
           <ActionButton icon="plus" onClick={() => setShowAddForm(true)}>
             Add student
@@ -2758,17 +3842,11 @@ function StudentsPage({
               </EmptyState>
               <div className={tableWrapClass}>
                 <table className={tableClass}>
-                  <thead>
-                    <tr>
-                      {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map(
-                        (head) => (
-                          <th key={head} className={thClass}>
-                            {head}
-                          </th>
-                        )
-                      )}
-                    </tr>
-                  </thead>
+                  <SortableHeaderRow
+                    columns={studentColumns}
+                    sortConfig={studentSortConfig}
+                    onSort={toggleStudentSort}
+                  />
                   <tbody>
                     <EmptyRow colSpan={5}>No students match this view.</EmptyRow>
                   </tbody>
@@ -2778,20 +3856,14 @@ function StudentsPage({
           ) : (
             <div className={tableWrapClass}>
               <table className={tableClass}>
-                <thead>
-                  <tr>
-                    {["Student name", "Group", "Aliases", "Attendance status", "Actions"].map(
-                      (head) => (
-                        <th key={head} className={thClass}>
-                          {head}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
+                <SortableHeaderRow
+                  columns={studentColumns}
+                  sortConfig={studentSortConfig}
+                  onSort={toggleStudentSort}
+                />
                 <tbody>
-                  {filtered.length ? (
-                    filtered.map((student) => {
+                  {sortedStudents.length ? (
+                    sortedStudents.map((student) => {
                       const present = currentRecords.some((record) =>
                         studentKeys(student).includes(normalize(record.participant_name))
                       );
@@ -2910,17 +3982,19 @@ function StudentRow({ student, present, createAlias }) {
         {present ? "Present" : "Not active"}
       </td>
       <td className={tdClass}>
-        <form className="flex gap-2" onSubmit={submitAlias}>
-          <input
-            className={cx(inputClass, "min-w-48")}
-            value={alias}
-            onChange={(event) => setAlias(event.target.value)}
-            placeholder="Zoom display name"
-          />
-          <ActionButton compact icon="user-plus" type="submit">
-            Add alias
-          </ActionButton>
-        </form>
+        <ActionsMenu>
+          <form className="flex gap-2" onSubmit={submitAlias}>
+            <input
+              className={cx(inputClass, "min-w-48")}
+              value={alias}
+              onChange={(event) => setAlias(event.target.value)}
+              placeholder="Zoom display name"
+            />
+            <ActionButton compact icon="user-plus" type="submit">
+              Add alias
+            </ActionButton>
+          </form>
+        </ActionsMenu>
       </td>
     </tr>
   );
@@ -3025,7 +4099,7 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
         <div className="grid grid-cols-[minmax(0,1fr)_320px] gap-6 p-6 max-[1280px]:grid-cols-1">
           <div className="grid gap-4">
             <h2 className="m-0 text-xl font-black">Filters</h2>
-            <div className="grid grid-cols-[150px_150px_minmax(180px,1fr)_minmax(160px,0.8fr)] gap-4">
+            <div className="grid grid-cols-[180px_180px_180px_170px] gap-4">
               <label className={labelClass}>
                 Start date
                 <FieldWithIcon icon="calendar">
@@ -3050,19 +4124,17 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
               </label>
               <label className={labelClass}>
                 Group
-                <FieldWithIcon icon="list-filter">
-                  <select
-                    className={inputClass}
-                    value={filters.group}
-                    onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
-                    <option value="">All groups</option>
-                    {groups.map((group) => (
-                      <option key={group} value={group}>
-                        {group}
-                      </option>
-                    ))}
-                  </select>
-                </FieldWithIcon>
+                <SelectField
+                  icon="list-filter"
+                  value={filters.group}
+                  onChange={(event) => setFilters({ ...filters, group: event.target.value })}>
+                  <option value="">All groups</option>
+                  {groups.map((group) => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                </SelectField>
               </label>
               <label className={labelClass}>
                 Meeting ID
@@ -3076,7 +4148,7 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
                 </FieldWithIcon>
               </label>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-flow-col auto-cols-max gap-5">
               {[
                 ["today", "Today"],
                 ["week", "This week"],
@@ -3123,23 +4195,29 @@ function ReportsPage({ summaries, historyRecords, students, generateSummary }) {
 }
 
 function SummaryTable({ summaries }) {
+  const columns = [
+    { key: "student_name", label: "Student" },
+    { key: "group_name", label: "Group" },
+    { key: "lesson_title", label: "Lesson", sortValue: (summary) => summary.lesson_title || "" },
+    {
+      key: "lesson_starts_at",
+      label: "Start",
+      sortValue: (summary) => timeSortValue(summary.lesson_starts_at)
+    },
+    { key: "status", label: "Status" },
+    { key: "total_seconds", label: "Total" }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("student_name");
+  const sortedSummaries = sortRows(summaries, sortConfig, columns);
   return (
     <Card>
       <CardHeader title="Attendance journal" />
       <div className={tableWrapClass}>
         <table className={tableClass}>
-          <thead>
-            <tr>
-              {["Student", "Group", "Lesson", "Start", "Status", "Total"].map((head) => (
-                <th key={head} className={thClass}>
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
           <tbody>
-            {summaries.length ? (
-              summaries.map((summary) => (
+            {sortedSummaries.length ? (
+              sortedSummaries.map((summary) => (
                 <tr key={summary.id}>
                   <td className={tdClass}>{summary.student_name}</td>
                   <td className={tdClass}>{summary.group_name}</td>
@@ -3370,21 +4448,21 @@ function SettingsPage({
 }
 
 function ScheduleTable({ entries }) {
+  const columns = [
+    { key: "title", label: "Title", sortValue: (entry) => entry.title || "" },
+    { key: "group_name", label: "Group" },
+    { key: "starts_at", label: "Starts", sortValue: (entry) => timeSortValue(entry.starts_at) },
+    { key: "ends_at", label: "Ends", sortValue: (entry) => timeSortValue(entry.ends_at) }
+  ];
+  const { sortConfig, toggleSort } = useTableSort("starts_at", "asc");
+  const sortedEntries = sortRows(entries, sortConfig, columns);
   return (
     <div className={tableWrapClass}>
       <table className={tableClass}>
-        <thead>
-          <tr>
-            {["Title", "Group", "Starts", "Ends"].map((head) => (
-              <th key={head} className={thClass}>
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
+        <SortableHeaderRow columns={columns} sortConfig={sortConfig} onSort={toggleSort} />
         <tbody>
-          {entries.length ? (
-            entries.map((entry) => (
+          {sortedEntries.length ? (
+            sortedEntries.map((entry) => (
               <tr key={entry.id}>
                 <td className={tdClass}>{entry.title || ""}</td>
                 <td className={tdClass}>{entry.group_name}</td>
@@ -3406,6 +4484,9 @@ function App() {
   const [page, setPage] = useState(
     pages.some((item) => item.id === initialPage) ? initialPage : "menu"
   );
+  const [language, setLanguage] = useState(getInitialLanguage);
+  const [languageChanging, setLanguageChanging] = useState(false);
+  const languageTimerRef = useRef(null);
   const [trendFilter, setTrendFilter] = useState("present");
   const [data, setData] = useState({
     summaries: [],
@@ -3433,6 +4514,35 @@ function App() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(languageTimerRef.current);
+    };
+  }, []);
+
+  const changeLanguage = useCallback(
+    (nextLanguage) => {
+      if (
+        nextLanguage === language ||
+        !languageOptions.some((option) => option.id === nextLanguage)
+      ) {
+        return;
+      }
+      window.clearTimeout(languageTimerRef.current);
+      setLanguageChanging(true);
+      languageTimerRef.current = window.setTimeout(() => {
+        setLanguage(nextLanguage);
+        try {
+          window.localStorage?.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+        } catch (error) {
+          console.warn("Unable to persist language", error);
+        }
+        languageTimerRef.current = window.setTimeout(() => setLanguageChanging(false), 160);
+      }, 110);
+    },
+    [language]
+  );
 
   const goToPage = useCallback((nextPage) => {
     const validPage = pages.some((item) => item.id === nextPage) ? nextPage : "menu";
@@ -3705,7 +4815,14 @@ function App() {
   };
 
   return (
-    <Shell page={page} goToPage={goToPage} oauthStatus={data.oauthStatus}>
+    <TranslationLayer language={language}>
+      <Shell
+        page={page}
+        goToPage={goToPage}
+        oauthStatus={data.oauthStatus}
+        language={language}
+        onLanguageChange={changeLanguage}
+        languageChanging={languageChanging}>
       <Header
         page={page}
         refreshData={refreshData}
@@ -3777,7 +4894,8 @@ function App() {
           disconnectZoom={disconnectZoom}
         />
       ) : null}
-    </Shell>
+      </Shell>
+    </TranslationLayer>
   );
 }
 

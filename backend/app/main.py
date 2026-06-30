@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 
 from .auth import is_public_path, zoom_session_auth
-from .config import allowed_zoom_emails, cors_allowed_origins, google_sheet_auto_sync_enabled, is_production, log_level
+from .config import auth_required, allowed_zoom_emails, cors_allowed_origins, google_sheet_auto_sync_enabled, is_production, log_level
 from .database import init_db
 from .env_loader import load_env_file
 from .routers.attendance import router as attendance_router
@@ -92,7 +92,7 @@ app.add_middleware(
 async def protect_app_and_add_security_headers(request: Request, call_next) -> Response:
     started_at = time.perf_counter()
     request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
-    if not is_public_path(request.url.path):
+    if auth_required() and not is_public_path(request.url.path):
         auth_result = zoom_session_auth(request)
         if not auth_result.authorized:
             logger.info(

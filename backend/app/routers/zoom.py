@@ -80,6 +80,8 @@ def _cookie_secure(request: Request) -> bool:
 
 def _zoom_email_allowed(email: str | None) -> bool:
     allowlist = allowed_zoom_emails()
+    if "*" in allowlist:
+        return True
     if is_production() and not allowlist:
         return False
     if not allowlist:

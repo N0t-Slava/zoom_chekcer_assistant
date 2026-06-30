@@ -51,6 +51,8 @@ def zoom_session_auth(request: Request) -> AuthResult:
 
         email = token_row.zoom_email
         allowlist = allowed_zoom_emails()
+        if "*" in allowlist:
+            return AuthResult(True, email=email)
         if is_production() and not allowlist:
             return AuthResult(False, "allowlist_required", email=email)
         if allowlist and (not email or email.casefold() not in allowlist):

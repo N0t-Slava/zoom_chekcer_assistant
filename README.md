@@ -147,24 +147,25 @@ export ZOOM_OAUTH_REDIRECT_URL="http://127.0.0.1:8000/zoom/oauth/callback"
 export APP_SECRET_KEY="use_a_long_random_string_for_token_encryption"
 ```
 
-For production, also set:
+For local all-access development, also set:
 
 ```bash
-export APP_ENV="production"
-export ALLOWED_ZOOM_EMAILS="teacher1@example.com,teacher2@example.com"
-export FORCE_SECURE_COOKIES="true"
-export CORS_ALLOWED_ORIGINS="https://63.181.188.132.sslip.io"
+export APP_ENV="development"
+export ALLOWED_ZOOM_EMAILS="*"
+export AUTH_REQUIRED="false"
+export FORCE_SECURE_COOKIES="false"
+export CORS_ALLOWED_ORIGINS="http://127.0.0.1:8000"
 ```
 
 For GitHub Actions deploy, set repository secrets:
 
 ```text
-PROD_HOST=63.181.188.132.sslip.io
+PROD_HOST=127.0.0.1
 PROD_SSH_KEY=<private SSH key for ubuntu on the server>
 ```
 
-When `APP_ENV=production`, the app requires `ALLOWED_ZOOM_EMAILS`. Only approved Zoom
-accounts can access the dashboard and APIs after OAuth.
+Set `AUTH_REQUIRED=false` for a local dashboard without mandatory Zoom OAuth. Set
+`ALLOWED_ZOOM_EMAILS=*` to let any authorized Zoom account pass when auth is enabled.
 
 Optional:
 

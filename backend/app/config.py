@@ -32,6 +32,10 @@ def force_secure_cookies() -> bool:
     return _bool_env("FORCE_SECURE_COOKIES", is_production())
 
 
+def auth_required() -> bool:
+    return _bool_env("AUTH_REQUIRED", is_production())
+
+
 def allowed_zoom_emails() -> set[str]:
     values = _split_csv(os.getenv("ALLOWED_ZOOM_EMAILS") or os.getenv("APP_ALLOWED_ZOOM_EMAILS"))
     return {value.casefold() for value in values}
