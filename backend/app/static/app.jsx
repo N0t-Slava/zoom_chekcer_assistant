@@ -246,7 +246,7 @@ const textTranslations = {
     "Importing...": "Імпорт...",
     "Confirm import": "Підтвердити імпорт",
     "Google Sheet students": "Студенти з Google Sheet",
-    "Aliases": "Псевдоніми",
+    Aliases: "Псевдоніми",
     "Attendance status": "Статус відвідуваності",
     "Aliases / Zoom names": "Псевдоніми / імена Zoom",
     None: "Немає",
@@ -367,10 +367,23 @@ const textTranslations = {
 const translationPatterns = {
   uk: [
     [/^Connected as (.+)\.$/, (match) => `Підключено як ${match[1]}.`],
-    [/^Preview ready: (\d+) rows detected\.$/, (match) => `Перегляд готовий: ${match[1]} рядків знайдено.`],
-    [/^(\d+) rows detected\. Confirm mapping before saving\.$/, (match) => `${match[1]} рядків знайдено. Підтвердьте зіставлення перед збереженням.`],
-    [/^Imported (\d+), created (\d+), updated (\d+), skipped (\d+)(.*)\.$/, (match) => `Імпортовано ${match[1]}, створено ${match[2]}, оновлено ${match[3]}, пропущено ${match[4]}${match[5]}.`],
-    [/^Generated (\d+): (\d+) present, (\d+) absent\.(.*)$/, (match) => `Створено ${match[1]}: присутні ${match[2]}, відсутні ${match[3]}.${match[4]}`],
+    [
+      /^Preview ready: (\d+) rows detected\.$/,
+      (match) => `Перегляд готовий: ${match[1]} рядків знайдено.`
+    ],
+    [
+      /^(\d+) rows detected\. Confirm mapping before saving\.$/,
+      (match) => `${match[1]} рядків знайдено. Підтвердьте зіставлення перед збереженням.`
+    ],
+    [
+      /^Imported (\d+), created (\d+), updated (\d+), skipped (\d+)(.*)\.$/,
+      (match) =>
+        `Імпортовано ${match[1]}, створено ${match[2]}, оновлено ${match[3]}, пропущено ${match[4]}${match[5]}.`
+    ],
+    [
+      /^Generated (\d+): (\d+) present, (\d+) absent\.(.*)$/,
+      (match) => `Створено ${match[1]}: присутні ${match[2]}, відсутні ${match[3]}.${match[4]}`
+    ],
     [/^Type: (.+)$/, (match) => `Тип: ${match[1]}`],
     [/^Mapping: (.+)$/, (match) => `Зіставлення: ${match[1]}`],
     [/^(\d+)% confidence$/, (match) => `${match[1]}% впевненості`],
@@ -893,7 +906,9 @@ function optionValue(option) {
     return "";
   }
   const value = option.props.value;
-  return value === undefined || value === null ? String(option.props.children || "") : String(value);
+  return value === undefined || value === null
+    ? String(option.props.children || "")
+    : String(value);
 }
 
 function floatingRoot() {
@@ -912,7 +927,10 @@ function selectFloatingStyle(anchor) {
   const maxMenuHeight = 256;
   const minUsefulHeight = 144;
   const width = Math.max(rect.width, 160);
-  const left = Math.min(Math.max(gutter, rect.left), Math.max(gutter, viewportWidth - width - gutter));
+  const left = Math.min(
+    Math.max(gutter, rect.left),
+    Math.max(gutter, viewportWidth - width - gutter)
+  );
   const belowSpace = viewportHeight - rect.bottom - gutter;
   const aboveSpace = rect.top - gutter;
   const openAbove = belowSpace < minUsefulHeight && aboveSpace > belowSpace;
@@ -979,11 +997,7 @@ function SelectField({
     function closeFromOutside(event) {
       const clickedRoot = rootRef.current?.contains(event.target);
       const clickedMenu = menuRef.current?.contains(event.target);
-      if (
-        rootRef.current &&
-        !clickedRoot &&
-        !clickedMenu
-      ) {
+      if (rootRef.current && !clickedRoot && !clickedMenu) {
         setOpen(false);
       }
     }
@@ -4259,13 +4273,6 @@ function SettingsPage({
   schedule,
   previewScheduleImport,
   commitScheduleImport,
-  googleConfig,
-  googleScheduleSources,
-  importHistory,
-  loadGoogleSheetTabs,
-  previewGoogleSheetImport,
-  saveGoogleSheetSource,
-  syncGoogleSheetSource,
   disconnectZoom
 }) {
   const [file, setFile] = useState(null);
@@ -4424,25 +4431,6 @@ function SettingsPage({
         />
         <ScheduleTable entries={schedule} />
       </Card>
-
-      <GoogleSheetImportPanel
-        title="Google Sheet schedule"
-        importKind="schedule"
-        googleConfig={googleConfig}
-        sources={googleScheduleSources}
-        importHistory={importHistory}
-        loadGoogleSheetTabs={loadGoogleSheetTabs}
-        previewGoogleSheetImport={previewGoogleSheetImport}
-        saveGoogleSheetSource={saveGoogleSheetSource}
-        syncGoogleSheetSource={syncGoogleSheetSource}
-        fields={[
-          { key: "date", label: "Lesson date" },
-          { key: "start_time", label: "Start time" },
-          { key: "end_time", label: "End time" },
-          { key: "group_name", label: "Group" },
-          { key: "title", label: "Title" }
-        ]}
-      />
     </section>
   );
 }
@@ -4823,77 +4811,70 @@ function App() {
         language={language}
         onLanguageChange={changeLanguage}
         languageChanging={languageChanging}>
-      <Header
-        page={page}
-        refreshData={refreshData}
-        oauthStatus={data.oauthStatus}
-        sdkConfig={data.sdkConfig}
-        meetings={data.meetings}
-        currentRecords={data.currentRecords}
-        unmatchedRecords={data.unmatchedRecords}
-        goToPage={goToPage}
-      />
-      {page === "menu" ? <MenuPage {...commonPageProps} /> : null}
-      {page === "meetings" ? (
-        <MeetingsPage
-          {...commonPageProps}
-          saveSavedMeeting={saveSavedMeeting}
-          deleteSavedMeeting={deleteSavedMeeting}
-          checkSavedMeeting={checkSavedMeeting}
-          updateMeeting={updateMeeting}
-          closeMeeting={closeMeeting}
-        />
-      ) : null}
-      {page === "live-attendance" ? (
-        <LiveAttendancePage
-          {...commonPageProps}
-          updateMeeting={updateMeeting}
-          closeMeeting={closeMeeting}
-        />
-      ) : null}
-      {page === "students" ? (
-        <StudentsPage
-          students={data.students}
-          currentRecords={data.currentRecords}
-          createStudent={createStudent}
-          previewStudentsImport={previewStudentsImport}
-          commitStudentsImport={commitStudentsImport}
-          googleConfig={data.googleConfig}
-          googleStudentSources={data.googleStudentSources}
-          importHistory={data.importHistory}
-          loadGoogleSheetTabs={loadGoogleSheetTabs}
-          previewGoogleSheetImport={previewGoogleSheetImport}
-          saveGoogleSheetSource={saveGoogleSheetSource}
-          syncGoogleSheetSource={syncGoogleSheetSource}
-          createAlias={createAlias}
-        />
-      ) : null}
-      {page === "reports" ? (
-        <ReportsPage
-          summaries={data.summaries}
-          historyRecords={data.historyRecords}
-          students={data.students}
-          generateSummary={generateSummary}
-        />
-      ) : null}
-      {page === "settings" ? (
-        <SettingsPage
+        <Header
+          page={page}
+          refreshData={refreshData}
           oauthStatus={data.oauthStatus}
           sdkConfig={data.sdkConfig}
-          students={data.students}
-          schedule={data.schedule}
-          previewScheduleImport={previewScheduleImport}
-          commitScheduleImport={commitScheduleImport}
-          googleConfig={data.googleConfig}
-          googleScheduleSources={data.googleScheduleSources}
-          importHistory={data.importHistory}
-          loadGoogleSheetTabs={loadGoogleSheetTabs}
-          previewGoogleSheetImport={previewGoogleSheetImport}
-          saveGoogleSheetSource={saveGoogleSheetSource}
-          syncGoogleSheetSource={syncGoogleSheetSource}
-          disconnectZoom={disconnectZoom}
+          meetings={data.meetings}
+          currentRecords={data.currentRecords}
+          unmatchedRecords={data.unmatchedRecords}
+          goToPage={goToPage}
         />
-      ) : null}
+        {page === "menu" ? <MenuPage {...commonPageProps} /> : null}
+        {page === "meetings" ? (
+          <MeetingsPage
+            {...commonPageProps}
+            saveSavedMeeting={saveSavedMeeting}
+            deleteSavedMeeting={deleteSavedMeeting}
+            checkSavedMeeting={checkSavedMeeting}
+            updateMeeting={updateMeeting}
+            closeMeeting={closeMeeting}
+          />
+        ) : null}
+        {page === "live-attendance" ? (
+          <LiveAttendancePage
+            {...commonPageProps}
+            updateMeeting={updateMeeting}
+            closeMeeting={closeMeeting}
+          />
+        ) : null}
+        {page === "students" ? (
+          <StudentsPage
+            students={data.students}
+            currentRecords={data.currentRecords}
+            createStudent={createStudent}
+            previewStudentsImport={previewStudentsImport}
+            commitStudentsImport={commitStudentsImport}
+            googleConfig={data.googleConfig}
+            googleStudentSources={data.googleStudentSources}
+            importHistory={data.importHistory}
+            loadGoogleSheetTabs={loadGoogleSheetTabs}
+            previewGoogleSheetImport={previewGoogleSheetImport}
+            saveGoogleSheetSource={saveGoogleSheetSource}
+            syncGoogleSheetSource={syncGoogleSheetSource}
+            createAlias={createAlias}
+          />
+        ) : null}
+        {page === "reports" ? (
+          <ReportsPage
+            summaries={data.summaries}
+            historyRecords={data.historyRecords}
+            students={data.students}
+            generateSummary={generateSummary}
+          />
+        ) : null}
+        {page === "settings" ? (
+          <SettingsPage
+            oauthStatus={data.oauthStatus}
+            sdkConfig={data.sdkConfig}
+            students={data.students}
+            schedule={data.schedule}
+            previewScheduleImport={previewScheduleImport}
+            commitScheduleImport={commitScheduleImport}
+            disconnectZoom={disconnectZoom}
+          />
+        ) : null}
       </Shell>
     </TranslationLayer>
   );
